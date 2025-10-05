@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeScape Academy: Junior Fire Marshal Certification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .course-content {
+            display: none;
+        }
+        .course-content.active {
+            display: block;
+        }
+        .nav-item {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .nav-item.locked {
+            cursor: not-allowed;
+            color: #9ca3af;
+        }
+        .nav-item.locked .fa-lock {
+            display: inline-block;
+        }
+        .nav-item:not(.locked):hover {
+            background-color: #e0e7ff;
+        }
+        .nav-item .fa-lock {
+            display: none;
+        }
+        .progress-bar-fill {
+            transition: width 0.5s ease-in-out;
+        }
+        .quiz-option {
+            transition: background-color 0.2s;
+        }
+        .quiz-option.selected {
+            background-color: #c7d2fe;
+            border-color: #818cf8;
+        }
+        .quiz-option.correct {
+            background-color: #dcfce7;
+            border-color: #4ade80;
+        }
+        .quiz-option.incorrect {
+            background-color: #fee2e2;
+            border-color: #f87171;
+        }
+    </style>
+</head>
+<body class="antialiased text-slate-800">
+
+    <!-- Header -->
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 p-2 rounded-full">
+                    <i class="fas fa-shield-halved text-white text-2xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-blue-600">SafeScape Academy</h1>
+            </div>
+            <nav class="hidden md:flex space-x-6 text-slate-600">
+                <a href="#home" class="hover:text-blue-600">Home</a>
+                <a href="#course" class="hover:text-blue-600">Courses</a>
+                <a href="#about" class="hover:text-blue-600">About</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="home" class="container mx-auto px-4 py-8">
+        <!-- Hero Section -->
+        <section class="text-center bg-white p-8 rounded-2xl shadow-lg mb-12">
+            <img src="https://images.unsplash.com/photo-1617066343110-33433a4020a5?q=80&w=2070&auto=format&fit=crop" onerror="this.onerror=null;this.src='https://placehold.co/1200x400/3b82f6/ffffff?text=Be+a+Fire+Safety+Hero!';" alt="Friendly firefighter with children" class="w-full h-64 object-cover rounded-xl mb-6">
+            <h2 class="text-4xl font-bold text-slate-900 mb-4">Become a Junior Fire Marshal!</h2>
+            <p class="text-lg text-slate-600 max-w-3xl mx-auto mb-6">Learn essential fire safety skills in a fun, interactive way. Our courses, inspired by the Bureau of Fire Protection, will teach you how to be a hero in your home and community.</p>
+            <button onclick="document.getElementById('course').scrollIntoView({ behavior: 'smooth' });" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-full hover:bg-blue-700 transition-transform transform hover:scale-105">Start Learning Now</button>
+        </section>
+
+        <!-- Main Course Interface -->
+        <section id="course" class="bg-white p-6 rounded-2xl shadow-lg">
+            <div class="flex flex-col md:flex-row gap-6">
+                <!-- Left Navigation -->
+                <aside class="w-full md:w-1/4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <h3 class="text-lg font-bold mb-4 border-b pb-2">Course Outline</h3>
+                    <div id="course-navigation"></div>
+                </aside>
+
+                <!-- Right Content -->
+                <div class="w-full md:w-3/4">
+                    <div id="content-display">
+                        <!-- Course content will be dynamically loaded here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="bg-white p-8 rounded-2xl shadow-lg mt-12">
+            <h2 class="text-3xl font-bold text-center text-slate-900 mb-6">About SafeScape</h2>
+            <p class="text-slate-600 text-center max-w-4xl mx-auto">
+                SafeScape is an inclusive, AI-driven platform for digital fire safety, risk assessment, education, and community preparedness in Sta. Cruz, Laguna. Our mission is to empower individuals, from kids to adults, with the knowledge and skills to prevent fires and respond effectively during emergencies. This Junior Fire Marshal course is our first step in building a more resilient and fire-safe community.
+            </p>
+        </section>
+
+    </main>
+    
+    <!-- Certificate Modal -->
+    <div id="certificateModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-3xl w-full text-center">
+             <h2 class="text-3xl font-bold text-blue-600 mb-4">Congratulations!</h2>
+             <p class="text-slate-600 mb-6">You've passed the final exam and earned your certificate!</p>
+             <div id="certificate" class="border-4 border-blue-600 p-8 rounded-lg bg-slate-50 mb-6 text-center">
+                <h3 class="text-4xl font-bold text-slate-800" style="font-family: 'Times New Roman', serif;">Certificate of Completion</h3>
+                <p class="my-4">This certifies that</p>
+                <p id="certName" class="text-3xl font-bold border-b-2 border-slate-400 pb-2"></p>
+                <p class="my-4">has successfully completed the</p>
+                <h4 class="text-2xl font-semibold text-blue-700">Junior Fire Marshal Certification</h4>
+                <p class="mt-8 text-sm text-slate-500">Issued by SafeScape Academy</p>
+            </div>
+            <button onclick="window.print()" class="bg-green-500 text-white font-bold py-2 px-6 rounded-full hover:bg-green-600 mr-2">Print Certificate</button>
+            <button onclick="closeModal()" class="bg-slate-500 text-white font-bold py-2 px-6 rounded-full hover:bg-slate-600">Close</button>
+        </div>
+    </div>
+
+
+    <script>
+        // --- COURSE DATA ---
+        const courseData = {
+            modules: [
+                {
+                    id: 1,
+                    title: "Module 1: Welcome to the Fire Station!",
+                    progress: 0,
+                    locked: false,
+                    sections: [
+                        { id: 1, title: "1.1 Introduction to Fire Safety", completed: false, content: `
+                            <h2 class='text-2xl font-bold mb-4'>1.1 Introduction to Fire Safety</h2>
+                            <p class='mb-4'>Hello, Junior Fire Marshals! Let's start with the basics. Fire can be a friend or a foe.</p>
+                            <div class='flex flex-col md:flex-row gap-4 items-center'>
+                                <div class='w-full md:w-1/2 bg-green-50 p-4 rounded-lg border border-green-200'>
+                                    <h3 class='font-bold text-green-700'>Good Fire 🔥</h3>
+                                    <p>This is fire that is controlled and helps us, like the fire on a stove for cooking or a candle on a birthday cake.</p>
+                                    <img src='https://images.unsplash.com/photo-1588252276502-39f5b24a3560?q=80&w=2070&auto=format&fit=crop' onerror="this.onerror=null;this.src='https://placehold.co/400x200/22c55e/ffffff?text=Good+Fire';" alt='Birthday cake with candles' class='mt-2 rounded-md h-40 w-full object-cover'>
+                                </div>
+                                <div class='w-full md:w-1/2 bg-red-50 p-4 rounded-lg border border-red-200'>
+                                    <h3 class='font-bold text-red-700'>Bad Fire 🚒</h3>
+                                    <p>This is fire that is out of control and can be very dangerous. It can damage homes and hurt people.</p>
+                                    <img src='https://images.unsplash.com/photo-1629068132997-c0e86337a283?q=80&w=2070&auto=format&fit=crop' onerror="this.onerror=null;this.src='https://placehold.co/400x200/ef4444/ffffff?text=Bad+Fire';" alt='House fire' class='mt-2 rounded-md h-40 w-full object-cover'>
+                                </div>
+                            </div>
+                             <button onclick="markCompleted(1,1)" class="mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-600">Mark as Completed</button>`},
+                        { id: 2, title: "1.2 Your Community Heroes", completed: false, content: `
+                            <h2 class='text-2xl font-bold mb-4'>1.2 Your Community Heroes</h2>
+                            <p class='mb-4'>Meet your friendly neighborhood firefighter, Berong! Firefighters are community helpers who are trained to keep us safe from fires. They wear special gear to protect themselves from heat and smoke.</p>
+                            <img src='https://storage.googleapis.com/proud-of-our-firefighters/berong_firefighter.png' onerror="this.onerror=null;this.src='https://placehold.co/600x400/3b82f6/ffffff?text=Berong+the+Firefighter';" alt='Cartoon Firefighter Berong' class='mx-auto rounded-lg shadow-md w-1/2'>
+                            <p class='mt-4'>They aren't scary, even in their big suits and masks! They are here to help you, your family, and even your pets. They drive a big red truck called a fire engine, which carries water, hoses, and ladders.</p>
+                            <button onclick="markCompleted(1,2)" class="mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-600">Mark as Completed</button>` },
+                        { id: 3, title: "1.3 The Super Sniffer: Smoke Alarms", completed: false, content: `
+                            <h2 class='text-2xl font-bold mb-4'>1.3 The Super Sniffer: Smoke Alarms</h2>
+                            <p class='mb-4'>Every home needs a 'Super Sniffer'! A smoke alarm is a small device on the ceiling that acts like a nose for smoke. When it smells smoke, it makes a very loud beeping sound to wake everyone up and warn them of danger.</p>
+                            <div class='flex justify-center'>
+                                <img src='https://images.unsplash.com/photo-1558985252-16d3e69188e4?q=80&w=2070&auto=format&fit=crop' onerror="this.onerror=null;this.src='https://placehold.co/400x300/f59e0b/ffffff?text=Smoke+Alarm';" alt='Smoke Alarm on ceiling' class='rounded-lg w-2/3 shadow-md'>
+                            </div>
+                            <p class='mt-4 font-semibold'>BEEP! BEEP! BEEP! When you hear this sound, it's time to get out and stay out!</p>
+                             <button onclick="markCompleted(1,3)" class="mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-600">Mark as Completed</button>`},
+                        { id: 4, title: "1.4 Mission: Smoke Alarm Hunt", completed: false, content: `
+                            <h2 class='text-2xl font-bold mb-4'>Mission 1: Smoke Alarm Hunt</h2>
+                            <div class='text-center p-6 bg-amber-50 border border-amber-200 rounded-lg'>
+                                <i class="fas fa-bullseye text-4xl text-amber-500 mb-4"></i>
+                                <p class='text-lg mb-4'>Your first mission, Junior Fire Marshal, is to go on a Smoke Alarm Hunt! With a grown-up, walk through your home and count how many smoke alarms you can find.</p>
+                                <a href="#" onclick="alert('Worksheet download feature would be here.')" class="bg-amber-500 text-white font-bold py-2 px-6 rounded-full hover:bg-amber-600">Download Mission Worksheet</a>
+                            </div>
+                             <button onclick="markCompleted(1,4)" class="mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-600">Mark as Completed</button>`},
+                        { id: 5, title: "1.5 Module 1 Quiz", completed: false, quiz: [
+                            { q: "What is the job of a smoke alarm?", options: ["Play music", "Make a loud noise when it smells smoke", "Turn on the lights"], a: 1 },
+                            { q: "Which of these is an example of 'Good Fire'?", options: ["A forest fire", "A fire on a kitchen stove", "A house on fire"], a: 1 }
+                        ]}
+                    ]
+                },
+                {
+                    id: 2,
+                    title: "Module 2: The Proactive Protector",
+                    progress: 0,
+                    locked: true,
+                    sections: [
+                       { id: 1, title: "2.1 Kitchen Safety 101", completed: false, content: `
+                            <h2 class='text-2xl font-bold mb-4'>2.1 Kitchen Safety 101</h2>
+                            <p class='mb-4'>The kitchen is where we make yummy food, but it has important safety rules. The most important rule is: <strong class='text-red-600'>When cooking, keep on looking!</strong> Never leave a hot stove without a grown-up watching it.</p>
+                            <h3 class='font-bold text-xl mt-6 mb-2'>Rule #1: The 3-Foot "Kid-Free" Zone</h3>
+                            <div class='flex items-center gap-4'>
+                                <img src='https://storage.googleapis.com/proud-of-our-firefighters/kitchen-safety-zone.png' onerror="this.onerror=null;this.src='https://placehold.co/400x300/fb923c/ffffff?text=3-Foot+Safety+Zone';" alt='Diagram of a 3-foot safety zone around a stove' class='w-1/3 rounded-lg'>
+                                <p>Imagine a big, invisible circle around your stove. This is a special 'Kid-Free Zone' where toys, paper towels, and anything that can burn are not allowed. It keeps everyone safe from the heat!</p>
+                            </div>
+                            <button onclick="markCompleted(2,1)" class="mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-600">Mark as Completed</button>`},
+                       { id: 2, title: "2.2 Video: Coco's Kitchen Mishap", completed: false, content: `
+                            <h2 class='text-2xl font-bold mb-4'>Video: Coco's Kitchen Mishap</h2>
+                            <p class='mb-4'>Let's see what happens when my friend Coco forgets the number one kitchen rule. Watch this short video to see why it's so important to always have a grown-up watch the stove.</p>
+                            <div class="aspect-w-16 aspect-h-9">
+                                <iframe src="https://www.youtube.com/embed/iFGc9y531mw" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-96 rounded-lg shadow-md"></iframe>
+                            </div>
+                            <button onclick="markCompleted(2,2)" class="mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-600">Mark as Completed</button>`},
+                        { id: 3, title: "2.3 The Plug Patrol: Electrical Safety", completed: false, content: `
+                            <h2 class='text-2xl font-bold mb-4'>The Plug Patrol: Electrical Safety</h2>
+                            <p class='mb-4'>My other friend, Limo, loves his gadgets! But he made a mistake by plugging too many into one outlet. This is called 'octopus wiring,' and it can make the wires very hot and start a fire.</p>
+                             <div class='flex flex-col md:flex-row gap-4 items-center'>
+                                <div class='w-full md:w-1/2 bg-red-50 p-4 rounded-lg border border-red-200'>
+                                    <h3 class='font-bold text-red-700'>Don't Do This! 🐙</h3>
+                                    <p>Plugging too many devices into one outlet or extension cord is dangerous.</p>
+                                    <img src='https://storage.googleapis.com/proud-of-our-firefighters/octopus-wiring.png' onerror="this.onerror=null;this.src='https://placehold.co/400x300/ef4444/ffffff?text=Octopus+Wiring';" alt='Overloaded outlet' class='mt-2 rounded-md h-48 w-full object-cover'>
+                                </div>
+                                <div class='w-full md:w-1/2 bg-green-50 p-4 rounded-lg border border-green-200'>
+                                    <h3 class='font-bold text-green-700'>Do This! ✅</h3>
+                                    <p>Use only one or two plugs per outlet and ask a grown-up before using an extension cord.</p>
+                                    <img src='https://images.unsplash.com/photo-1620786352378-f7935a8b6a1e?q=80&w=1974&auto=format&fit=crop' onerror="this.onerror=null;this.src='https://placehold.co/400x300/22c55e/ffffff?text=Safe+Outlet';" alt='Safely used outlet' class='mt-2 rounded-md h-48 w-full object-cover'>
+                                </div>
+                            </div>
+                             <button onclick="markCompleted(2,3)" class="mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-600">Mark as Completed</button>`},
+                        { id: 4, title: "2.4 Mission: Home Hazard Checklist", completed: false, content: `
+                            <h2 class='text-2xl font-bold mb-4'>Mission 2: Home Hazard Checklist</h2>
+                            <div class='text-center p-6 bg-orange-50 border border-orange-200 rounded-lg'>
+                                <i class="fas fa-tasks text-4xl text-orange-500 mb-4"></i>
+                                <p class='text-lg mb-4'>Time for your next mission! With your grown-up, become a Hazard Detective. Use this checklist to find and fix common fire hazards around your home.</p>
+                                <a href="#" onclick="alert('Checklist download feature would be here.')" class="bg-orange-500 text-white font-bold py-2 px-6 rounded-full hover:bg-orange-600">Download Mission Checklist</a>
+                            </div>
+                             <button onclick="markCompleted(2,4)" class="mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-600">Mark as Completed</button>`},
+                        { id: 5, title: "2.5 Module 2 Quiz", completed: false, quiz: [
+                            { q: "What is the most important rule for kitchen safety?", options: ["Play music while you cook", "When cooking, keep on looking", "Taste the food often"], a: 1 },
+                            { q: "Plugging too many things into one outlet is called...", options: ["Octopus wiring", "Spider wiring", "Jellyfish wiring"], a: 0 }
+                        ]}
+                    ]
+                },
+                // --- ADD MODULES 3 and 4 here similarly ---
+                 {
+                    id: 3, title: "Module 3: The Action Plan", progress: 0, locked: true, sections: [
+                        {id: 1, title: "3.1 Your Great Escape Plan", completed: false, content: `
+                            <h2 class='text-2xl font-bold mb-4'>3.1 Your Great Escape Plan</h2>
+                            <p class='mb-4'>If a fire happens, you need a plan! Every family should have a fire escape plan. This means knowing how to get out quickly and where to meet outside.</p>
+                            <h3 class='font-bold text-xl mt-6 mb-2'>Know Two Ways Out</h3>
+                            <p class='mb-4'>Every room in your house should have at least two ways to escape, like a door and a window. If one way is blocked by smoke or fire, you can use the other!</p>
+                            <img src='https://storage.googleapis.com/proud-of-our-firefighters/escape-plan.png' onerror="this.onerror=null;this.src='https://placehold.co/600x400/8b5cf6/ffffff?text=Two+Ways+Out';" alt='Floor plan showing two exits from a room' class='w-full rounded-lg shadow-md'>
+                            <h3 class='font-bold text-xl mt-6 mb-2'>Pick a Safe Meeting Spot</h3>
+                            <p>This is a special place outside your home where everyone in your family will go after escaping. It could be a neighbor's mailbox, a big tree, or the end of the driveway. This way, everyone knows who is safe.</p>
+                             <button onclick="markCompleted(3,1)" class="mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-600">Mark as Completed</button>`},
+                        {id: 2, title: "3.2 Video: Get Low and Go!", completed: false, content: `
+                             <h2 class='text-2xl font-bold mb-4'>Video: Get Low and Go!</h2>
+                            <p class='mb-4'>Smoke from a fire is dangerous and it rises to the ceiling. To stay safe, you need to get below the smoke. This video will also teach you what to do if your clothes catch fire: Stop, Drop, and Roll!</p>
+                            <div class="aspect-w-16 aspect-h-9">
+                                <iframe src="https://www.youtube.com/embed/FRk5G2-z26E" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-96 rounded-lg shadow-md"></iframe>
+                            </div>
+                             <button onclick="markCompleted(3,2)" class="mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-600">Mark as Completed</button>`},
+                        {id: 3, title: "3.3 Mission: Draw Your Escape Plan", completed: false, content: `
+                             <h2 class='text-2xl font-bold mb-4'>Mission 3: Draw Your Escape Plan</h2>
+                            <div class='text-center p-6 bg-violet-50 border border-violet-200 rounded-lg'>
+                                <i class="fas fa-map-marked-alt text-4xl text-violet-500 mb-4"></i>
+                                <p class='text-lg mb-4'>Time to be a real Fire Marshal! Download this worksheet and draw a map of your bedroom. Mark your door and your window as your two ways out!</p>
+                                <a href="#" onclick="alert('Worksheet download feature would be here.')" class="bg-violet-500 text-white font-bold py-2 px-6 rounded-full hover:bg-violet-600">Download Map Worksheet</a>
+                            </div>
+                             <button onclick="markCompleted(3,3)" class="mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-600">Mark as Completed</button>`},
+                        { id: 4, title: "3.4 Module 3 Quiz", completed: false, quiz: [
+                            { q: "What should you do if you come to a door and it feels hot?", options: ["Open it quickly", "Don't open it and use your second way out", "Knock on it"], a: 1 },
+                            { q: "If there is smoke in a room, you should:", options: ["Stand up and run", "Get low and crawl under the smoke", "Wave your arms to clear the smoke"], a: 1 }
+                        ]}
+                    ]
+                },
+                 {
+                    id: 4, title: "Module 4: Community Champion", progress: 0, locked: true, sections: [
+                        {id: 1, title: "4.1 How to Call for Help", completed: false, content: `
+                            <h2 class='text-2xl font-bold mb-4'>4.1 How to Call for Help</h2>
+                            <p class='mb-4'>If there is a fire, the very first thing to do is tell a grown-up! If a grown-up isn't around, you need to know how to call for help. In the Philippines, the emergency number is <strong class='text-2xl'>911</strong>.</p>
+                            <div class='bg-sky-50 p-6 rounded-lg border border-sky-200'>
+                                <h3 class='font-bold text-xl mb-2'>What to Say on the Phone:</h3>
+                                <ul class='list-decimal list-inside space-y-2'>
+                                    <li><strong>Stay calm</strong> and tell the operator there is a fire.</li>
+                                    <li><strong>Give your full address.</strong> Practice this with a grown-up!</li>
+                                    <li><strong>Answer their questions</strong> and don't hang up until they tell you to.</li>
+                                </ul>
+                            </div>
+                             <button onclick="markCompleted(4,1)" class="mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-600">Mark as Completed</button>`},
+                        {id: 2, title: "4.2 Fire Extinguishers", completed: false, content: `
+                             <h2 class='text-2xl font-bold mb-4'>4.2 Fire Extinguishers: A Tool for Grown-Ups</h2>
+                            <p class='mb-4'>You have probably seen these red tanks in buildings. They are fire extinguishers, and they are special tools that <strong class='text-red-600'>only grown-ups should use</strong> on very small fires.</p>
+                             <img src='https://images.unsplash.com/photo-1570228722709-a6a24a1f33f6?q=80&w=1964&auto=format&fit=crop' onerror="this.onerror=null;this.src='https://placehold.co/600x400/dc2626/ffffff?text=Fire+Extinguisher';" alt='Fire Extinguisher' class='w-1/3 mx-auto rounded-lg shadow-md'>
+                             <p class='mt-4'>There are different types of extinguishers for different types of fires. Here are a few to know:</p>
+                             <ul class='list-disc list-inside mt-2 space-y-1'>
+                                 <li><strong>Class A (Ash):</strong> For things that leave an ash, like wood and paper.</li>
+                                 <li><strong>Class B (Boil):</strong> For liquids that can boil, like gasoline or cooking oil.</li>
+                                 <li><strong>Class K (Kitchen):</strong> A special type just for kitchen fires!</li>
+                             </ul>
+                             <button onclick="markCompleted(4,2)" class="mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-600">Mark as Completed</button>`},
+                        {id: 3, title: "4.3 Video: The P.A.S.S. Method", completed: false, content: `
+                            <h2 class='text-2xl font-bold mb-4'>Video: The P.A.S.S. Method</h2>
+                            <p class='mb-4'>Even though only grown-ups use them, it's good to know HOW a fire extinguisher works. There's an easy song to remember the steps. It's called the P.A.S.S. method!</p>
+                            <div class="aspect-w-16 aspect-h-9">
+                                <iframe src="https://www.youtube.com/embed/kX2n1z_N-u4" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-96 rounded-lg shadow-md"></iframe>
+                            </div>
+                            <div class='mt-4 p-4 bg-gray-100 rounded-lg text-center font-bold text-xl'>
+                                P - Pull | A - Aim | S - Squeeze | S - Sweep
+                            </div>
+                            <button onclick="markCompleted(4,3)" class="mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-600">Mark as Completed</button>`},
+                        { id: 4, title: "4.4 Module 4 Quiz", completed: false, quiz: [
+                            { q: "What does the 'A' in P.A.S.S. stand for?", options: ["Ask for help", "Away from the fire", "Aim at the base of the fire"], a: 2 },
+                            { q: "Who should use a fire extinguisher?", options: ["Kids who are brave", "Only grown-ups", "Anyone who can lift it"], a: 1 }
+                        ]}
+                    ]
+                },
+                {
+                    id: 5, title: "Final Certification", progress: 0, locked: true, sections: [
+                        { id: 1, title: "Final Exam", completed: false, quiz: [
+                            { q: "What are the three 'fire ingredients'?", options: ["Water, Air, Earth", "Heat, Fuel, Oxygen", "Sparks, Wood, Wind"], a: 1 },
+                            { q: "If your clothes catch fire, you should:", options: ["Run to find water", "Stop, Drop, and Roll", "Call 911"], a: 1 },
+                            { q: "What is an 'octopus wiring'?", options: ["Wires shaped like an octopus", "A safe way to get more power", "Plugging too many things into one outlet"], a: 2 },
+                            { q: "Where should your family's Safe Meeting Spot be?", options: ["Inside the house", "A place outside, away from the house", "In the car"], a: 1 }
+                        ]}
+                    ]
+                }
+            ]
+        };
+
+        // --- GLOBAL STATE ---
+        let currentModuleId = 1;
+        let currentSectionId = 1;
+        let userName = "";
+
+        // --- DOM ELEMENTS ---
+        const navigationContainer = document.getElementById('course-navigation');
+        const contentContainer = document.getElementById('content-display');
+        const modal = document.getElementById('certificateModal');
+
+        // --- FUNCTIONS ---
+        function renderNavigation() {
+            let navHtml = '';
+            courseData.modules.forEach(module => {
+                navHtml += `<div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                         <h4 class="font-bold text-slate-900">${module.title}</h4>
+                         <span class="text-xs text-slate-500">${module.progress}%</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2 mb-2">
+                        <div class="bg-blue-600 h-2 rounded-full progress-bar-fill" style="width: ${module.progress}%"></div>
+                    </div>
+                    <ul class="space-y-1">`;
+                module.sections.forEach(section => {
+                    const isLocked = module.locked;
+                    const isCompleted = section.completed;
+                    const isActive = module.id === currentModuleId && section.id === currentSectionId;
+                    navHtml += `<li>
+                        <a class="nav-item flex justify-between items-center px-3 py-2 rounded-md text-sm ${isLocked ? 'locked' : ''} ${isActive ? 'bg-blue-100 font-semibold text-blue-700' : ''}" 
+                           onclick="${!isLocked ? `displaySection(${module.id}, ${section.id})` : ''}">
+                            <span>
+                                <i class="fas ${isCompleted ? 'fa-check-circle text-green-500' : 'fa-circle text-slate-300'} mr-2"></i>
+                                ${section.title}
+                            </span>
+                            <i class="fas fa-lock text-xs"></i>
+                        </a>
+                    </li>`;
+                });
+                navHtml += `</ul></div>`;
+            });
+            navigationContainer.innerHTML = navHtml;
+        }
+
+        function displaySection(moduleId, sectionId) {
+            currentModuleId = moduleId;
+            currentSectionId = sectionId;
+            const module = courseData.modules.find(m => m.id === moduleId);
+            const section = module.sections.find(s => s.id === sectionId);
+
+            let contentHtml = '';
+            if (section.content) {
+                contentHtml = section.content;
+            } else if (section.quiz) {
+                contentHtml = `<h2 class='text-2xl font-bold mb-4'>${section.title}</h2>`;
+                if(moduleId === 5){
+                    contentHtml += `<p class="mb-4">Time for the final test, Junior Fire Marshal! Show us what you've learned. You need to get at least 80% to pass.</p>
+                    <div class="mb-4"><label for="userName" class="block font-semibold mb-2">Please enter your full name for the certificate:</label>
+                    <input type="text" id="userName" class="w-full md:w-1/2 p-2 border rounded-md" placeholder="e.g., Juan dela Cruz"></div>`;
+                }
+                section.quiz.forEach((q, index) => {
+                    contentHtml += `<div class="mb-6 quiz-question" data-answer="${q.a}">
+                        <p class="font-semibold mb-3">${index + 1}. ${q.q}</p>
+                        <div class="space-y-2">`;
+                    q.options.forEach((opt, optIndex) => {
+                        contentHtml += `<div onclick="selectAnswer(this, ${moduleId}, ${section.id}, ${index}, ${optIndex})" 
+                                             class="quiz-option p-3 border-2 border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100">
+                                            ${opt}
+                                        </div>`;
+                    });
+                    contentHtml += `</div>
+                        <p class="quiz-feedback text-sm mt-2 hidden"></p>
+                    </div>`;
+                });
+                 contentHtml += `<button onclick="submitQuiz(${moduleId}, ${section.id})" class="mt-6 bg-green-500 text-white font-bold py-2 px-6 rounded-full hover:bg-green-600 disabled:bg-slate-400" disabled>Submit Quiz</button>`;
+            }
+            contentContainer.innerHTML = contentHtml;
+            renderNavigation();
+        }
+
+        function selectAnswer(element, moduleId, sectionId, qIndex, optIndex) {
+            // Find the parent question div and remove 'selected' from all options
+            const questionDiv = element.closest('.quiz-question');
+            const allOptions = questionDiv.querySelectorAll('.quiz-option');
+            allOptions.forEach(opt => opt.classList.remove('selected'));
+
+            // Add 'selected' to the clicked option
+            element.classList.add('selected');
+            
+            // Store the selected answer
+            const module = courseData.modules.find(m => m.id === moduleId);
+            const section = module.sections.find(s => s.id === sectionId);
+            section.quiz[qIndex].selected = optIndex;
+
+            // Check if all questions are answered to enable submit button
+            const allAnswered = section.quiz.every(q => q.selected !== undefined);
+            if (allAnswered) {
+                contentContainer.querySelector('button').disabled = false;
+            }
+        }
+
+        function submitQuiz(moduleId, sectionId) {
+            const module = courseData.modules.find(m => m.id === moduleId);
+            const section = module.sections.find(s => s.id === sectionId);
+            const questions = contentContainer.querySelectorAll('.quiz-question');
+            let correctCount = 0;
+
+            section.quiz.forEach((q, index) => {
+                const questionDiv = questions[index];
+                const options = questionDiv.querySelectorAll('.quiz-option');
+                const selectedOption = options[q.selected];
+                const feedbackP = questionDiv.querySelector('.quiz-feedback');
+
+                options.forEach(opt => opt.onclick = null); // Disable further clicks
+
+                if (q.selected === q.a) {
+                    selectedOption.classList.add('correct');
+                    feedbackP.textContent = "Correct! Great job!";
+                    feedbackP.className = 'quiz-feedback text-sm mt-2 text-green-600 block';
+                    correctCount++;
+                } else {
+                    selectedOption.classList.add('incorrect');
+                    options[q.a].classList.add('correct');
+                    feedbackP.textContent = `Not quite. The correct answer was: "${q.options[q.a]}"`;
+                    feedbackP.className = 'quiz-feedback text-sm mt-2 text-red-600 block';
+                }
+            });
+            
+            const score = (correctCount / section.quiz.length);
+
+            if(moduleId === 5) { // Final Exam
+                const nameInput = document.getElementById('userName');
+                userName = nameInput.value.trim();
+                if(!userName){
+                    alert("Please enter your name before submitting the final exam.");
+                    return;
+                }
+                if(score >= 0.8){
+                    markCompleted(moduleId, sectionId);
+                    showCertificate();
+                } else {
+                    contentContainer.querySelector('button').insertAdjacentHTML('afterend', `<p class='mt-4 font-bold text-red-600'>You scored ${Math.round(score * 100)}%. You need at least 80% to pass. Please review the course and try again!</p>`);
+                }
+            } else {
+                markCompleted(moduleId, sectionId);
+                unlockNextModule(moduleId);
+                contentContainer.querySelector('button').insertAdjacentHTML('afterend', `<p class='mt-4 font-bold text-blue-600'>You scored ${correctCount}/${section.quiz.length}! Module ${moduleId + 1} is now unlocked.</p>`);
+                contentContainer.querySelector('button').style.display = 'none';
+            }
+        }
+        
+        function showCertificate() {
+            document.getElementById('certName').textContent = userName;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+
+        function markCompleted(moduleId, sectionId) {
+            const module = courseData.modules.find(m => m.id === moduleId);
+            const section = module.sections.find(s => s.id === sectionId);
+            if (!section.completed) {
+                section.completed = true;
+                updateProgress();
+            }
+        }
+
+        function updateProgress() {
+            courseData.modules.forEach(module => {
+                const completedSections = module.sections.filter(s => s.completed).length;
+                const totalSections = module.sections.length;
+                module.progress = Math.round((completedSections / totalSections) * 100);
+            });
+            renderNavigation();
+        }
+
+        function unlockNextModule(completedModuleId) {
+            const nextModule = courseData.modules.find(m => m.id === completedModuleId + 1);
+            if (nextModule) {
+                nextModule.locked = false;
+                renderNavigation();
+            }
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            displaySection(currentModuleId, currentSectionId);
+            renderNavigation();
+        };
+    </script>
+</body>
+</html>
