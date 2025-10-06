@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,43 +7,36 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-// User roles enum
-enum UserRole {
-  guest
-  kid
-  adult
-  professional
-  admin
-}
-
-// Content categories enum
-enum ContentCategory {
-  kids
-  adult
-  professional
-}
-
-// Users table - Authentication and user profiles
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String
-  age       Int
-  role      UserRole @default(guest)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  blogPosts     BlogPost[]
-  progress      UserProgress[]
-  quizResults   QuizResult[]
+  id          Int            @id @default(autoincrement())
+  email       String         @unique
+  password    String
+  name        String
+  age         Int
+   role        UserRole       @default(guest)
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  blogPosts   BlogPost[]
+  quizResults QuizResult[]
+  progress    UserProgress[]
 
   @@map("users")
 }
 
-// Carousel Images - Dashboard carousel management
+model QuickQuestion {
+  id           Int                   @id @default(autoincrement())
+  category     QuickQuestionCategory
+  questionText String
+  responseText String
+  order        Int                   @default(0)
+  isActive     Boolean               @default(true)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@map("quick_questions")
+}
+
 model CarouselImage {
   id        Int      @id @default(autoincrement())
   title     String
@@ -60,87 +50,95 @@ model CarouselImage {
   @@map("carousel_images")
 }
 
-// Blog Posts - Adult section content
 model BlogPost {
-  id        Int      @id @default(autoincrement())
-  title     String
-  excerpt   String
-  content   String
-  imageUrl  String?
-  category  ContentCategory
-  authorId  Int
-  isPublished Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  id          Int             @id @default(autoincrement())
+  title       String
+  excerpt     String
+  content     String
+  imageUrl    String?
+  category    ContentCategory
+  authorId    Int
+  isPublished Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  author      User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@map("blog_posts")
 }
 
-// Videos - Professional and educational videos
 model Video {
-  id          Int      @id @default(autoincrement())
+  id          Int             @id @default(autoincrement())
   title       String
   description String?
   youtubeId   String
   category    ContentCategory
   duration    String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   @@map("videos")
 }
 
-// Kids Modules - 30-day learning system
 model KidsModule {
-  id          Int      @id @default(autoincrement())
+  id          Int            @id @default(autoincrement())
   title       String
   description String?
-  dayNumber   Int      @unique // 1-30 for 30-day program
-  content     String // Learning content
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  progress UserProgress[]
+  dayNumber   Int            @unique
+  content     String
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  progress    UserProgress[]
 
   @@map("kids_modules")
 }
 
-// User Progress - Learning progress tracking
 model UserProgress {
-  id          Int      @id @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   userId      Int
   moduleId    Int
-  completed   Boolean  @default(false)
-  score       Int      @default(0)
+  completed   Boolean    @default(false)
+  score       Int        @default(0)
   completedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  module KidsModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  module      KidsModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, moduleId])
   @@map("user_progress")
 }
 
-// Quiz Results - Game and quiz scores
 model QuizResult {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  quizType  String // "memory_game", "fire_safety_quiz", etc.
-  score     Int      @default(0)
-  maxScore  Int      @default(0)
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  quizType    String
+  score       Int      @default(0)
+  maxScore    Int      @default(0)
   completedAt DateTime @default(now())
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("quiz_results")
+}
+
+enum UserRole {
+  guest
+  kid
+  adult
+  professional
+  admin
+}
+
+enum ContentCategory {
+  kids
+  adult
+  professional
+}
+
+enum QuickQuestionCategory {
+  emergency
+  prevention
+  equipment
+  general
 }

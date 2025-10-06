@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,17 +13,55 @@ interface Message {
   timestamp: Date
 }
 
+interface QuickQuestion {
+  id: number;
+  questionText: string;
+  responseText: string;
+  category: string;
+}
+
 export function Chatbot() {
   const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      text: "Hello! I'm the BFP Sta Cruz assistant. How can I help you with fire safety today?",
-      sender: "bot",
-      timestamp: new Date(),
-    },
-  ])
+  const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState("")
+ const [quickQuestions, setQuickQuestions] = useState<Record<string, QuickQuestion[]>>({})
+  const [loadingQuestions, setLoadingQuestions] = useState(true)
+
+  // Load quick questions when the component mounts
+  useEffect(() => {
+    const loadQuickQuestions = async () => {
+      try {
+        const response = await fetch('/api/quick-questions')
+        if (response.ok) {
+          const questions = await response.json()
+          setQuickQuestions(questions)
+        }
+      } catch (error) {
+        console.error('Error loading quick questions:', error)
+      } finally {
+        setLoadingQuestions(false)
+      }
+    }
+
+    if (isOpen) {
+      // Add initial welcome message when the chatbot opens
+      if (messages.length === 0) {
+        setMessages([
+          {
+            id: "1",
+            text: "Hello! I'm the BFP Sta Cruz assistant. How can I help you with fire safety today?",
+            sender: "bot",
+            timestamp: new Date(),
+          }
+        ])
+      }
+
+      // Load quick questions if not already loaded
+      if (Object.keys(quickQuestions).length === 0) {
+        loadQuickQuestions()
+      }
+    }
+  }, [isOpen, messages.length, quickQuestions])
 
   const handleSend = () => {
     if (!inputValue.trim()) return
@@ -51,6 +89,29 @@ export function Chatbot() {
     }, 1000)
   }
 
+  const handleQuickQuestion = (questionText: string, responseText: string) => {
+    // Add the question as a user message
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: questionText,
+      sender: "user",
+      timestamp: new Date(),
+    }
+
+    setMessages((prev) => [...prev, userMessage])
+
+    // Add the response as a bot message
+    setTimeout(() => {
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: responseText,
+        sender: "bot",
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, botMessage])
+    }, 300)
+  }
+
   const generateBotResponse = (input: string): string => {
     const lowerInput = input.toLowerCase()
 
@@ -58,7 +119,7 @@ export function Chatbot() {
       return "To use a fire extinguisher, remember PASS: Pull the pin, Aim at the base, Squeeze the handle, and Sweep side to side. Check our Adult section for detailed tutorials!"
     }
     if (lowerInput.includes("emergency") || lowerInput.includes("911")) {
-      return "In case of fire emergency, call 911 immediately. Our emergency hotline is also available at (02) 8888-0000."
+      return "In case of fire emergency, call 911 immediately. Our emergency hotline is also available at (02) 888-0000."
     }
     if (lowerInput.includes("smoke detector") || lowerInput.includes("alarm")) {
       return "Smoke detectors should be tested monthly and batteries replaced annually. Install them on every level of your home, especially near bedrooms."
@@ -70,7 +131,7 @@ export function Chatbot() {
       return "Our Professional section offers advanced firefighting techniques, fire codes, and BFP manuals. Access requires professional credentials or admin permission."
     }
     if (lowerInput.includes("contact") || lowerInput.includes("location")) {
-      return "BFP Sta Cruz Fire Station is located in Sta Cruz, Philippines. Contact us at (02) 8888-0000 or bfp.stacruz@bfp.gov.ph"
+      return "BFP Sta Cruz Fire Station is located in Sta Cruz, Philippines. Contact us at (02) 8888-000 or bfp.stacruz@bfp.gov.ph"
     }
 
     return "Thank you for your question! For specific fire safety information, please explore our Dashboard, Adult, or Professional sections. For emergencies, always call 911."
@@ -107,6 +168,35 @@ export function Chatbot() {
               <X className="h-4 w-4" />
             </Button>
           </div>
+
+          {/* Quick Questions */}
+          {loadingQuestions ? (
+            <div className="p-4 text-center text-sm text-muted-foreground">Loading quick questions...</div>
+          ) : Object.keys(quickQuestions).length > 0 && messages.length <= 1 ? (
+            <div className="p-4 border-b max-h-40 overflow-y-auto">
+              <h4 className="font-semibold text-sm text-muted-foreground mb-2">Quick Questions:</h4>
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {Object.entries(quickQuestions).map(([category, questions]) => (
+                  <div key={category}>
+                    <h5 className="font-medium text-xs text-muted-foreground mt-2">{category.charAt(0).toUpperCase() + category.slice(1)}</h5>
+                    <div className="space-y-1 mt-1">
+                      {questions.slice(0, 3).map((question) => (
+                        <Button
+                          key={question.id}
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start text-xs p-2 truncate"
+                          onClick={() => handleQuickQuestion(question.questionText, question.responseText)}
+                        >
+                          {question.questionText}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">

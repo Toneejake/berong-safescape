@@ -280,6 +280,101 @@ async function main() {
   }
   console.log('✅ Seeded kids modules')
 
+  // Seed quick questions for chatbot
+  const quickQuestions = [
+    // Emergency Procedures
+    {
+      category: 'emergency' as const,
+      questionText: 'What should I do if I see a fire?',
+      responseText: 'If you see a fire, immediately evacuate the area and call emergency services (911 or your local emergency number). Never try to retrieve personal belongings. Once you are safe, alert others and stay at a safe distance until help arrives.',
+      order: 1,
+      isActive: true,
+    },
+    {
+      category: 'emergency' as const,
+      questionText: 'How do I report a fire emergency?',
+      responseText: 'Call 911 (or your local emergency number) immediately. Provide your exact location, the nature of the emergency, and any relevant details about the fire. Do not hang up until the operator tells you to do so.',
+      order: 2,
+      isActive: true,
+    },
+    {
+      category: 'emergency' as const,
+      questionText: 'What is the emergency number?',
+      responseText: 'In case of fire emergency, dial 911 (or your local emergency number). For non-emergency inquiries, you can visit your nearest BFP station or call their office during business hours.',
+      order: 3,
+      isActive: true,
+    },
+
+    // Fire Prevention
+    {
+      category: 'prevention' as const,
+      questionText: 'How can I prevent home fires?',
+      responseText: 'To prevent home fires: Never leave cooking unattended, keep flammable items away from heat sources, have electrical wiring checked regularly, properly store flammable liquids, and install and maintain smoke alarms.',
+      order: 1,
+      isActive: true,
+    },
+    {
+      category: 'prevention' as const,
+      questionText: 'What are common fire hazards?',
+      responseText: 'Common fire hazards include: unattended candles, overloaded electrical outlets, faulty wiring, uncleaned dryer vents, improperly stored flammable materials, and children playing with matches or lighters.',
+      order: 2,
+      isActive: true,
+    },
+    {
+      category: 'prevention' as const,
+      questionText: 'How often should I inspect my home?',
+      responseText: 'Conduct a home fire safety inspection monthly. Check smoke alarms, test fire extinguishers, inspect electrical cords, and ensure heating equipment is clean and properly ventilated.',
+      order: 3,
+      isActive: true,
+    },
+
+    // Safety Equipment
+    {
+      category: 'equipment' as const,
+      questionText: 'How do I use a fire extinguisher?',
+      responseText: 'To use a fire extinguisher, remember the acronym PASS: Pull the pin, Aim at the base of the fire, Squeeze the handle, and Sweep from side to side. Only attempt to use an extinguisher on small fires and always have an escape route.',
+      order: 1,
+      isActive: true,
+    },
+    {
+      category: 'equipment' as const,
+      questionText: 'How do I test my smoke alarm?',
+      responseText: 'Press and hold the test button on your smoke alarm until it sounds. If it doesn\'t sound, replace the batteries immediately. Test your smoke alarms monthly and replace batteries annually.',
+      order: 2,
+      isActive: true,
+    },
+    {
+      category: 'equipment' as const,
+      questionText: 'What types of fire extinguishers are there?',
+      responseText: 'Common fire extinguisher types: Class A (ordinary combustibles like wood/paper), Class B (flammable liquids like gasoline), Class C (electrical fires), Class D (combustible metals), and Class K (cooking oils/greases).',
+      order: 3,
+      isActive: true,
+    },
+
+    // General Information
+    {
+      category: 'general' as const,
+      questionText: 'What are fire safety inspections?',
+      responseText: 'Fire safety inspections ensure buildings comply with fire codes. Businesses and multi-family dwellings are required to have regular inspections. Contact your local BFP station to schedule an inspection.',
+      order: 1,
+      isActive: true,
+    },
+    {
+      category: 'general' as const,
+      questionText: 'How do I create a fire escape plan?',
+      responseText: 'Create a home fire escape plan: Draw a map of your home, mark two ways out of each room, establish a meeting place outside, practice the drill twice a year, and ensure everyone knows how to call emergency services.',
+      order: 2,
+      isActive: true,
+    },
+  ];
+
+  for (const question of quickQuestions) {
+    await prisma.quickQuestion.create({
+      data: question,
+    });
+  }
+  console.log('✅ Seeded quick questions for chatbot');
+
   console.log('🎉 Database seeding completed successfully!')
   console.log('\n📋 Test Accounts Created:')
   console.log('Admin: admin@bfp.gov.ph / admin123')

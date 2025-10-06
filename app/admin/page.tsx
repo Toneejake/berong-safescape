@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Shield, ImageIcon, FileText, Video, Users, Plus, Trash2, AlertCircle, CheckCircle } from "lucide-react"
+import { Shield, ImageIcon, FileText, Video, Users, Plus, Trash2, AlertCircle, CheckCircle, HelpCircle } from "lucide-react"
 import type { CarouselImage, BlogPost } from "@/lib/mock-data"
 
 export default function AdminPage() {
@@ -37,6 +38,15 @@ export default function AdminPage() {
 
   // User Management
   const [users, setUsers] = useState<any[]>([])
+  
+  // Quick Questions Management
+  const [quickQuestions, setQuickQuestions] = useState<any[]>([])
+  const [newQuickQuestion, setNewQuickQuestion] = useState({
+    category: "emergency",
+    questionText: "",
+    responseText: "",
+    isActive: true
+  })
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -53,6 +63,7 @@ export default function AdminPage() {
     loadCarouselImages()
     loadBlogPosts()
     loadUsers()
+    loadQuickQuestions()
     setLoading(false)
   }, [isAuthenticated, user, router])
 
@@ -97,6 +108,69 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error('Error loading users:', error)
+    }
+  }
+
+  const loadQuickQuestions = async () => {
+    try {
+      const response = await fetch('/api/admin/quick-questions')
+      if (response.ok) {
+        const questions = await response.json()
+        setQuickQuestions(questions)
+      } else {
+        console.error('Failed to load quick questions')
+      }
+    } catch (error) {
+      console.error('Error loading quick questions:', error)
+    }
+  }
+
+  const handleAddQuickQuestion = async () => {
+    if (!newQuickQuestion.questionText || !newQuickQuestion.responseText || !newQuickQuestion.category) {
+      setError("Please fill all quick question fields")
+      return
+    }
+
+    try {
+      const response = await fetch('/api/admin/quick-questions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newQuickQuestion),
+      })
+
+      if (response.ok) {
+        await loadQuickQuestions() // Reload the list
+        setNewQuickQuestion({ category: "emergency", questionText: "", responseText: "", isActive: true })
+        setSuccess("Quick question added successfully")
+        setTimeout(() => setSuccess(""), 3000)
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || "Failed to add quick question")
+      }
+    } catch (error) {
+      console.error('Error adding quick question:', error)
+      setError("Network error occurred")
+    }
+  }
+
+  const handleDeleteQuickQuestion = async (id: number) => {
+    try {
+      const response = await fetch(`/api/admin/quick-questions/${id}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        await loadQuickQuestions() // Reload the list
+        setSuccess("Quick question deleted")
+        setTimeout(() => setSuccess(""), 3000)
+      } else {
+        setError("Failed to delete quick question")
+      }
+    } catch (error) {
+      console.error('Error deleting quick question:', error)
+      setError("Network error occurred")
     }
   }
 
@@ -268,7 +342,7 @@ export default function AdminPage() {
 
         {/* Admin Tabs */}
         <Tabs defaultValue="carousel" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto">
             <TabsTrigger value="carousel">
               <ImageIcon className="h-4 w-4 mr-2" />
               Carousel
@@ -284,6 +358,10 @@ export default function AdminPage() {
             <TabsTrigger value="users">
               <Users className="h-4 w-4 mr-2" />
               Users
+            </TabsTrigger>
+            <TabsTrigger value="quick-questions">
+              <HelpCircle className="h-4 w-4 mr-2" />
+              Quick Questions
             </TabsTrigger>
           </TabsList>
 
@@ -512,7 +590,6 @@ export default function AdminPage() {
                               Age: {u.age} • Role: {u.role}
                             </p>
                           </div>
-                        </div>
                         <div className="flex flex-wrap gap-2">
                           <Button
                             size="sm"
@@ -547,6 +624,115 @@ export default function AdminPage() {
                             Admin
                           </Button>
                         </div>
+                      </div>
+                    </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Quick Questions Management */}
+          <TabsContent value="quick-questions" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Add New Quick Question</CardTitle>
+                <CardDescription>Create frequently asked questions for the chatbot</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="qq-category">Category</Label>
+                    <Select
+                      value={newQuickQuestion.category}
+                      onValueChange={(value) => setNewQuickQuestion({ ...newQuickQuestion, category: value })}
+                    >
+                      <SelectTrigger id="qq-category">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="emergency">Emergency Procedures</SelectItem>
+                        <SelectItem value="prevention">Fire Prevention</SelectItem>
+                        <SelectItem value="equipment">Safety Equipment</SelectItem>
+                        <SelectItem value="general">General Information</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="qq-active">Status</Label>
+                    <Select
+                      value={newQuickQuestion.isActive ? "active" : "inactive"}
+                      onValueChange={(value) => setNewQuickQuestion({ ...newQuickQuestion, isActive: value === "active" })}
+                    >
+                      <SelectTrigger id="qq-active">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="qq-question">Question</Label>
+                  <Input
+                    id="qq-question"
+                    placeholder="Enter the question"
+                    value={newQuickQuestion.questionText}
+                    onChange={(e) => setNewQuickQuestion({ ...newQuickQuestion, questionText: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="qq-response">Response</Label>
+                  <Textarea
+                    id="qq-response"
+                    placeholder="Enter the response"
+                    value={newQuickQuestion.responseText}
+                    onChange={(e) => setNewQuickQuestion({ ...newQuickQuestion, responseText: e.target.value })}
+                    rows={4}
+                  />
+                </div>
+                <Button onClick={handleAddQuickQuestion} className="bg-bfp-orange hover:bg-bfp-orange/90">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Quick Question
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Current Quick Questions</CardTitle>
+                <CardDescription>{quickQuestions.length} questions in database</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {quickQuestions.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">No quick questions yet</p>
+                  ) : (
+                    quickQuestions.map((question) => (
+                      <div key={question.id} className="flex items-start justify-between p-4 border rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-semibold">{question.questionText}</h4>
+                            <span className={`text-xs px-2 py-1 rounded ${question.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                              {question.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                            <span className="text-xs px-2 py-1 rounded bg-accent/10 text-accent capitalize">
+                              {question.category}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-2">{question.responseText}</p>
+                        </div>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => handleDeleteQuickQuestion(question.id)}
+                          className="ml-4"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     ))
                   )}
