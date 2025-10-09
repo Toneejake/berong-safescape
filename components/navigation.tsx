@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
-import { LogOut, User, Menu, X, Home, Users, Briefcase, Baby, Shield } from "lucide-react"
+import { Bell, LogOut, User, Menu, X, Home, Users, Briefcase, Baby, Shield } from "lucide-react"
 import Image from "next/image"
 
 export function Navigation() {
@@ -148,11 +148,13 @@ export function Navigation() {
                   </div>
                   {/*Notification Settings*/}
                   <Button variant="outline" size="icon" className="border-red-200 text-red-700 hover:bg-red-50">
-                    
+                    <Bell className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="icon" className="border-red-200 text-red-700 hover:bg-red-50">
-                    <User className="h-4 w-4" />
-                  </Button>
+                  <Link href="/profile">
+                    <Button variant="outline" size="icon" className="border-red-200 text-red-700 hover:bg-red-50">
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </Link>
                   <Button
                     variant="outline"
                     size="icon"

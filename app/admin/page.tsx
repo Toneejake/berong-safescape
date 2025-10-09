@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Shield, ImageIcon, FileText, Video, Users, Plus, Trash2, AlertCircle, CheckCircle, HelpCircle } from "lucide-react"
 import type { CarouselImage, BlogPost } from "@/lib/mock-data"
+import { ImageUpload } from "@/components/ui/image-upload"
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 
 export default function AdminPage() {
   const router = useRouter()
@@ -36,6 +38,17 @@ export default function AdminPage() {
     category: "adult" as "adult" | "professional",
   })
 
+  // Video Management
+  const [videos, setVideos] = useState<any[]>([])
+  const [newVideo, setNewVideo] = useState({
+    title: "",
+    description: "",
+    youtubeId: "",
+    category: "professional" as "professional" | "adult" | "kids",
+    duration: "",
+    isActive: true
+  })
+
   // User Management
   const [users, setUsers] = useState<any[]>([])
   
@@ -47,6 +60,35 @@ export default function AdminPage() {
     responseText: "",
     isActive: true
   })
+
+  // Confirmation Dialog State
+  const [confirmationDialog, setConfirmationDialog] = useState({
+    isOpen: false,
+    title: "",
+    description: "",
+    action: "",
+    item: null as any,
+    onConfirm: () => {},
+  });
+
+  // Confirmation Dialog Functions
+  const openConfirmationDialog = (title: string, description: string, action: string, onConfirm: () => void, item: any = null) => {
+    setConfirmationDialog({
+      isOpen: true,
+      title,
+      description,
+      action,
+      item,
+      onConfirm,
+    });
+  };
+
+  const closeConfirmationDialog = () => {
+    setConfirmationDialog({
+      ...confirmationDialog,
+      isOpen: false,
+    });
+  };
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -62,6 +104,7 @@ export default function AdminPage() {
     // Load data from database
     loadCarouselImages()
     loadBlogPosts()
+    loadVideos() // Load videos
     loadUsers()
     loadQuickQuestions()
     setLoading(false)
@@ -95,6 +138,20 @@ export default function AdminPage() {
     }
   }
 
+  const loadVideos = async () => {
+    try {
+      const response = await fetch('/api/admin/videos')
+      if (response.ok) {
+        const videos = await response.json()
+        setVideos(videos)
+      } else {
+        console.error('Failed to load videos')
+      }
+    } catch (error) {
+      console.error('Error loading videos:', error)
+    }
+  }
+
   const loadUsers = async () => {
     try {
       // For now, we'll use a simple approach to get users
@@ -125,156 +182,294 @@ export default function AdminPage() {
     }
   }
 
-  const handleAddQuickQuestion = async () => {
+  const handleAddQuickQuestion = () => {
     if (!newQuickQuestion.questionText || !newQuickQuestion.responseText || !newQuickQuestion.category) {
       setError("Please fill all quick question fields")
       return
     }
 
-    try {
-      const response = await fetch('/api/admin/quick-questions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newQuickQuestion),
-      })
+    openConfirmationDialog(
+      "Add Quick Question",
+      "Are you sure you want to add this quick question?",
+      "add-quick-question",
+      async () => {
+        try {
+          const response = await fetch('/api/admin/quick-questions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newQuickQuestion),
+          })
 
-      if (response.ok) {
-        await loadQuickQuestions() // Reload the list
-        setNewQuickQuestion({ category: "emergency", questionText: "", responseText: "", isActive: true })
-        setSuccess("Quick question added successfully")
-        setTimeout(() => setSuccess(""), 3000)
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || "Failed to add quick question")
+          if (response.ok) {
+            await loadQuickQuestions() // Reload the list
+            setNewQuickQuestion({ category: "emergency", questionText: "", responseText: "", isActive: true })
+            setSuccess("Quick question added successfully")
+            setTimeout(() => setSuccess(""), 3000)
+          } else {
+            const errorData = await response.json()
+            setError(errorData.error || "Failed to add quick question")
+          }
+        } catch (error) {
+          console.error('Error adding quick question:', error)
+          setError("Network error occurred")
+        } finally {
+          closeConfirmationDialog();
+        }
       }
-    } catch (error) {
-      console.error('Error adding quick question:', error)
-      setError("Network error occurred")
-    }
+    );
   }
 
-  const handleDeleteQuickQuestion = async (id: number) => {
-    try {
-      const response = await fetch(`/api/admin/quick-questions/${id}`, {
-        method: 'DELETE',
-      })
+  const handleDeleteQuickQuestion = (id: number) => {
+    openConfirmationDialog(
+      "Delete Quick Question",
+      "Are you sure you want to delete this quick question? This action cannot be undone.",
+      "delete-quick-question",
+      async () => {
+        try {
+          const response = await fetch(`/api/admin/quick-questions/${id}`, {
+            method: 'DELETE',
+          })
 
-      if (response.ok) {
-        await loadQuickQuestions() // Reload the list
-        setSuccess("Quick question deleted")
-        setTimeout(() => setSuccess(""), 3000)
-      } else {
-        setError("Failed to delete quick question")
+          if (response.ok) {
+            await loadQuickQuestions() // Reload the list
+            setSuccess("Quick question deleted")
+            setTimeout(() => setSuccess(""), 3000)
+          } else {
+            setError("Failed to delete quick question")
+          }
+        } catch (error) {
+          console.error('Error deleting quick question:', error)
+          setError("Network error occurred")
+        } finally {
+          closeConfirmationDialog();
+        }
       }
-    } catch (error) {
-      console.error('Error deleting quick question:', error)
-      setError("Network error occurred")
-    }
+    );
   }
 
-  const handleAddCarousel = async () => {
+  const handleAddCarousel = () => {
     if (!newCarousel.title || !newCarousel.alt || !newCarousel.url) {
       setError("Please fill all carousel fields")
       return
     }
 
-    try {
-      const response = await fetch('/api/admin/carousel', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newCarousel),
-      })
+    openConfirmationDialog(
+      "Add Carousel Image",
+      "Are you sure you want to add this carousel image?",
+      "add-carousel-image",
+      async () => {
+        try {
+          const response = await fetch('/api/admin/carousel', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newCarousel),
+          })
 
-      if (response.ok) {
-        await loadCarouselImages() // Reload the list
-        setNewCarousel({ title: "", alt: "", url: "" })
-        setSuccess("Carousel image added successfully")
-        setTimeout(() => setSuccess(""), 3000)
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || "Failed to add carousel image")
+          if (response.ok) {
+            await loadCarouselImages() // Reload the list
+            setNewCarousel({ title: "", alt: "", url: "" })
+            setSuccess("Carousel image added successfully")
+            setTimeout(() => setSuccess(""), 3000)
+          } else {
+            const errorData = await response.json()
+            setError(errorData.error || "Failed to add carousel image")
+          }
+        } catch (error) {
+          console.error('Error adding carousel image:', error)
+          setError("Network error occurred")
+        } finally {
+          closeConfirmationDialog();
+        }
       }
-    } catch (error) {
-      console.error('Error adding carousel image:', error)
-      setError("Network error occurred")
-    }
+    );
   }
 
-  const handleDeleteCarousel = async (id: string) => {
-    try {
-      const response = await fetch(`/api/admin/carousel/${id}`, {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        await loadCarouselImages() // Reload the list
-        setSuccess("Carousel image deleted")
-        setTimeout(() => setSuccess(""), 3000)
-      } else {
-        setError("Failed to delete carousel image")
-      }
-    } catch (error) {
-      console.error('Error deleting carousel image:', error)
-      setError("Network error occurred")
+  const handleDeleteCarousel = (id: string) => {
+    // Convert string ID to number for API
+    const numericId = parseInt(id);
+    if (isNaN(numericId)) {
+      setError("Invalid carousel image ID");
+      return;
     }
+
+    openConfirmationDialog(
+      "Delete Carousel Image",
+      "Are you sure you want to delete this carousel image? This action cannot be undone.",
+      "delete-carousel-image",
+      async () => {
+        try {
+          const response = await fetch(`/api/admin/carousel/${numericId}`, {
+            method: 'DELETE',
+          })
+
+          if (response.ok) {
+            await loadCarouselImages() // Reload the list
+            setSuccess("Carousel image deleted")
+            setTimeout(() => setSuccess(""), 3000)
+          } else {
+            setError("Failed to delete carousel image")
+          }
+        } catch (error) {
+          console.error('Error deleting carousel image:', error)
+          setError("Network error occurred")
+        } finally {
+          closeConfirmationDialog();
+        }
+      },
+      { id: numericId }
+    );
   }
 
-  const handleAddBlog = async () => {
+  const handleAddBlog = () => {
     if (!newBlog.title || !newBlog.excerpt || !newBlog.content) {
       setError("Please fill all blog fields")
       return
     }
 
-    try {
-      const blogData = {
-        ...newBlog,
-        authorId: user?.id || 1, // Default to first user if no current user
-      }
+    openConfirmationDialog(
+      "Add Blog Post",
+      "Are you sure you want to add this blog post?",
+      "add-blog-post",
+      async () => {
+        try {
+          const blogData = {
+            ...newBlog,
+            authorId: user?.id || 1, // Default to first user if no current user
+          }
 
-      const response = await fetch('/api/admin/blogs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(blogData),
-      })
+          const response = await fetch('/api/admin/blogs', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(blogData),
+          })
 
-      if (response.ok) {
-        await loadBlogPosts() // Reload the list
-        setNewBlog({ title: "", excerpt: "", content: "", imageUrl: "", category: "adult" })
-        setSuccess("Blog post added successfully")
-        setTimeout(() => setSuccess(""), 3000)
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || "Failed to add blog post")
+          if (response.ok) {
+            await loadBlogPosts() // Reload the list
+            setNewBlog({ title: "", excerpt: "", content: "", imageUrl: "", category: "adult" })
+            setSuccess("Blog post added successfully")
+            setTimeout(() => setSuccess(""), 3000)
+          } else {
+            const errorData = await response.json()
+            setError(errorData.error || "Failed to add blog post")
+          }
+        } catch (error) {
+          console.error('Error adding blog post:', error)
+          setError("Network error occurred")
+        } finally {
+          closeConfirmationDialog();
+        }
       }
-    } catch (error) {
-      console.error('Error adding blog post:', error)
-      setError("Network error occurred")
-    }
+    );
   }
 
-  const handleDeleteBlog = async (id: string) => {
-    try {
-      const response = await fetch(`/api/admin/blogs/${id}`, {
-        method: 'DELETE',
-      })
+  const handleDeleteBlog = (id: string) => {
+    openConfirmationDialog(
+      "Delete Blog Post",
+      "Are you sure you want to delete this blog post? This action cannot be undone.",
+      "delete-blog-post",
+      async () => {
+        try {
+          const response = await fetch(`/api/admin/blogs/${id}`, {
+            method: 'DELETE',
+          })
 
-      if (response.ok) {
-        await loadBlogPosts() // Reload the list
-        setSuccess("Blog post deleted")
-        setTimeout(() => setSuccess(""), 3000)
-      } else {
-        setError("Failed to delete blog post")
-      }
-    } catch (error) {
-      console.error('Error deleting blog post:', error)
-      setError("Network error occurred")
+          if (response.ok) {
+            await loadBlogPosts() // Reload the list
+            setSuccess("Blog post deleted")
+            setTimeout(() => setSuccess(""), 3000)
+          } else {
+            setError("Failed to delete blog post")
+          }
+        } catch (error) {
+          console.error('Error deleting blog post:', error)
+          setError("Network error occurred")
+        } finally {
+          closeConfirmationDialog();
+        }
+      },
+      { id }
+    );
+  }
+
+  const handleAddVideo = () => {
+    if (!newVideo.title || !newVideo.youtubeId || !newVideo.category) {
+      setError("Please fill all video fields");
+      return;
     }
+
+    openConfirmationDialog(
+      "Add Video",
+      "Are you sure you want to add this video?",
+      "add-video",
+      async () => {
+        try {
+          const response = await fetch('/api/admin/videos', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newVideo),
+          });
+
+          if (response.ok) {
+            await loadVideos(); // Reload the list
+            setNewVideo({ title: "", description: "", youtubeId: "", category: "professional", duration: "", isActive: true });
+            setSuccess("Video added successfully");
+            setTimeout(() => setSuccess(""), 3000);
+          } else {
+            const errorData = await response.json();
+            setError(errorData.error || "Failed to add video");
+          }
+        } catch (error) {
+          console.error('Error adding video:', error);
+          setError("Network error occurred");
+        } finally {
+          closeConfirmationDialog();
+        }
+      }
+    );
+  }
+
+  const handleDeleteVideo = (id: string) => {
+    // Convert string ID to number for API
+    const numericId = parseInt(id);
+    if (isNaN(numericId)) {
+      setError("Invalid video ID");
+      return;
+    }
+
+    openConfirmationDialog(
+      "Delete Video",
+      "Are you sure you want to delete this video? This action cannot be undone.",
+      "delete-video",
+      async () => {
+        try {
+          const response = await fetch(`/api/admin/videos/${numericId}`, {
+            method: 'DELETE',
+          });
+
+          if (response.ok) {
+            await loadVideos(); // Reload the list
+            setSuccess("Video deleted");
+            setTimeout(() => setSuccess(""), 3000);
+          } else {
+            setError("Failed to delete video");
+          }
+        } catch (error) {
+          console.error('Error deleting video:', error);
+          setError("Network error occurred");
+        } finally {
+          closeConfirmationDialog();
+        }
+      },
+      { id: numericId }
+    );
   }
 
   const handleToggleUserPermission = async (userId: string, permission: string) => {
@@ -365,8 +560,24 @@ export default function AdminPage() {
             </TabsTrigger>
           </TabsList>
 
+          <ConfirmationDialog
+            isOpen={confirmationDialog.isOpen}
+            onClose={closeConfirmationDialog}
+            onConfirm={() => {
+              confirmationDialog.onConfirm();
+            }}
+            title={confirmationDialog.title}
+            description={confirmationDialog.description}
+          />
+
           {/* Carousel Management */}
           <TabsContent value="carousel" className="space-y-6">
+            <ImageUpload 
+              title="Upload Carousel Image" 
+              description="Upload an image to generate a URL for the carousel"
+              onUploadComplete={(url) => setNewCarousel({...newCarousel, url})}
+            />
+            
             <Card>
               <CardHeader>
                 <CardTitle>Add New Carousel Image</CardTitle>
@@ -402,7 +613,7 @@ export default function AdminPage() {
                     onChange={(e) => setNewCarousel({ ...newCarousel, url: e.target.value })}
                   />
                 </div>
-                <Button onClick={handleAddCarousel} className="bg-bfp-orange hover:bg-bfp-orange/90">
+                <Button onClick={handleAddCarousel} variant="secondary">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Image
                 </Button>
@@ -440,6 +651,12 @@ export default function AdminPage() {
 
           {/* Blog Management */}
           <TabsContent value="blogs" className="space-y-6">
+            <ImageUpload 
+              title="Upload Blog Image" 
+              description="Upload an image to generate a URL for the blog post"
+              onUploadComplete={(url) => setNewBlog({...newBlog, imageUrl: url})}
+            />
+            
             <Card>
               <CardHeader>
                 <CardTitle>Add New Blog Post</CardTitle>
@@ -460,7 +677,7 @@ export default function AdminPage() {
                     <Label htmlFor="blog-category">Category</Label>
                     <select
                       id="blog-category"
-                      className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                      className="w-full h-10 px-3 rounded-md border-input bg-background"
                       value={newBlog.category}
                       onChange={(e) => setNewBlog({ ...newBlog, category: e.target.value as "adult" | "professional" })}
                     >
@@ -498,7 +715,7 @@ export default function AdminPage() {
                     rows={6}
                   />
                 </div>
-                <Button onClick={handleAddBlog} className="bg-bfp-blue hover:bg-bfp-blue/90">
+                <Button onClick={handleAddBlog} variant="default">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Blog Post
                 </Button>
@@ -549,21 +766,120 @@ export default function AdminPage() {
           <TabsContent value="videos" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Video Management</CardTitle>
-                <CardDescription>Manage educational videos for different sections</CardDescription>
+                <CardTitle>Add New Video</CardTitle>
+                <CardDescription>Add educational videos for different sections</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="video-title">Title</Label>
+                  <Input
+                    id="video-title"
+                    placeholder="Video title"
+                    value={newVideo.title}
+                    onChange={(e) => setNewVideo({ ...newVideo, title: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="video-description">Description</Label>
+                  <Textarea
+                    id="video-description"
+                    placeholder="Video description"
+                    value={newVideo.description}
+                    onChange={(e) => setNewVideo({ ...newVideo, description: e.target.value })}
+                    rows={2}
+                  />
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="video-youtube-id">YouTube ID</Label>
+                    <Input
+                      id="video-youtube-id"
+                      placeholder="YouTube video ID (e.g., W25rzeEO740)"
+                      value={newVideo.youtubeId}
+                      onChange={(e) => setNewVideo({ ...newVideo, youtubeId: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="video-duration">Duration</Label>
+                    <Input
+                      id="video-duration"
+                      placeholder="Duration (e.g., 15:30)"
+                      value={newVideo.duration}
+                      onChange={(e) => setNewVideo({ ...newVideo, duration: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="video-category">Category</Label>
+                    <select
+                      id="video-category"
+                      className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                      value={newVideo.category}
+                      onChange={(e) => setNewVideo({ ...newVideo, category: e.target.value as "professional" | "adult" | "kids" })}
+                    >
+                      <option value="professional">Professional</option>
+                      <option value="adult">Adult</option>
+                      <option value="kids">Kids</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2 flex items-center pt-6">
+                    <input
+                      type="checkbox"
+                      id="video-active"
+                      checked={newVideo.isActive}
+                      onChange={(e) => setNewVideo({ ...newVideo, isActive: e.target.checked })}
+                      className="mr-2 h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                    />
+                    <Label htmlFor="video-active">Active</Label>
+                  </div>
+                </div>
+                <Button onClick={handleAddVideo} variant="default" className="w-full md:w-auto">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Video
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Current Videos</CardTitle>
+                <CardDescription>{videos.length} videos in database</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 mb-4">
-                  Video management functionality will allow you to add, edit, and organize YouTube videos for
-                  Professional, Adult, and Kids sections.
-                </p>
-                <Alert>
-                  <Video className="h-4 w-4" />
-                  <AlertDescription>
-                    This feature is currently using placeholder videos. You can extend this section to add custom video
-                    management.
-                  </AlertDescription>
-                </Alert>
+                <div className="space-y-4">
+                  {videos.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">No videos yet</p>
+                  ) : (
+                    videos.map((video) => (
+                      <div key={video.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-semibold">{video.title}</h4>
+                            <span className={`text-xs px-2 py-1 rounded ${video.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                              {video.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                            <span className="text-xs px-2 py-1 rounded bg-accent/10 text-accent capitalize">
+                              {video.category}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{video.description}</p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            YouTube ID: {video.youtubeId} • Duration: {video.duration}
+                          </p>
+                        </div>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => handleDeleteVideo(video.id)}
+                          className="ml-4"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -694,7 +1010,7 @@ export default function AdminPage() {
                     rows={4}
                   />
                 </div>
-                <Button onClick={handleAddQuickQuestion} className="bg-bfp-orange hover:bg-bfp-orange/90">
+                <Button onClick={handleAddQuickQuestion} variant="secondary">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Quick Question
                 </Button>

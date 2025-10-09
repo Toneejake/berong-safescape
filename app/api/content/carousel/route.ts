@@ -8,7 +8,15 @@ export async function GET() {
       orderBy: { order: 'asc' }
     })
 
-    return NextResponse.json(carouselImages)
+    // Transform the database response to match the component interface
+    const transformedImages = carouselImages.map(image => ({
+      id: image.id.toString(), // Ensure id is a string
+      url: image.imageUrl,     // Map imageUrl to url
+      altText: image.altText,
+      title: image.title
+    }))
+
+    return NextResponse.json(transformedImages)
   } catch (error) {
     console.error('Error fetching carousel images:', error)
     return NextResponse.json(
