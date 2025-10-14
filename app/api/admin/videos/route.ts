@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { NotificationService } from '@/lib/notification-service'
 
 export async function GET() {
   try {
@@ -60,6 +61,14 @@ export async function POST(request: NextRequest) {
       duration: newVideo.duration,
       isActive: newVideo.isActive
     }
+
+    // Create notification for users with access to this category
+    await NotificationService.createNotification({
+      title: `New Video: ${body.title}`,
+      message: `A new video "${body.title}" has been published in the ${body.category} section.`,
+      type: 'video',
+      category: body.category
+    })
 
     return NextResponse.json(transformedVideo)
   } catch (error) {

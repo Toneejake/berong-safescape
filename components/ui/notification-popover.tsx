@@ -6,80 +6,119 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Bell, Check, CheckCheck, MoreHorizontal } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/lib/auth-context";
 
 interface Notification {
-  id: string;
+  id: number;
   title: string;
-  description: string;
-  timestamp: string;
-  read: boolean;
-  type: "info" | "warning" | "success" | "urgent";
+  message: string;
+  type: string;
+  category: string;
+  isRead: boolean;
+  createdAt: string;
 }
 
 export function NotificationPopover() {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: "1",
-      title: "New Training Module Available",
-      description: "Module 3: Emergency Response Protocols is now available",
-      timestamp: "2 hours ago",
-      read: false,
-      type: "info",
-    },
-    {
-      id: "2",
-      title: "System Maintenance",
-      description: "Scheduled maintenance this weekend from 2 AM to 4 AM",
-      timestamp: "1 day ago",
-      read: false,
-      type: "warning",
-    },
-    {
-      id: "3",
-      title: "Certificate Achieved",
-      description: "You've earned your Fire Safety Certificate",
-      timestamp: "3 days ago",
-      read: true,
-      type: "success",
-    },
-    {
-      id: "4",
-      title: "Important Update",
-      description: "New fire safety regulations have been published",
-      timestamp: "1 week ago",
-      read: true,
-      type: "info",
-    },
-    {
-      id: "5",
-      title: "Training Reminder",
-      description: "Your refresher course is due next week",
-      timestamp: "1 week ago",
-      read: true,
-      type: "info",
-    },
-  ]);
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
-  const markAsRead = (id: string) => {
-    setNotifications(notifications.map(n => 
-      n.id === id ? { ...n, read: true } : n
-    ));
+  // Load notifications from the database
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!user?.id) return;
+
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/notifications?userId=${user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setNotifications(data);
+        } else {
+          setError('Failed to load notifications');
+        }
+      } catch (err) {
+        setError('Error loading notifications');
+        console.error('Error fetching notifications:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotifications();
+
+    // Set up polling to refresh notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
+  const markAsRead = async (id: number) => {
+    if (!user?.id) return;
+
+    try {
+      const response = await fetch(`/api/notifications/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      if (response.ok) {
+        setNotifications(notifications.map(n => 
+          n.id === id ? { ...n, isRead: true } : n
+        ));
+      } else {
+        console.error('Failed to mark notification as read');
+      }
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
+  const markAllAsRead = async () => {
+    if (!user?.id) return;
+
+    try {
+      // Mark all unread notifications as read in the UI first
+      setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+
+      // Then update in the database
+      const unreadNotificationIds = notifications.filter(n => !n.isRead).map(n => n.id);
+      await Promise.all(unreadNotificationIds.map(id => markAsRead(id)));
+    } catch (err) {
+      console.error('Error marking all notifications as read:', err);
+      // Revert the UI changes if there was an error
+      setNotifications(notifications.map(n => ({ ...n, isRead: false })));
+    }
   };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+ };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "urgent":
         return <Bell className="h-4 w-4 text-destructive" />;
       case "warning":
-        return <Bell className="h-4 w-4 text-yellow-50" />;
+        return <Bell className="h-4 w-4 text-yellow-500" />;
       case "success":
         return <Bell className="h-4 w-4 text-green-500" />;
+      case "blog":
+        return <Bell className="h-4 w-4 text-primary" />;
+      case "video":
+        return <Bell className="h-4 w-4 text-secondary" />;
       default:
         return <Bell className="h-4 w-4 text-primary" />;
     }
@@ -93,6 +132,10 @@ export function NotificationPopover() {
         return "bg-yellow-500";
       case "success":
         return "bg-green-500";
+      case "blog":
+        return "bg-primary";
+      case "video":
+        return "bg-secondary";
       default:
         return "bg-primary";
     }
@@ -134,7 +177,15 @@ export function NotificationPopover() {
         </div>
         <ScrollArea className="h-[450px]">
           <div className="p-2">
-            {notifications.length === 0 ? (
+            {loading ? (
+              <div className="p-6 text-center text-sm text-muted-foreground">
+                Loading notifications...
+              </div>
+            ) : error ? (
+              <div className="p-6 text-center text-sm text-destructive">
+                {error}
+              </div>
+            ) : notifications.length === 0 ? (
               <div className="p-6 text-center text-sm text-muted-foreground">
                 No notifications yet
               </div>
@@ -144,7 +195,7 @@ export function NotificationPopover() {
                   <div
                     key={notification.id}
                     className={`p-3 rounded-md transition-colors ${
-                      !notification.read 
+                      !notification.isRead 
                         ? "bg-accent/50 hover:bg-accent/70" 
                         : "hover:bg-muted/50"
                     }`}
@@ -158,17 +209,17 @@ export function NotificationPopover() {
                           <h4 className="text-sm font-medium line-clamp-2">
                             {notification.title}
                           </h4>
-                          {!notification.read && (
+                          {!notification.isRead && (
                             <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
                               NEW
                             </Badge>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                          {notification.description}
+                          {notification.message}
                         </p>
                         <p className="text-xs text-muted-foreground mt-2">
-                          {notification.timestamp}
+                          {formatDate(notification.createdAt)}
                         </p>
                       </div>
                       <Button
@@ -177,7 +228,7 @@ export function NotificationPopover() {
                         onClick={() => markAsRead(notification.id)}
                         className="h-auto p-1 text-xs opacity-0 group-hover:opacity-100"
                       >
-                        {!notification.read ? (
+                        {!notification.isRead ? (
                           <Check className="h-3 w-3" />
                         ) : (
                           <CheckCheck className="h-3 w-3 text-green-50" />

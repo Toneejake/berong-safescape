@@ -20,6 +20,7 @@ model User {
   blogPosts   BlogPost[]
   quizResults QuizResult[]
   progress    UserProgress[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -43,7 +44,7 @@ model CarouselImage {
   altText   String
   imageUrl  String
   order     Int      @default(0)
-  isActive  Boolean  @default(true)
+ isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -72,7 +73,7 @@ model Video {
   description String?
   youtubeId   String
   category    ContentCategory
-  duration    String?
+ duration    String?
   isActive    Boolean         @default(true)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
@@ -100,7 +101,7 @@ model UserProgress {
   moduleId    Int
   completed   Boolean    @default(false)
   score       Int        @default(0)
-  completedAt DateTime?
+ completedAt DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   module      KidsModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
@@ -115,7 +116,7 @@ model QuizResult {
   userId      Int
   quizType    String
   score       Int      @default(0)
-  maxScore    Int      @default(0)
+ maxScore    Int      @default(0)
   completedAt DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -141,4 +142,18 @@ enum QuickQuestionCategory {
   prevention
   equipment
   general
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  userId      Int      // User who receives the notification
+  title       String
+  message     String
+  type        String   // 'blog', 'video', 'system', etc.
+  category    String   // 'adult', 'professional', 'kids'
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
 }

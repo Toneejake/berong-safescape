@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { NotificationService } from '@/lib/notification-service'
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,6 +23,14 @@ export async function POST(request: NextRequest) {
         authorId: body.authorId,
         isPublished: true,
       }
+    })
+
+    // Create notification for users with access to this category
+    await NotificationService.createNotification({
+      title: `New Blog Post: ${body.title}`,
+      message: `A new blog post "${body.title}" has been published in the ${body.category} section.`,
+      type: 'blog',
+      category: body.category
     })
 
     return NextResponse.json(newBlog)

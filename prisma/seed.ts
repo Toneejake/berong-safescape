@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { NotificationService } from '../lib/notification-service'
 
 const prisma = new PrismaClient()
 
@@ -199,7 +200,7 @@ async function main() {
     {
       title: 'Fire Escape Planning',
       excerpt: 'Create an effective evacuation plan for your family',
-      content: 'A well-practiced fire escape plan can save lives. Draw a floor plan of your home showing all doors and windows. Mark two escape routes from each room. Choose an outside meeting place a safe distance from your home. Practice your escape plan at least twice a year. Make sure everyone knows how to call emergency services. Consider special needs of children, elderly, or disabled family members.',
+      content: 'A well-practiced fire escape plan can save lives. Draw a floor plan of your home showing all doors and windows. Mark two escape routes from each room. Choose an outside meeting point a safe distance from your home. Practice your escape plan at least twice a year. Make sure everyone knows how to call emergency services. Consider special needs of children, elderly, or disabled family members.',
       imageUrl: '/family-fire-escape-plan.jpg',
       category: 'adult' as const,
       authorId: adultUser.id,
@@ -226,8 +227,16 @@ async function main() {
   ]
 
   for (const post of blogPosts) {
-    await prisma.blogPost.create({
+    const blog = await prisma.blogPost.create({
       data: post,
+    })
+
+    // Create notification for the blog post
+    await NotificationService.createNotification({
+      title: `New Blog Post: ${post.title}`,
+      message: `A new blog post "${post.title}" has been published in the ${post.category} section.`,
+      type: 'blog',
+      category: post.category
     })
   }
   console.log('✅ Seeded blog posts')
