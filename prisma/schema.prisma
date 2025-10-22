@@ -157,3 +157,16 @@ model Notification {
 
   @@map("notifications")
 }
+
+model FireCodeSection {
+  id            Int     @id @default(autoincrement())
+  title         String
+  sectionNum    String
+  content       String
+  parentSectionId Int?
+  order         Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+ parentSection FireCodeSection? @relation(fields: [parentSectionId], references: [id], onDelete: Cascade, name: "ParentSubSection")
+  subSections   FireCodeSection[] @relation(name: "ParentSubSection")
+}

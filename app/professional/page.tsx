@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
+import Link from "next/link"
 import { Navigation } from "@/components/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -262,9 +263,11 @@ export default function ProfessionalPage() {
                 <p className="text-muted-foreground mb-4 text-pretty">
                   Stay updated with the latest fire safety codes, building regulations, and compliance requirements.
                 </p>
-                <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                  <FileText className="h-4 w-4 mr-2" />
-                  View Fire Codes
+                <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" asChild>
+                  <Link href="/professional/fire-codes">
+                    <FileText className="h-4 w-4 mr-2" />
+                    View Fire Codes
+                  </Link>
                 </Button>
               </CardContent>
             </Card>

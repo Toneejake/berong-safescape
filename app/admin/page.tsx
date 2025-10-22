@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Shield, ImageIcon, FileText, Video, Users, Plus, Trash2, AlertCircle, CheckCircle, HelpCircle } from "lucide-react"
+import { Shield, ImageIcon, FileText, Video, Users, Plus, Trash2, AlertCircle, CheckCircle, HelpCircle, BookOpen } from "lucide-react"
 import type { CarouselImage, BlogPost } from "@/lib/mock-data"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
@@ -52,13 +52,22 @@ export default function AdminPage() {
   // User Management
   const [users, setUsers] = useState<any[]>([])
   
-  // Quick Questions Management
+   // Quick Questions Management
   const [quickQuestions, setQuickQuestions] = useState<any[]>([])
   const [newQuickQuestion, setNewQuickQuestion] = useState({
     category: "emergency",
     questionText: "",
     responseText: "",
     isActive: true
+  })
+
+  // Fire Codes Management
+  const [fireCodeSections, setFireCodeSections] = useState<any[]>([])
+  const [newFireCode, setNewFireCode] = useState({
+    title: "",
+    sectionNum: "",
+    content: "",
+    parentSectionId: ""
   })
 
   // Confirmation Dialog State
@@ -107,6 +116,7 @@ export default function AdminPage() {
     loadVideos() // Load videos
     loadUsers()
     loadQuickQuestions()
+    loadFireCodeSections()
     setLoading(false)
   }, [isAuthenticated, user, router])
 
@@ -179,6 +189,20 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error('Error loading quick questions:', error)
+    }
+  }
+
+  const loadFireCodeSections = async () => {
+    try {
+      const response = await fetch('/api/admin/fire-codes')
+      if (response.ok) {
+        const sections = await response.json()
+        setFireCodeSections(sections)
+      } else {
+        console.error('Failed to load fire code sections')
+      }
+    } catch (error) {
+      console.error('Error loading fire code sections:', error)
     }
   }
 
@@ -495,6 +519,74 @@ export default function AdminPage() {
     }
   }
 
+  const handleAddFireCode = () => {
+    if (!newFireCode.title || !newFireCode.sectionNum || !newFireCode.content) {
+      setError("Please fill all fire code section fields")
+      return
+    }
+
+    openConfirmationDialog(
+      "Add Fire Code Section",
+      "Are you sure you want to add this fire code section?",
+      "add-fire-code",
+      async () => {
+        try {
+          const response = await fetch('/api/admin/fire-codes', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newFireCode),
+          })
+
+          if (response.ok) {
+            await loadFireCodeSections() // Reload the list
+            setNewFireCode({ title: "", sectionNum: "", content: "", parentSectionId: "" })
+            setSuccess("Fire code section added successfully")
+            setTimeout(() => setSuccess(""), 3000)
+          } else {
+            const errorData = await response.json()
+            setError(errorData.error || "Failed to add fire code section")
+          }
+        } catch (error) {
+          console.error('Error adding fire code section:', error)
+          setError("Network error occurred")
+        } finally {
+          closeConfirmationDialog();
+        }
+      }
+    );
+  }
+
+  const handleDeleteFireCode = (id: number) => {
+    openConfirmationDialog(
+      "Delete Fire Code Section",
+      "Are you sure you want to delete this fire code section? This action cannot be undone.",
+      "delete-fire-code",
+      async () => {
+        try {
+          const response = await fetch(`/api/admin/fire-codes/${id}`, {
+            method: 'DELETE',
+          })
+
+          if (response.ok) {
+            await loadFireCodeSections() // Reload the list
+            setSuccess("Fire code section deleted")
+            setTimeout(() => setSuccess(""), 3000)
+          } else {
+            setError("Failed to delete fire code section")
+          }
+        } catch (error) {
+          console.error('Error deleting fire code section:', error)
+          setError("Network error occurred")
+        } finally {
+          closeConfirmationDialog();
+        }
+      },
+      { id }
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -535,30 +627,34 @@ export default function AdminPage() {
           </Alert>
         )}
 
-        {/* Admin Tabs */}
-        <Tabs defaultValue="carousel" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto">
-            <TabsTrigger value="carousel">
-              <ImageIcon className="h-4 w-4 mr-2" />
-              Carousel
-            </TabsTrigger>
-            <TabsTrigger value="blogs">
-              <FileText className="h-4 w-4 mr-2" />
-              Blogs
-            </TabsTrigger>
-            <TabsTrigger value="videos">
-              <Video className="h-4 w-4 mr-2" />
-              Videos
-            </TabsTrigger>
-            <TabsTrigger value="users">
-              <Users className="h-4 w-4 mr-2" />
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="quick-questions">
-              <HelpCircle className="h-4 w-4 mr-2" />
-              Quick Questions
-            </TabsTrigger>
-          </TabsList>
+          {/* Admin Tabs */}
+          <Tabs defaultValue="carousel" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-6 lg:w-auto">
+              <TabsTrigger value="carousel">
+                <ImageIcon className="h-4 w-4 mr-2" />
+                Carousel
+              </TabsTrigger>
+              <TabsTrigger value="blogs">
+                <FileText className="h-4 w-4 mr-2" />
+                Blogs
+              </TabsTrigger>
+              <TabsTrigger value="videos">
+                <Video className="h-4 w-4 mr-2" />
+                Videos
+              </TabsTrigger>
+              <TabsTrigger value="users">
+                <Users className="h-4 w-4 mr-2" />
+                Users
+              </TabsTrigger>
+              <TabsTrigger value="quick-questions">
+                <HelpCircle className="h-4 w-4 mr-2" />
+                Quick Questions
+              </TabsTrigger>
+              <TabsTrigger value="fire-codes">
+                <BookOpen className="h-4 w-4 mr-2" />
+                Fire Codes
+              </TabsTrigger>
+            </TabsList>
 
           <ConfirmationDialog
             isOpen={confirmationDialog.isOpen}
@@ -1045,6 +1141,100 @@ export default function AdminPage() {
                           variant="destructive"
                           size="icon"
                           onClick={() => handleDeleteQuickQuestion(question.id)}
+                          className="ml-4"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Fire Codes Management */}
+          <TabsContent value="fire-codes" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Add New Fire Code Section</CardTitle>
+                <CardDescription>Add sections to the Fire Code & Regulations</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fc-title">Title</Label>
+                  <Input
+                    id="fc-title"
+                    placeholder="Section title"
+                    value={newFireCode.title}
+                    onChange={(e) => setNewFireCode({ ...newFireCode, title: e.target.value })}
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fc-section-num">Section Number</Label>
+                    <Input
+                      id="fc-section-num"
+                      placeholder="e.g., 1.1, 2.3.1, etc."
+                      value={newFireCode.sectionNum}
+                      onChange={(e) => setNewFireCode({ ...newFireCode, sectionNum: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fc-parent-section">Parent Section (Optional)</Label>
+                    <Input
+                      id="fc-parent-section"
+                      placeholder="Parent section ID"
+                      value={newFireCode.parentSectionId}
+                      onChange={(e) => setNewFireCode({ ...newFireCode, parentSectionId: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fc-content">Content</Label>
+                  <Textarea
+                    id="fc-content"
+                    placeholder="Section content"
+                    rows={6}
+                    value={newFireCode.content}
+                    onChange={(e) => setNewFireCode({ ...newFireCode, content: e.target.value })}
+                  />
+                </div>
+                <Button variant="default" onClick={handleAddFireCode}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Fire Code Section
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Current Fire Code Sections</CardTitle>
+                <CardDescription>Fire Code & Regulations sections in the database</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {fireCodeSections.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">No fire code sections yet</p>
+                  ) : (
+                    fireCodeSections.map((section) => (
+                      <div key={section.id} className="flex items-start justify-between p-4 border rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-semibold">{section.title}</h4>
+                            <span className="text-xs px-2 py-1 rounded bg-accent/10 text-accent">
+                              {section.sectionNum}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground line-clamp-2">{section.content}</p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Last updated: {new Date(section.updatedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => handleDeleteFireCode(section.id)}
                           className="ml-4"
                         >
                           <Trash2 className="h-4 w-4" />
