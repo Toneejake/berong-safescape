@@ -26,35 +26,30 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   register: (email: string, password: string, name: string, age: number) => Promise<{ success: boolean; error?: string }>
   logout: () => void
-  isAuthenticated: boolean
-  loading: boolean
+  isLoading: boolean
+  isAuthenticating: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isAuthenticating, setIsAuthenticating] = useState(false)
 
   useEffect(() => {
-    // Check for existing session on mount
-    checkAuthStatus()
-  }, [])
-
-  const checkAuthStatus = async () => {
-    try {
-      const storedUser = localStorage.getItem("bfp_user")
-      if (storedUser) {
-        const userData = JSON.parse(storedUser)
-        setUser(userData)
+    // Check for stored user session
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser))
+      } catch (error) {
+        console.error('Failed to parse stored user:', error)
+        localStorage.removeItem('user')
       }
-    } catch (error) {
-      console.error("Error checking auth status:", error)
-      localStorage.removeItem("bfp_user")
-    } finally {
-      setLoading(false)
     }
-  }
+    setIsLoading(false)
+  }, [])
 
   const determinePermissions = (role: UserRole, isAdmin = false) => {
     if (isAdmin) {
@@ -99,9 +94,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const register = async (email: string, password: string, name: string, age: number): Promise<{ success: boolean; error?: string }> => {
+    setIsAuthenticating(true)
     try {
-      setLoading(true)
-
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
@@ -112,24 +106,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json()
 
-      if (response.ok) {
-        // Registration successful
-        return { success: true }
-      } else {
+      if (!response.ok || !data.success) {
         return { success: false, error: data.error || 'Registration failed' }
       }
-    } catch (error) {
-      console.error("Registration error:", error)
-      return { success: false, error: 'Network error occurred' }
+
+      setUser(data.user)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      return { success: true }
+    } catch (error: any) {
+      console.error('Registration error:', error)
+      return { success: false, error: 'Network error. Please try again.' }
     } finally {
-      setLoading(false)
+      setIsAuthenticating(false)
     }
   }
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    setIsAuthenticating(true)
     try {
-      setLoading(true)
-
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -140,50 +134,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json()
 
-      if (response.ok) {
-        const userWithPermissions = {
-          ...data.user,
-          permissions: determinePermissions(data.user.role, data.user.role === 'admin')
-        }
-
-        setUser(userWithPermissions)
-        localStorage.setItem("bfp_user", JSON.stringify(userWithPermissions))
-
-        // Set HTTP cookie for middleware (development-friendly)
-        document.cookie = `bfp_user=${encodeURIComponent(JSON.stringify(userWithPermissions))}; path=/; max-age=86400`
-
-        return { success: true }
-      } else {
+      if (!response.ok || !data.success) {
         return { success: false, error: data.error || 'Login failed' }
       }
-    } catch (error) {
-      console.error("Login error:", error)
-      return { success: false, error: 'Network error occurred' }
+
+      setUser(data.user)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      return { success: true }
+    } catch (error: any) {
+      console.error('Login error:', error)
+      return { success: false, error: 'Network error. Please try again.' }
     } finally {
-      setLoading(false)
+      setIsAuthenticating(false)
     }
   }
 
   const logout = () => {
     setUser(null)
-    localStorage.removeItem("bfp_user")
-    // Clear HTTP cookie
-    document.cookie = "bfp_user=; path=/; max-age=0; samesite=strict"
-    // Clear any server-side sessions if needed
-    fetch('/api/auth/logout', { method: 'POST' }).catch(console.error)
+    localStorage.removeItem('user')
   }
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        login,
-        logout,
-        register,
-        loading,
-      }}
-    >
+    <AuthContext.Provider value={{ user, login, register, logout, isLoading, isAuthenticating }}>
       {children}
     </AuthContext.Provider>
   )
@@ -192,7 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error('useAuth must be used within an AuthProvider')
   }
   return context
 }

@@ -1,60 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AuthService, type CreateUserData } from '@/lib/auth-utils'
+import { registerUser } from '@/lib/auth-utils'
 
 export async function POST(request: NextRequest) {
   try {
-    const body: CreateUserData = await request.json()
+    const body = await request.json()
+    const { email, password, name, age } = body
 
-    // Validate required fields
-    if (!body.email || !body.password || !body.name || !body.age) {
+    if (!email || !password || !name || !age) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { success: false, error: 'All fields are required' },
         { status: 400 }
       )
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(body.email)) {
+    const ageNumber = parseInt(age, 10)
+    if (isNaN(ageNumber) || ageNumber < 1 || ageNumber > 120) {
       return NextResponse.json(
-        { error: 'Invalid email format' },
+        { success: false, error: 'Invalid age provided' },
         { status: 400 }
       )
     }
 
-    // Validate password strength
-    if (body.password.length < 6) {
+    const result = await registerUser(email, password, name, ageNumber)
+
+    if (!result.success) {
       return NextResponse.json(
-        { error: 'Password must be at least 6 characters long' },
+        { success: false, error: result.error },
         { status: 400 }
       )
     }
 
-    // Validate age
-    if (body.age < 1 || body.age > 120) {
-      return NextResponse.json(
-        { error: 'Invalid age' },
-        { status: 400 }
-      )
-    }
-
-    const result = await AuthService.createUser(body)
-
-    if (result.success) {
-      return NextResponse.json({
-        message: 'User created successfully',
-        user: result.user
-      })
-    } else {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 400 }
-      )
-    }
-  } catch (error) {
-    console.error('Registration error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: true, user: result.user },
+      { status: 201 }
+    )
+  } catch (error: any) {
+    console.error('Registration API error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     )
   }

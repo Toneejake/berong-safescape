@@ -1,0 +1,11 @@
+﻿fastapi
+uvicorn[standard]
+python-multipart
+torch
+torchvision
+stable-baselines3[extra]
+gymnasium
+opencv-python-headless
+numpy
+Pillow
+pydantic

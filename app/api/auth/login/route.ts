@@ -1,35 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AuthService, type LoginCredentials } from '@/lib/auth-utils'
+import { loginUser } from '@/lib/auth-utils'
 
 export async function POST(request: NextRequest) {
   try {
-    const body: LoginCredentials = await request.json()
+    const body = await request.json()
+    const { email, password } = body
 
-    // Validate required fields
-    if (!body.email || !body.password) {
+    if (!email || !password) {
       return NextResponse.json(
-        { error: 'Email and password are required' },
+        { success: false, error: 'Email and password are required' },
         { status: 400 }
       )
     }
 
-    const result = await AuthService.authenticateUser(body)
+    const result = await loginUser(email, password)
 
-    if (result.success) {
-      return NextResponse.json({
-        message: 'Login successful',
-        user: result.user
-      })
-    } else {
+    if (!result.success) {
       return NextResponse.json(
-        { error: result.error },
+        { success: false, error: result.error },
         { status: 401 }
       )
     }
-  } catch (error) {
-    console.error('Login error:', error)
+
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: true, user: result.user },
+      { status: 200 }
+    )
+  } catch (error: any) {
+    console.error('Login API error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     )
   }

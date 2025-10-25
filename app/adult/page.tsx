@@ -14,18 +14,22 @@ import Link from "next/link"
 
 export default function AdultPage() {
   const router = useRouter()
-  const { user, isAuthenticated } = useAuth()
+  const { user, isLoading } = useAuth()
   const [loading, setLoading] = useState(true)
   const [blogs, setBlogs] = useState<BlogPost[]>([])
   const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isLoading) {
+      return
+    }
+
+    if (!user) {
       router.push("/auth")
       return
     }
 
-    if (!user?.permissions.accessAdult) {
+    if (!user.permissions.accessAdult) {
       router.push("/")
       return
     }
@@ -48,7 +52,7 @@ export default function AdultPage() {
     }
 
     loadBlogs()
-  }, [isAuthenticated, user, router])
+  }, [isLoading, user, router])
 
   const filteredBlogs = blogs.filter(
     (blog) =>
@@ -118,10 +122,12 @@ export default function AdultPage() {
               <p className="text-muted-foreground mb-4 text-pretty">
                 Interactive tool to visualize how fire spreads in different environments and conditions.
               </p>
-              <Button className="bg-secondary hover:bg-secondary/90 text-secondary-foreground">
-                Launch Simulator
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
+              <Link href="/adult/simulation">
+                <Button className="bg-secondary hover:bg-secondary/90 text-secondary-foreground">
+                  Launch Simulator
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>

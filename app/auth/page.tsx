@@ -17,9 +17,10 @@ import Image from "next/image"
 
 export default function AuthPage() {
   const router = useRouter()
-  const { login, register } = useAuth()
+  const { login, register, isAuthenticating } = useAuth()
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [isLogin, setIsLogin] = useState(true)
 
   const [loginData, setLoginData] = useState({ email: "", password: "" })
   const [registerData, setRegisterData] = useState({
@@ -30,10 +31,46 @@ export default function AuthPage() {
     age: "",
   })
 
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {}
+
+    if (!loginData.email) {
+      errors.email = "Email is required"
+    } else if (!/\S+@\S+\.\S+/.test(loginData.email)) {
+      errors.email = "Email is invalid"
+    }
+
+    if (!loginData.password) {
+      errors.password = "Password is required"
+    } else if (loginData.password.length < 6) {
+      errors.password = "Password must be at least 6 characters"
+    }
+
+    if (!isLogin) {
+      if (!registerData.name) {
+        errors.name = "Name is required"
+      }
+      if (!registerData.age) {
+        errors.age = "Age is required"
+      } else if (Number.parseInt(registerData.age) < 1 || Number.parseInt(registerData.age) > 120) {
+        errors.age = "Please enter a valid age"
+      }
+    }
+
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setLoading(true)
+
+    if (!validateForm()) {
+      return
+    }
 
     const success = await login(loginData.email, loginData.password)
 
@@ -125,6 +162,9 @@ export default function AuthPage() {
                       onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                       required
                     />
+                    {validationErrors.email && (
+                      <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="login-password">Password</Label>
@@ -136,6 +176,9 @@ export default function AuthPage() {
                       onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                       required
                     />
+                    {validationErrors.password && (
+                      <p className="mt-1 text-sm text-red-600">{validationErrors.password}</p>
+                    )}
                   </div>
 
                   {error && (
@@ -164,6 +207,9 @@ export default function AuthPage() {
                       onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
                       required
                     />
+                    {validationErrors.name && (
+                      <p className="mt-1 text-sm text-red-600">{validationErrors.name}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="register-age">Age</Label>
@@ -178,6 +224,9 @@ export default function AuthPage() {
                       required
                     />
                     <p className="text-xs text-muted-foreground">Your age determines which sections you can access</p>
+                    {validationErrors.age && (
+                      <p className="mt-1 text-sm text-red-600">{validationErrors.age}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="register-email">Email</Label>
@@ -189,6 +238,9 @@ export default function AuthPage() {
                       onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                       required
                     />
+                    {validationErrors.email && (
+                      <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="register-password">Password</Label>
@@ -200,6 +252,9 @@ export default function AuthPage() {
                       onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                       required
                     />
+                    {validationErrors.password && (
+                      <p className="mt-1 text-sm text-red-600">{validationErrors.password}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="register-confirm">Confirm Password</Label>
