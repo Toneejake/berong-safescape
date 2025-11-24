@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { MessageCircle, X, Send } from "lucide-react"
+import Image from "next/image"
 
 interface Message {
   id: string
@@ -24,7 +25,7 @@ export function Chatbot() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState("")
- const [quickQuestions, setQuickQuestions] = useState<Record<string, QuickQuestion[]>>({})
+  const [quickQuestions, setQuickQuestions] = useState<Record<string, QuickQuestion[]>>({})
   const [loadingQuestions, setLoadingQuestions] = useState(true)
   const [showQuickQuestions, setShowQuickQuestions] = useState(true)
 
@@ -67,7 +68,7 @@ export function Chatbot() {
     }
   }, [isOpen, messages.length, quickQuestions])
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!inputValue.trim()) return
 
     const userMessage: Message = {
@@ -80,20 +81,18 @@ export function Chatbot() {
     setMessages((prev) => [...prev, userMessage])
     setInputValue("")
 
-    // Simple bot response logic
-    setTimeout(() => {
-      const botResponse = generateBotResponse(inputValue)
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: botResponse,
-        sender: "bot",
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, botMessage])
-    }, 1000)
+    // Get bot response and add to messages
+    const botResponse = await generateBotResponse(inputValue)
+    const botMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      text: botResponse,
+      sender: "bot",
+      timestamp: new Date(),
+    }
+    setMessages((prev) => [...prev, botMessage])
   }
 
-  const handleQuickQuestion = (questionText: string, responseText: string) => {
+  const handleQuickQuestion = async (questionText: string, responseText: string) => {
     // Add the question as a user message
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -105,18 +104,42 @@ export function Chatbot() {
     setMessages((prev) => [...prev, userMessage])
 
     // Add the response as a bot message
-    setTimeout(() => {
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: responseText,
-        sender: "bot",
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, botMessage])
-    }, 300)
+    const botMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      text: responseText,
+      sender: "bot",
+      timestamp: new Date(),
+    }
+    setMessages((prev) => [...prev, botMessage])
   }
 
-  const generateBotResponse = (input: string): string => {
+  const generateBotResponse = async (input: string): Promise<string> => {
+    try {
+      // First try the AI backend
+      const response = await fetch('/api/chatbot/ai-response', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: input }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.response;
+      } else {
+        console.error('AI response failed:', response.status);
+        // Fallback to rule-based response
+        return generateRuleBasedResponse(input);
+      }
+    } catch (error) {
+      console.error('Error calling AI backend:', error);
+      // Fallback to rule-based response
+      return generateRuleBasedResponse(input);
+    }
+  }
+
+  const generateRuleBasedResponse = (input: string): string => {
     const lowerInput = input.toLowerCase()
 
     if (lowerInput.includes("fire") && lowerInput.includes("extinguisher")) {
@@ -147,20 +170,35 @@ export function Chatbot() {
       {!isOpen && (
         <Button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-primary shadow-lg hover:bg-primary/90 z-50"
+          // UPDATED: Added 'p-0' to remove padding and 'overflow-hidden' to clip the image
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-primary shadow-lg hover:bg-primary/90 z-50 p-0 overflow-hidden"
           size="icon"
         >
-          <MessageCircle className="h-6 w-6" />
+          <Image
+            src="/RD Logo.png"
+            alt="Chatbot"
+            // UPDATED: Increased size to match button (56px = h-14)
+            width={56}
+            height={56}
+            // UPDATED: Changed to w-full h-full object-cover to fill the circle
+            className="w-full h-full object-cover"
+          />
         </Button>
       )}
 
       {/* Chatbot Window */}
       {isOpen && (
-        <Card className="fixed bottom-6 right-6 w-full max-w-sm h-[70vh] min-h-[400px] flex flex-col shadow-2xl z-50 border-secondary">
+        <Card className="fixed bottom-6 right-6 w-full max-w-sm h-[70vh] min-h-[400px] flex flex-col shadow-2xl z-50 border-secondary p-0 overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b bg-primary text-primary-foreground rounded-t-lg">
             <div className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5" />
+              <Image
+                src="/RD Logo.png"
+                alt="BFP Assistant"
+                width={20}
+                height={20}
+                className="h-5 w-5 object-contain rounded-full"
+              />
               <h3 className="font-semibold">BFP Assistant</h3>
             </div>
             <Button
@@ -173,27 +211,47 @@ export function Chatbot() {
             </Button>
           </div>
 
-          {/* Quick Questions */}
+          {/* Quick Questions Section */}
           {loadingQuestions ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">Loading quick questions...</div>
+            <div className="p-6 text-center">
+              <div className="animate-pulse text-xs text-muted-foreground">Loading suggestions...</div>
+            </div>
           ) : Object.keys(quickQuestions).length > 0 && showQuickQuestions ? (
-            <div className="p-4 border-b max-h-40 overflow-y-auto" id="quick-questions-section">
-              <h4 className="font-semibold text-sm text-muted-foreground mb-2">Quick Questions:</h4>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
+            <div className="p-4 bg-gray-50/50 border-b backdrop-blur-sm">
+              
+              {/* Header with Icon */}
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"/>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Suggested Topics
+                </h4>
+              </div>
+
+              {/* Scrollable Area - Hidden Scrollbar */}
+              <div className="max-h-[110px] overflow-y-auto pr-1 space-y-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full">
                 {Object.entries(quickQuestions).map(([category, questions]) => (
-                  <div key={category}>
-                    <h5 className="font-medium text-xs text-muted-foreground mt-2">{category.charAt(0).toUpperCase() + category.slice(1)}</h5>
-                    <div className="space-y-1 mt-1">
-                      {questions.slice(0, 3).map((question) => (
-                        <Button
+                  <div key={category} className="first:mt-0">
+                    {/* Category Header */}
+                    <h5 className="text-[10px] font-bold text-gray-400 mb-2 pl-1 uppercase">
+                      {category}
+                    </h5>
+                    
+                    {/* Question Chips */}
+                    <div className="flex flex-wrap gap-2">
+                      {questions.slice(0, 4).map((question) => (
+                        <button
                           key={question.id}
-                          variant="outline"
-                          size="sm"
-                          className="w-full justify-start text-xs p-2 truncate"
                           onClick={() => handleQuickQuestion(question.questionText, question.responseText)}
+                          className="
+                            text-xs text-left px-3 py-2 rounded-xl
+                            bg-white border border-gray-200 shadow-sm
+                            text-gray-700 transition-all duration-200
+                            hover:border-red-200 hover:bg-red-50 hover:text-red-700 hover:shadow-md
+                            active:scale-95
+                          "
                         >
                           {question.questionText}
-                        </Button>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -246,4 +304,4 @@ export function Chatbot() {
       )}
     </>
   )
-}
+};

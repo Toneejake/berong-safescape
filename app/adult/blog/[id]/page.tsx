@@ -4,9 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { Navigation } from "@/components/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ArrowLeft, Calendar, User, Flame, AlertCircle } from "lucide-react"
 import type { BlogPost } from "@/lib/mock-data"
 import Link from "next/link"
@@ -29,7 +27,6 @@ export default function BlogPostPage() {
       return
     }
 
-    // Load blog post from database
     const loadBlog = async () => {
       try {
         const response = await fetch(`/api/content/blogs/${params.id}`)
@@ -52,95 +49,132 @@ export default function BlogPostPage() {
     }
   }, [isAuthenticated, user, router, params.id])
 
+  // --- Loading State ---
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         <Navigation />
-        <div className="flex items-center justify-center h-96">
-          <p className="text-gray-500">Loading...</p>
+        <div className="flex flex-col items-center justify-center h-[60vh]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
+          <p className="text-gray-500 font-medium">Loading article...</p>
         </div>
       </div>
     )
   }
 
+  // --- 404 State ---
   if (!blog) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         <Navigation />
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Card>
-            <CardContent className="py-12 text-center">
-              <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 mb-4">Blog post not found.</p>
-              <Link href="/adult">
-                <Button>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Articles
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+          <div className="bg-gray-50 rounded-2xl p-12 border border-gray-100">
+            <AlertCircle className="h-16 w-16 text-gray-300 mx-auto mb-6" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Article not found</h2>
+            <p className="text-gray-500 mb-8">The article you are looking for has been moved or deleted.</p>
+            <Link href="/adult">
+              <Button variant="default">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Articles
+              </Button>
+            </Link>
+          </div>
         </main>
       </div>
     )
   }
 
+  // --- Main Article View ---
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white font-sans selection:bg-orange-100 selection:text-orange-900">
       <Navigation />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Back Button */}
-        <Link href="/adult">
-          <Button variant="ghost" className="mb-6">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Articles
-          </Button>
-        </Link>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        
+        {/* Top Navigation */}
+        <div className="mb-8">
+          <Link 
+            href="/adult" 
+            className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors group"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+            Back to Safety Articles
+          </Link>
+        </div>
 
-        {/* Blog Post */}
         <article>
-          <Card>
-            <CardHeader>
-              {blog.imageUrl && (
-                <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden mb-6">
-                  <img
-                    src={blog.imageUrl || "/placeholder.svg"}
-                    alt={blog.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = `/placeholder.svg?height=400&width=800&query=${encodeURIComponent(blog.title)}`
-                    }}
-                  />
-                </div>
-              )}
-              <CardTitle className="text-3xl mb-4">{blog.title}</CardTitle>
-              <div className="flex items-center gap-4 text-sm text-gray-600">
-                <div className="flex items-center gap-1">
-                  <User className="h-4 w-4" />
-                  <span>{blog.author}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>{blog.createdAt}</span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="prose prose-gray max-w-none">
-                <p className="text-lg text-gray-700 leading-relaxed whitespace-pre-line">{blog.content}</p>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Header Section */}
+          <header className="mb-10">
+            <div className="flex flex-wrap items-center gap-2 mb-6">
+              <span className="bg-orange-50 text-orange-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide border border-orange-100">
+                Fire Safety
+              </span>
+            </div>
 
-          {/* Related Safety Alert */}
-          <Alert className="mt-6 border-bfp-blue bg-bfp-blue/5">
-            <Flame className="h-4 w-4 text-bfp-blue" />
-            <AlertDescription className="text-gray-700">
-              <strong>Remember:</strong> In case of fire emergency, call 911 immediately. Never put yourself at risk
-              trying to fight a large fire.
-            </AlertDescription>
-          </Alert>
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 mb-8 leading-[1.15]">
+              {blog.title}
+            </h1>
+
+            {/* Author & Date Byline */}
+            <div className="flex items-center border-b border-gray-100 pb-8">
+              <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center mr-4 ring-2 ring-white shadow-sm">
+                <User className="h-6 w-6 text-gray-400" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-900">
+                  {blog.author || "BFP Contributor"}
+                </p>
+                <div className="flex items-center text-sm text-gray-500 mt-0.5">
+                  <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                  <time dateTime={blog.createdAt}>
+                    {new Date(blog.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </time>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Hero Image */}
+          {blog.imageUrl && (
+            <div className="relative w-full aspect-video mb-12 rounded-2xl overflow-hidden shadow-xl ring-1 ring-gray-900/5">
+              <img
+                src={blog.imageUrl || "/placeholder.svg"}
+                alt={blog.title}
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-700 ease-out"
+                onError={(e) => {
+                  e.currentTarget.src = `/placeholder.svg?height=600&width=1200&query=${encodeURIComponent(blog.title)}`
+                }}
+              />
+            </div>
+          )}
+
+          {/* Content Body */}
+          {/* Note: 'prose-lg' creates nice readability. 'whitespace-pre-line' respects your database line breaks. */}
+          <div className="prose prose-lg prose-slate max-w-none prose-headings:font-bold prose-p:text-gray-600 prose-img:rounded-xl">
+            <div className="whitespace-pre-line leading-8">
+                {blog.content}
+            </div>
+          </div>
+
+          {/* Footer / Emergency Action */}
+          <div className="mt-16 p-8 bg-red-50 rounded-2xl border border-red-100 flex flex-col sm:flex-row gap-6 items-start shadow-sm">
+            <div className="p-3 bg-white rounded-full shrink-0 shadow-sm">
+               <Flame className="h-6 w-6 text-red-600" />
+            </div>
+            <div>
+                <h3 className="text-lg font-bold text-red-900 mb-2">Emergency Protocol</h3>
+                <p className="text-red-900/80 leading-relaxed">
+                    In case of a fire emergency, do not hesitate. Call <strong>911</strong> immediately. 
+                    Never put yourself at risk trying to fight a large fire. 
+                    <strong> Evacuate first</strong>, then call for help.
+                </p>
+            </div>
+          </div>
+          
         </article>
       </main>
     </div>

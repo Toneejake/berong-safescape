@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Flame, Search, BookOpen, Calendar, User, ArrowRight, Zap, AlertCircle } from "lucide-react"
 import type { BlogPost } from "@/lib/mock-data"
 import Link from "next/link"
+import { Footer } from "@/components/footer"
 
 export default function AdultPage() {
   const router = useRouter()
@@ -264,6 +265,9 @@ export default function AdultPage() {
           </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <Footer />
     </div>
   )
 }

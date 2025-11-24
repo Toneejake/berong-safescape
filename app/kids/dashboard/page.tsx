@@ -8,6 +8,7 @@ import { KidsWelcomeBanner } from "@/components/kids-welcome-banner"
 import { KidsNavBar, ContentCategory } from "@/components/kids-nav-bar"
 import { ContentGrid } from "@/components/content-grid"
 import { ContentCardData } from "@/components/content-card"
+import { Footer } from "@/components/footer"
 
 export default function KidsDashboardPage() {
   const router = useRouter()
@@ -102,6 +103,16 @@ export default function KidsDashboardPage() {
         emoji: "🦄",
         href: "/kids/games/msunicorn",
         difficulty: "easy",
+        category: "games"
+      },
+      {
+        id: "game-5",
+        title: "House Player Defense",
+        description: "Defend your house from fire hazards in this strategy game",
+        type: "game",
+        emoji: "🏠",
+        href: "/kids/games/House-Player-Defense",
+        difficulty: "hard",
         category: "games"
       },
 
@@ -236,6 +247,9 @@ export default function KidsDashboardPage() {
           emptyMessage={`No ${activeCategory === "all" ? "" : activeCategory} content available yet. Check back soon! 🎉`}
         />
       </main>
+
+      {/* Footer */}
+      <Footer />
     </div>
   )
 }

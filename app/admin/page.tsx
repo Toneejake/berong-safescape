@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Shield, ImageIcon, FileText, Video, Users, Plus, Trash2, AlertCircle, CheckCircle, HelpCircle, BookOpen } from "lucide-react"
+import { Shield, ImageIcon, FileText, Video, Users, Plus, Trash2, AlertCircle, CheckCircle, HelpCircle, BookOpen, Search } from "lucide-react"
 import type { CarouselImage, BlogPost } from "@/lib/mock-data"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
@@ -51,8 +51,16 @@ export default function AdminPage() {
 
   // User Management
   const [users, setUsers] = useState<any[]>([])
-  
-   // Quick Questions Management
+  const [userSearchQuery, setUserSearchQuery] = useState("")
+
+  // Filter users based on search query
+  const filteredUsers = users.filter((user) =>
+    (user.name && user.name.toLowerCase().includes(userSearchQuery.toLowerCase())) ||
+    (user.email && user.email.toLowerCase().includes(userSearchQuery.toLowerCase())) ||
+    (user.role && user.role.toLowerCase().includes(userSearchQuery.toLowerCase()))
+  )
+
+  // Quick Questions Management
   const [quickQuestions, setQuickQuestions] = useState<any[]>([])
   const [newQuickQuestion, setNewQuickQuestion] = useState({
     category: "emergency",
@@ -164,8 +172,6 @@ export default function AdminPage() {
 
   const loadUsers = async () => {
     try {
-      // For now, we'll use a simple approach to get users
-      // In a real implementation, you'd have a proper users API endpoint
       const response = await fetch('/api/admin/users')
       if (response.ok) {
         const usersData = await response.json()
@@ -312,9 +318,9 @@ export default function AdminPage() {
     );
   }
 
-  const handleDeleteCarousel = (id: string) => {
-    // Convert string ID to number for API
-    const numericId = parseInt(id);
+  // Accept string OR number to avoid TypeErrors
+  const handleDeleteCarousel = (id: string | number) => {
+    const numericId = Number(id); // Use Number() instead of parseInt for safety
     if (isNaN(numericId)) {
       setError("Invalid carousel image ID");
       return;
@@ -392,7 +398,7 @@ export default function AdminPage() {
     );
   }
 
-  const handleDeleteBlog = (id: string) => {
+  const handleDeleteBlog = (id: string | number) => {
     openConfirmationDialog(
       "Delete Blog Post",
       "Are you sure you want to delete this blog post? This action cannot be undone.",
@@ -460,9 +466,9 @@ export default function AdminPage() {
     );
   }
 
-  const handleDeleteVideo = (id: string) => {
-    // Convert string ID to number for API
-    const numericId = parseInt(id);
+  // Accept string OR number
+  const handleDeleteVideo = (id: string | number) => {
+    const numericId = Number(id);
     if (isNaN(numericId)) {
       setError("Invalid video ID");
       return;
@@ -487,7 +493,7 @@ export default function AdminPage() {
           }
         } catch (error) {
           console.error('Error deleting video:', error);
-          setError("Network error occurred");
+          setError("Network error occurred")
         } finally {
           closeConfirmationDialog();
         }
@@ -769,6 +775,7 @@ export default function AdminPage() {
                       onChange={(e) => setNewBlog({ ...newBlog, title: e.target.value })}
                     />
                   </div>
+                </div>
                   <div className="space-y-2">
                     <Label htmlFor="blog-category">Category</Label>
                     <select
@@ -781,7 +788,6 @@ export default function AdminPage() {
                       <option value="professional">Professional</option>
                     </select>
                   </div>
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="blog-image">Image URL</Label>
                   <Input
@@ -895,7 +901,8 @@ export default function AdminPage() {
                       onChange={(e) => setNewVideo({ ...newVideo, youtubeId: e.target.value })}
                     />
                   </div>
-                  <div className="space-y-2">
+                </div>
+                  {/* <div className="space-y-2">
                     <Label htmlFor="video-duration">Duration</Label>
                     <Input
                       id="video-duration"
@@ -903,20 +910,17 @@ export default function AdminPage() {
                       value={newVideo.duration}
                       onChange={(e) => setNewVideo({ ...newVideo, duration: e.target.value })}
                     />
-                  </div>
-                </div>
+                  </div> */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="video-category">Category</Label>
                     <select
                       id="video-category"
-                      className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                      className="w-full h-10 px-3 rounded-md border-input bg-background"
                       value={newVideo.category}
                       onChange={(e) => setNewVideo({ ...newVideo, category: e.target.value as "professional" | "adult" | "kids" })}
                     >
                       <option value="professional">Professional</option>
-                      <option value="adult">Adult</option>
-                      <option value="kids">Kids</option>
                     </select>
                   </div>
                   <div className="space-y-2 flex items-center pt-6">
@@ -988,11 +992,21 @@ export default function AdminPage() {
                 <CardDescription>Manage user permissions and access levels</CardDescription>
               </CardHeader>
               <CardContent>
+                <div className="mb-4 relative">
+                  <Input
+                    type="text"
+                    placeholder="Search users by name, email, or role..."
+                    value={userSearchQuery}
+                    onChange={(e) => setUserSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                </div>
                 <div className="space-y-4">
-                  {users.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-8">No users registered yet</p>
+                  {filteredUsers.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">No users found</p>
                   ) : (
-                    users.map((u) => (
+                    filteredUsers.map((u) => (
                       <div key={u.id} className="p-4 border rounded-lg">
                         <div className="flex items-center justify-between mb-3">
                           <div>
@@ -1002,42 +1016,42 @@ export default function AdminPage() {
                               Age: {u.age} • Role: {u.role}
                             </p>
                           </div>
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            size="sm"
-                            variant={u.permissions.accessKids ? "default" : "outline"}
-                            onClick={() => handleToggleUserPermission(u.id, "accessKids")}
-                            className={u.permissions.accessKids ? "bg-secondary" : ""}
-                          >
-                            Kids Access
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={u.permissions.accessAdult ? "default" : "outline"}
-                            onClick={() => handleToggleUserPermission(u.id, "accessAdult")}
-                            className={u.permissions.accessAdult ? "bg-accent" : ""}
-                          >
-                            Adult Access
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={u.permissions.accessProfessional ? "default" : "outline"}
-                            onClick={() => handleToggleUserPermission(u.id, "accessProfessional")}
-                            className={u.permissions.accessProfessional ? "bg-primary" : ""}
-                          >
-                            Professional Access
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={u.permissions.isAdmin ? "default" : "outline"}
-                            onClick={() => handleToggleUserPermission(u.id, "isAdmin")}
-                            className={u.permissions.isAdmin ? "bg-foreground text-background" : ""}
-                          >
-                            Admin
-                          </Button>
                         </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant={u.permissions.accessKids ? "default" : "outline"}
+                    onClick={() => handleToggleUserPermission(u.id, "accessKids")}
+                    className={u.permissions.accessKids ? "bg-secondary" : ""}
+                  >
+                    Kids Access
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={u.permissions.accessAdult ? "default" : "outline"}
+                    onClick={() => handleToggleUserPermission(u.id, "accessAdult")}
+                    className={u.permissions.accessAdult ? "bg-accent" : ""}
+                  >
+                    Adult Access
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={u.permissions.accessProfessional ? "default" : "outline"}
+                    onClick={() => handleToggleUserPermission(u.id, "accessProfessional")}
+                    className={u.permissions.accessProfessional ? "bg-primary" : ""}
+                  >
+                    Professional Access
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={u.permissions.isAdmin ? "default" : "outline"}
+                    onClick={() => handleToggleUserPermission(u.id, "isAdmin")}
+                    className={u.permissions.isAdmin ? "bg-foreground text-background" : ""}
+                  >
+                    Admin
+                  </Button>
+                </div>
                       </div>
-                    </div>
                     ))
                   )}
                 </div>

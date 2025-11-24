@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Shield, Video, Clock, Search, BookOpen, FileText, AlertCircle, Play } from "lucide-react"
 import type { VideoContent } from "@/lib/mock-data"
 import { ManualsDialog } from "@/components/ui/manuals-dialog"
+import { Footer } from "@/components/footer"
 
 export default function ProfessionalPage() {
   const router = useRouter()
@@ -274,6 +275,9 @@ export default function ProfessionalPage() {
           </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <Footer />
     </div>
   )
 }

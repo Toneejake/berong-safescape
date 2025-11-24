@@ -14,6 +14,12 @@ import random
 from datetime import datetime
 from PIL import Image
 from io import BytesIO
+import pickle
+import nltk
+from nltk.stem import WordNetLemmatizer
+import tensorflow as tf
+from tensorflow.keras.models import load_model
+
 from stable_baselines3 import PPO
 from sb3_contrib import MaskablePPO
 
@@ -42,6 +48,72 @@ unet_model = None
 ppo_model = None
 device = None
 IMAGE_SIZE = 256
+
+# Chatbot global variables
+chatbot_model = None
+words = None
+classes = None
+intents = None
+lemmatizer = None
+
+# Pydantic model for chatbot requests
+class ChatbotRequest(BaseModel):
+    message: str
+
+class ChatbotResponse(BaseModel):
+    response: str
+
+def clean_up_sentence(sentence):
+    """Tokenize and lemmatize the sentence"""
+    if lemmatizer is None:
+        return nltk.word_tokenize(sentence)
+    sentence_words = nltk.word_tokenize(sentence)
+    sentence_words = [lemmatizer.lemmatize(word.lower()) for word in sentence_words]
+    return sentence_words
+
+def bow(sentence, show_details=True):
+    """Create bag of words array from sentence"""
+    sentence_words = clean_up_sentence(sentence)
+    bag = [0] * len(words)
+    for s in sentence_words:
+        for i, w in enumerate(words):
+            if w == s:
+                bag[i] = 1
+                if show_details:
+                    print(f"Found in bag: {w}")
+    return np.array(bag)
+
+def predict_class(sentence):
+    """Predict the class of the sentence"""
+    p = bow(sentence, show_details=False)
+    res = chatbot_model.predict(np.array([p]))[0]
+    ERROR_THRESHOLD = 0.25
+    results = [[i, r] for i, r in enumerate(res) if r > ERROR_THRESHOLD]
+    
+    results.sort(key=lambda x: x[1], reverse=True)
+    return_list = []
+    for r in results:
+        return_list.append({"intent": classes[r[0]], "probability": str(r[1])})
+    return return_list
+
+def get_response(ints, intents_json):
+    """Get response based on predicted intent"""
+    if len(ints) > 0:
+        tag = ints[0]['intent']
+        if tag in intents_json:
+            import random
+            result = random.choice(intents_json[tag]['responses'])
+        else:
+            result = "I don't understand. Please ask me something related to fire safety."
+        return result
+    else:
+        return "I don't understand. Please ask me something related to fire safety."
+
+def chatbot_response(msg):
+    """Main function to get chatbot response"""
+    ints = predict_class(msg)
+    res = get_response(ints, intents)
+    return res
 
 # Database setup
 def init_db():
@@ -196,7 +268,7 @@ def auto_detect_exits(grid: np.ndarray, max_exits: int = 248) -> List[Tuple[int,
 # Startup event - Load models
 @app.on_event("startup")
 async def load_models():
-    global unet_model, ppo_model, device
+    global unet_model, ppo_model, device, chatbot_model, words, classes, intents, lemmatizer
     
     print("Loading AI models...")
     device = torch.device("cpu")
@@ -220,6 +292,38 @@ async def load_models():
         ppo_model = PPO.load(model_path, device=device)
         print(f"PPO Commander {PPO_MODEL_VERSION} loaded successfully")
     
+    # Load Chatbot model
+    print("Loading Chatbot model...")
+    try:
+        # Download required NLTK data if not already present
+        try:
+            nltk.data.find('tokenizers/punkt')
+        except LookupError:
+            nltk.download('punkt')
+
+        try:
+            nltk.data.find('corpora/wordnet')
+        except LookupError:
+            nltk.download('wordnet')
+
+        try:
+            nltk.data.find('corpora/omw-1.4')
+        except LookupError:
+            nltk.download('omw-1.4')
+
+        # Initialize lemmatizer
+        lemmatizer = WordNetLemmatizer()
+
+        # Load the model and data files
+        chatbot_model = load_model('Fire Safety Chatbot/chatbot_model.h5')
+        words = pickle.load(open('Fire Safety Chatbot/words.pkl', 'rb'))
+        classes = pickle.load(open('Fire Safety Chatbot/classes.pkl', 'rb'))
+        intents = json.load(open('Fire Safety Chatbot/intents.json', 'rb'))
+        print("Chatbot model loaded successfully")
+    except Exception as e:
+        print(f"Error loading chatbot model: {str(e)}")
+        print("Chatbot will not be available")
+    
     print("All models loaded and ready!")
 
 
@@ -235,6 +339,22 @@ async def health_check():
         "ppo_version": PPO_MODEL_VERSION,
         "maskable_ppo": USE_MASKABLE_PPO
     }
+
+@app.post("/api/chatbot/ai-response", response_model=ChatbotResponse)
+async def get_chatbot_response(request: ChatbotRequest):
+    """Get AI response from the chatbot model"""
+    try:
+        # Check if chatbot model is loaded
+        if chatbot_model is None:
+            # Return a rule-based response if model is not available
+            return ChatbotResponse(response="I'm sorry, the AI chatbot is currently unavailable. Please try again later.")
+        
+        # Get response from the chatbot
+        response = chatbot_response(request.message)
+        return ChatbotResponse(response=response)
+    except Exception as e:
+        print(f"Error in chatbot response: {str(e)}")
+        return ChatbotResponse(response="I'm sorry, I encountered an error processing your request.")
 
 @app.post("/api/process-image")
 async def process_image(file: UploadFile = File(...)):
@@ -413,4 +533,3 @@ async def get_status(job_id: str):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-

@@ -41,13 +41,13 @@ export function Navigation() {
 
             {/* Right Section - Philippine Seal & Time */}
             <div className="flex items-center gap-4">
-              <Image
+              {/* <Image
                 src="/stacruz.png"
                 alt="Republic of the Philippines Seal"
                 width={50}
                 height={50}
                 className="object-contain"
-              />
+              /> */}
               <div className="hidden md:block text-right">
                 <p className="text-xs text-red-100">Republic of the Philippines</p>
                 <p className="text-xs text-red-200">Philippine Standard Time:</p>
@@ -75,8 +75,8 @@ export function Navigation() {
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                   <Image
-                    src="/RD Logo.png"
-                    alt="RD Logo"
+                    src="/stacruz.png"
+                    alt="Republic of the Philippines Seal"
                     width={50}
                     height={50}
                     className="object-contain"

@@ -4,60 +4,60 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Base colors */
-  --background: oklch(0.98 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Base colors - Refined neutral tones for institutional feel */
+  --background: oklch(0.98 0.005 260); /* Very light gray-blue */
+  --foreground: oklch(0.2 0.02 260); /* Dark gray-blue */
 
-  /* Card colors */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  /* Card colors - Slightly off-white */
+  --card: oklch(0.97 0.03 260);
+  --card-foreground: oklch(0.2 0.02 260);
 
-  /* Popover colors */
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  /* Popover colors - Slightly off-white */
+  --popover: oklch(0.97 0.003 260);
+  --popover-foreground: oklch(0.2 0.02 260);
 
-  /* Updated primary to use BFP red */
+  /* Primary - BFP Red (used as accent) */
   --primary: oklch(0.5 0.22 25); /* BFP Red */
   --primary-foreground: oklch(1 0 0);
 
-  /* Updated secondary to use BFP orange */
-  --secondary: oklch(0.65 0.18 50); /* BFP Orange */
-  --secondary-foreground: oklch(0.145 0 0);
+  /* Secondary - A more muted, professional tone (e.g., a deep blue-gray) */
+  --secondary: oklch(0.45 0.05 240); /* Professional blue-gray */
+  --secondary-foreground: oklch(1 0 0);
 
-  /* Updated accent to use BFP blue */
-  --accent: oklch(0.45 0.15 250); /* BFP Blue */
+  /* Accent - A refined, complementary color (e.g., a deep teal) */
+  --accent: oklch(0.4 0.06 180); /* Deep teal */
   --accent-foreground: oklch(1 0 0);
 
-  /* Muted colors */
-  --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(0.5 0 0);
+  /* Muted colors - Soft, neutral grays */
+  --muted: oklch(0.92 0.002 260); /* Light gray-blue */
+  --muted-foreground: oklch(0.5 0.01 260); /* Medium gray-blue */
 
-  /* Destructive colors */
+  /* Destructive colors - Standard red for errors */
   --destructive: oklch(0.55 0.25 27);
   --destructive-foreground: oklch(1 0 0);
 
-  /* Border and input */
-  --border: oklch(0.9 0 0);
-  --input: oklch(0.9 0 0);
-  --ring: oklch(0.5 0.22 25);
+  /* Border and input - Subtle gray */
+  --border: oklch(0.85 0.002 260);
+  --input: oklch(0.85 0.002 260);
+  --ring: oklch(0.5 0.22 25); /* BFP Red for focus rings */
 
-  /* Chart colors using BFP palette */
+  /* Chart colors using refined palette */
   --chart-1: oklch(0.5 0.22 25); /* Red */
-  --chart-2: oklch(0.65 0.18 50); /* Orange */
-  --chart-3: oklch(0.45 0.15 250); /* Blue */
-  --chart-4: oklch(0.7 0.15 60); /* Light Orange */
-  --chart-5: oklch(0.4 0.18 240); /* Dark Blue */
+  --chart-2: oklch(0.45 0.05 240); /* Professional blue-gray */
+  --chart-3: oklch(0.4 0.06 180); /* Deep teal */
+  --chart-4: oklch(0.6 0.08 60); /* Soft yellow */
+  --chart-5: oklch(0.35 0.07 300); /* Soft purple */
 
   --radius: 0.625rem;
 
-  /* Sidebar colors */
-  --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
+  /* Sidebar colors - Consistent with new palette */
+  --sidebar: oklch(0.97 0.003 260);
+  --sidebar-foreground: oklch(0.2 0.02 260);
   --sidebar-primary: oklch(0.5 0.22 25);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.96 0 0);
-  --sidebar-accent-foreground: oklch(0.145 0 0);
-  --sidebar-border: oklch(0.9 0 0);
+  --sidebar-accent: oklch(0.92 0.002 260);
+  --sidebar-accent-foreground: oklch(0.2 0.02 260);
+  --sidebar-border: oklch(0.85 0.002 260);
   --sidebar-ring: oklch(0.5 0.22 25);
 }
 
@@ -107,58 +107,4 @@
   body {
     @apply bg-background text-foreground;
   }
-}
-
-/* Custom animations for kids dashboard */
-@keyframes wave {
-  0%, 100% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(20deg);
-  }
-  75% {
-    transform: rotate(-15deg);
-  }
-}
-
-@keyframes bounce-slow {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-@keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-wave {
-  animation: wave 2s ease-in-out infinite;
-  transform-origin: 70% 70%;
-  display: inline-block;
-}
-
-.animate-bounce-slow {
-  animation: bounce-slow 2s ease-in-out infinite;
-}
-
-.animate-spin-slow {
-  animation: spin-slow 3s linear infinite;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
 }
