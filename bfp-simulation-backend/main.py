@@ -185,9 +185,9 @@ def distribute_exits_to_model(user_exits: List[Tuple[int, int]], grid: np.ndarra
     Distribute 248 model exits across user-defined exit points.
     
     Example:
-    - 1 user exit → all 248 model exits at that location (with small offsets)
-    - 2 user exits → 124 exits each
-    - 3 user exits → 83, 83, 82 exits
+    - 1 user exit -> all 248 model exits at that location (with small offsets)
+    - 2 user exits -> 124 exits each
+    - 3 user exits -> 83, 83, 82 exits
     
     Args:
         user_exits: List of (x, y) tuples where user clicked

@@ -87,6 +87,8 @@ export function SimulationWizard() {
           }
         } catch (e) {
           console.error('Failed to restore state:', e)
+          // Clear invalid state
+          localStorage.removeItem('sim-wizard-state')
         }
       }
     }
@@ -123,7 +125,7 @@ export function SimulationWizard() {
 
       const result = await response.json()
       console.log('Process image result:', result)
-      
+
       setData(prev => ({
         ...prev,
         imageFile: file,
@@ -202,7 +204,7 @@ export function SimulationWizard() {
     while (attempts < maxAttempts) {
       try {
         const response = await fetch(`/api/simulation/status/${jobId}`)
-        
+
         if (!response.ok) {
           console.error('Status check failed:', response.status)
           await new Promise(resolve => setTimeout(resolve, 1000))
@@ -215,6 +217,15 @@ export function SimulationWizard() {
 
         if (status.status === "complete") {
           console.log('Simulation complete!', status.result)
+
+          // Validate result structure
+          if (!status.result || !status.result.agent_results) {
+            console.warn('Received incomplete results:', status.result)
+            // If we have dashboard data but no agents, we can still show partial results
+            // or we might want to fail if it's critical. 
+            // For now, let's allow it but ensure the component handles missing data (which we fixed in simulation-results.tsx)
+          }
+
           setData(prev => ({ ...prev, results: status.result }))
           setStage("results")
           return
@@ -240,7 +251,7 @@ export function SimulationWizard() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('sim-wizard-state')
     }
-    
+
     setData({
       imageFile: null,
       grid: null,
@@ -269,9 +280,8 @@ export function SimulationWizard() {
               {stages.map((s, idx) => (
                 <div
                   key={s.id}
-                  className={`flex items-center gap-2 ${
-                    idx <= currentStageIndex ? "text-primary" : "text-muted-foreground"
-                  }`}
+                  className={`flex items-center gap-2 ${idx <= currentStageIndex ? "text-primary" : "text-muted-foreground"
+                    }`}
                 >
                   <s.icon className="h-5 w-5" />
                   <span className="text-sm font-medium hidden md:inline">{s.label}</span>
@@ -314,7 +324,7 @@ export function SimulationWizard() {
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Upload Different Plan
                 </Button>
-                <Button 
+                <Button
                   onClick={() => setStage("setup")}
                   disabled={data.userExits.length === 0}
                 >

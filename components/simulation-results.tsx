@@ -87,7 +87,7 @@ export function SimulationResults({ results, onReset }: SimulationResultsProps) 
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {results.agent_results.map((agent) => (
+            {(results.agent_results || []).map((agent) => (
               <div
                 key={agent.agent_id}
                 className="flex items-center justify-between p-3 border rounded-lg"

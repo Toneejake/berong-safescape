@@ -16,6 +16,7 @@ import { Shield, ImageIcon, FileText, Video, Users, Plus, Trash2, AlertCircle, C
 import type { CarouselImage, BlogPost } from "@/lib/mock-data"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
+import { SortableCarouselList } from "@/components/sortable-carousel-list"
 
 export default function AdminPage() {
   const router = useRouter()
@@ -27,6 +28,7 @@ export default function AdminPage() {
   // Carousel Management
   const [carouselImages, setCarouselImages] = useState<CarouselImage[]>([])
   const [newCarousel, setNewCarousel] = useState({ title: "", alt: "", url: "" })
+  const [carouselUploadKey, setCarouselUploadKey] = useState(0)
 
   // Blog Management
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
@@ -37,6 +39,7 @@ export default function AdminPage() {
     imageUrl: "",
     category: "adult" as "adult" | "professional",
   })
+  const [blogUploadKey, setBlogUploadKey] = useState(0)
 
   // Video Management
   const [videos, setVideos] = useState<any[]>([])
@@ -85,7 +88,7 @@ export default function AdminPage() {
     description: "",
     action: "",
     item: null as any,
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   // Confirmation Dialog Functions
@@ -130,7 +133,7 @@ export default function AdminPage() {
 
   const loadCarouselImages = async () => {
     try {
-      const response = await fetch('/api/content/carousel')
+      const response = await fetch('/api/content/carousel', { cache: 'no-store' })
       if (response.ok) {
         const images = await response.json()
         setCarouselImages(images)
@@ -144,7 +147,7 @@ export default function AdminPage() {
 
   const loadBlogPosts = async () => {
     try {
-      const response = await fetch('/api/content/blogs')
+      const response = await fetch('/api/content/blogs', { cache: 'no-store' })
       if (response.ok) {
         const blogs = await response.json()
         setBlogPosts(blogs)
@@ -158,7 +161,7 @@ export default function AdminPage() {
 
   const loadVideos = async () => {
     try {
-      const response = await fetch('/api/admin/videos')
+      const response = await fetch('/api/admin/videos', { cache: 'no-store' })
       if (response.ok) {
         const videos = await response.json()
         setVideos(videos)
@@ -172,7 +175,7 @@ export default function AdminPage() {
 
   const loadUsers = async () => {
     try {
-      const response = await fetch('/api/admin/users')
+      const response = await fetch('/api/admin/users', { cache: 'no-store' })
       if (response.ok) {
         const usersData = await response.json()
         setUsers(usersData)
@@ -186,7 +189,7 @@ export default function AdminPage() {
 
   const loadQuickQuestions = async () => {
     try {
-      const response = await fetch('/api/admin/quick-questions')
+      const response = await fetch('/api/admin/quick-questions', { cache: 'no-store' })
       if (response.ok) {
         const questions = await response.json()
         setQuickQuestions(questions)
@@ -200,7 +203,7 @@ export default function AdminPage() {
 
   const loadFireCodeSections = async () => {
     try {
-      const response = await fetch('/api/admin/fire-codes')
+      const response = await fetch('/api/admin/fire-codes', { cache: 'no-store' })
       if (response.ok) {
         const sections = await response.json()
         setFireCodeSections(sections)
@@ -302,6 +305,7 @@ export default function AdminPage() {
           if (response.ok) {
             await loadCarouselImages() // Reload the list
             setNewCarousel({ title: "", alt: "", url: "" })
+            setCarouselUploadKey(prev => prev + 1) // Reset upload component
             setSuccess("Carousel image added successfully")
             setTimeout(() => setSuccess(""), 3000)
           } else {
@@ -354,6 +358,34 @@ export default function AdminPage() {
     );
   }
 
+  // Handle carousel reordering
+  const handleReorderCarousel = async (newOrder: CarouselImage[]) => {
+    try {
+      const imageIds = newOrder.map((img) => img.id)
+      const response = await fetch('/api/admin/carousel/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageIds }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to reorder')
+      }
+
+      const updated = await response.json()
+      setCarouselImages(updated)
+
+      setSuccess('Carousel order updated')
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (error) {
+      console.error('Error reordering:', error)
+      setError('Failed to update order')
+      // Reload to revert
+      await loadCarouselImages()
+      throw error // Re-throw to trigger component revert
+    }
+  }
+
   const handleAddBlog = () => {
     if (!newBlog.title || !newBlog.excerpt || !newBlog.content) {
       setError("Please fill all blog fields")
@@ -382,6 +414,7 @@ export default function AdminPage() {
           if (response.ok) {
             await loadBlogPosts() // Reload the list
             setNewBlog({ title: "", excerpt: "", content: "", imageUrl: "", category: "adult" })
+            setBlogUploadKey(prev => prev + 1) // Reset upload component
             setSuccess("Blog post added successfully")
             setTimeout(() => setSuccess(""), 3000)
           } else {
@@ -633,34 +666,34 @@ export default function AdminPage() {
           </Alert>
         )}
 
-          {/* Admin Tabs */}
-          <Tabs defaultValue="carousel" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6 lg:w-auto">
-              <TabsTrigger value="carousel">
-                <ImageIcon className="h-4 w-4 mr-2" />
-                Carousel
-              </TabsTrigger>
-              <TabsTrigger value="blogs">
-                <FileText className="h-4 w-4 mr-2" />
-                Blogs
-              </TabsTrigger>
-              <TabsTrigger value="videos">
-                <Video className="h-4 w-4 mr-2" />
-                Videos
-              </TabsTrigger>
-              <TabsTrigger value="users">
-                <Users className="h-4 w-4 mr-2" />
-                Users
-              </TabsTrigger>
-              <TabsTrigger value="quick-questions">
-                <HelpCircle className="h-4 w-4 mr-2" />
-                Quick Questions
-              </TabsTrigger>
-              <TabsTrigger value="fire-codes">
-                <BookOpen className="h-4 w-4 mr-2" />
-                Fire Codes
-              </TabsTrigger>
-            </TabsList>
+        {/* Admin Tabs */}
+        <Tabs defaultValue="carousel" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto">
+            <TabsTrigger value="carousel">
+              <ImageIcon className="h-4 w-4 mr-2" />
+              Carousel
+            </TabsTrigger>
+            <TabsTrigger value="blogs">
+              <FileText className="h-4 w-4 mr-2" />
+              Blogs
+            </TabsTrigger>
+            <TabsTrigger value="videos">
+              <Video className="h-4 w-4 mr-2" />
+              Videos
+            </TabsTrigger>
+            <TabsTrigger value="users">
+              <Users className="h-4 w-4 mr-2" />
+              Users
+            </TabsTrigger>
+            <TabsTrigger value="quick-questions">
+              <HelpCircle className="h-4 w-4 mr-2" />
+              Quick Questions
+            </TabsTrigger>
+            <TabsTrigger value="fire-codes">
+              <BookOpen className="h-4 w-4 mr-2" />
+              Fire Codes
+            </TabsTrigger>
+          </TabsList>
 
           <ConfirmationDialog
             isOpen={confirmationDialog.isOpen}
@@ -674,12 +707,13 @@ export default function AdminPage() {
 
           {/* Carousel Management */}
           <TabsContent value="carousel" className="space-y-6">
-            <ImageUpload 
-              title="Upload Carousel Image" 
+            <ImageUpload
+              key={carouselUploadKey}
+              title="Upload Carousel Image"
               description="Upload an image to generate a URL for the carousel"
-              onUploadComplete={(url) => setNewCarousel({...newCarousel, url})}
+              onUploadComplete={(url) => setNewCarousel({ ...newCarousel, url })}
             />
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Add New Carousel Image</CardTitle>
@@ -722,43 +756,22 @@ export default function AdminPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Current Carousel Images</CardTitle>
-                <CardDescription>{carouselImages.length} images in carousel</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {carouselImages.map((image) => (
-                    <div key={image.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <h4 className="font-semibold">{image.title}</h4>
-                        <p className="text-sm text-muted-foreground">{image.altText}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{image.url}</p>
-                      </div>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => handleDeleteCarousel(image.id)}
-                        className="ml-4"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <SortableCarouselList
+              images={carouselImages}
+              onReorder={handleReorderCarousel}
+              onDelete={handleDeleteCarousel}
+            />
           </TabsContent>
 
           {/* Blog Management */}
           <TabsContent value="blogs" className="space-y-6">
-            <ImageUpload 
-              title="Upload Blog Image" 
+            <ImageUpload
+              key={blogUploadKey}
+              title="Upload Blog Image"
               description="Upload an image to generate a URL for the blog post"
-              onUploadComplete={(url) => setNewBlog({...newBlog, imageUrl: url})}
+              onUploadComplete={(url) => setNewBlog({ ...newBlog, imageUrl: url })}
             />
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Add New Blog Post</CardTitle>
@@ -776,18 +789,17 @@ export default function AdminPage() {
                     />
                   </div>
                 </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="blog-category">Category</Label>
-                    <select
-                      id="blog-category"
-                      className="w-full h-10 px-3 rounded-md border-input bg-background"
-                      value={newBlog.category}
-                      onChange={(e) => setNewBlog({ ...newBlog, category: e.target.value as "adult" | "professional" })}
-                    >
-                      <option value="adult">Adult</option>
-                      <option value="professional">Professional</option>
-                    </select>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="blog-category">Category</Label>
+                  <select
+                    id="blog-category"
+                    className="w-full h-10 px-3 rounded-md border-input bg-background"
+                    value={newBlog.category}
+                    onChange={(e) => setNewBlog({ ...newBlog, category: e.target.value as "adult" | "professional" })}
+                  >
+                    <option value="adult">Adult</option>
+                  </select>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="blog-image">Image URL</Label>
                   <Input
@@ -902,7 +914,7 @@ export default function AdminPage() {
                     />
                   </div>
                 </div>
-                  {/* <div className="space-y-2">
+                {/* <div className="space-y-2">
                     <Label htmlFor="video-duration">Duration</Label>
                     <Input
                       id="video-duration"
@@ -1017,40 +1029,40 @@ export default function AdminPage() {
                             </p>
                           </div>
                         </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant={u.permissions.accessKids ? "default" : "outline"}
-                    onClick={() => handleToggleUserPermission(u.id, "accessKids")}
-                    className={u.permissions.accessKids ? "bg-secondary" : ""}
-                  >
-                    Kids Access
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={u.permissions.accessAdult ? "default" : "outline"}
-                    onClick={() => handleToggleUserPermission(u.id, "accessAdult")}
-                    className={u.permissions.accessAdult ? "bg-accent" : ""}
-                  >
-                    Adult Access
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={u.permissions.accessProfessional ? "default" : "outline"}
-                    onClick={() => handleToggleUserPermission(u.id, "accessProfessional")}
-                    className={u.permissions.accessProfessional ? "bg-primary" : ""}
-                  >
-                    Professional Access
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={u.permissions.isAdmin ? "default" : "outline"}
-                    onClick={() => handleToggleUserPermission(u.id, "isAdmin")}
-                    className={u.permissions.isAdmin ? "bg-foreground text-background" : ""}
-                  >
-                    Admin
-                  </Button>
-                </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            size="sm"
+                            variant={u.permissions.accessKids ? "default" : "outline"}
+                            onClick={() => handleToggleUserPermission(u.id, "accessKids")}
+                            className={u.permissions.accessKids ? "bg-secondary" : ""}
+                          >
+                            Kids Access
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={u.permissions.accessAdult ? "default" : "outline"}
+                            onClick={() => handleToggleUserPermission(u.id, "accessAdult")}
+                            className={u.permissions.accessAdult ? "bg-accent" : ""}
+                          >
+                            Adult Access
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={u.permissions.accessProfessional ? "default" : "outline"}
+                            onClick={() => handleToggleUserPermission(u.id, "accessProfessional")}
+                            className={u.permissions.accessProfessional ? "bg-primary" : ""}
+                          >
+                            Professional Access
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={u.permissions.isAdmin ? "default" : "outline"}
+                            onClick={() => handleToggleUserPermission(u.id, "isAdmin")}
+                            className={u.permissions.isAdmin ? "bg-foreground text-background" : ""}
+                          >
+                            Admin
+                          </Button>
+                        </div>
                       </div>
                     ))
                   )}

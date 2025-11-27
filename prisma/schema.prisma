@@ -7,21 +7,6 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-model User {
-  id          Int            @id @default(autoincrement())
-  username    String         @unique
-  email       String? @unique
-  password    String
-  name        String
-  age         Int
-  role        UserRole       @default(guest)
-  isActive    Boolean        @default(true)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  blogPosts   BlogPost[]
-  quizResults QuizResult[]
-  progress    UserProgress[]
-  notifications Notification[]
 
   @@map("users")
 }
@@ -37,19 +22,6 @@ model QuickQuestion {
   updatedAt    DateTime              @updatedAt
 
   @@map("quick_questions")
-}
-
-model CarouselImage {
-  id        Int      @id @default(autoincrement())
-  title     String
-  altText   String
-  imageUrl  String
-  order     Int      @default(0)
- isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("carousel_images")
 }
 
 model BlogPost {

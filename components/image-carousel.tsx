@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import type { CarouselImage } from "@/lib/mock-data"
+import { ImageViewerModal } from "@/components/image-viewer-modal"
 
 interface ImageCarouselProps {
   images: CarouselImage[]
@@ -12,6 +13,7 @@ interface ImageCarouselProps {
 
 export function ImageCarousel({ images }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [isViewerOpen, setIsViewerOpen] = useState(false)
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -35,9 +37,8 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
       {images.map((image, index) => (
         <div
           key={image.id}
-          className={`absolute inset-0 transition-opacity duration-500 ${
-            index === currentIndex ? "opacity-100" : "opacity-0"
-          }`}
+          className={`absolute inset-0 transition-opacity duration-500 ${index === currentIndex ? "opacity-100" : "opacity-0"
+            }`}
         >
           <Image
             src={image.url || "/placeholder.svg"}
@@ -53,12 +54,29 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
         </div>
       ))}
 
+      {/* Transparent Button Overlay for Full-Screen View */}
+      <button
+        onClick={() => {
+          console.log("🖱️ Overlay button clicked!")
+          setIsViewerOpen(true)
+        }}
+        className="absolute inset-0 z-10 cursor-pointer bg-red-500/20 hover:bg-red-500/30 transition-colors group/fullscreen border-4 border-red-500"
+        aria-label="View full-screen image"
+      >
+        {/* Maximize icon appears on hover */}
+        <div className="absolute top-4 right-4 opacity-0 group-hover/fullscreen:opacity-100 transition-opacity pointer-events-none">
+          <div className="bg-black/50 rounded-full p-2">
+            <Maximize2 className="h-5 w-5 text-white" />
+          </div>
+        </div>
+      </button>
+
       {/* Navigation Buttons */}
       <Button
         onClick={goToPrevious}
         variant="ghost"
         size="icon"
-        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white opacity-0 group-hover:opacity-100 transition-opacity z-30"
       >
         <ChevronLeft className="h-6 w-6" />
       </Button>
@@ -66,13 +84,13 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
         onClick={goToNext}
         variant="ghost"
         size="icon"
-        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white opacity-0 group-hover:opacity-100 transition-opacity z-30"
       >
         <ChevronRight className="h-6 w-6" />
       </Button>
 
       {/* Indicators */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
         {images.map((_, index) => (
           <button
             key={index}
@@ -82,6 +100,15 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
           />
         ))}
       </div>
+
+      {/* Image Viewer Modal */}
+      <ImageViewerModal
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
+        imageUrl={images[currentIndex]?.url || ""}
+        imageTitle={images[currentIndex]?.title || ""}
+        imageAlt={images[currentIndex]?.altText || ""}
+      />
     </div>
   )
 }

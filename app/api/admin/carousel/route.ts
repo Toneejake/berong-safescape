@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const carouselImages = await prisma.carouselImage.findMany({
@@ -36,12 +38,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get the highest order number to assign next order
+    const maxOrderImage = await prisma.carouselImage.findFirst({
+      orderBy: { order: 'desc' },
+      select: { order: true }
+    })
+    const nextOrder = (maxOrderImage?.order ?? -1) + 1
+
     const newCarousel = await prisma.carouselImage.create({
       data: {
         title: body.title,
         altText: body.alt,
         imageUrl: body.url, // Map the url from request to imageUrl in DB
-        order: body.order || 0,
+        order: body.order ?? nextOrder, // Use provided order or auto-assign next
         isActive: body.isActive ?? true,
       }
     })

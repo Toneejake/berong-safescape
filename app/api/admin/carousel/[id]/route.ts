@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { deleteUploadedFile } from '@/lib/file-utils'
 
 export async function DELETE(
   request: NextRequest,
@@ -15,9 +16,20 @@ export async function DELETE(
       )
     }
 
-    await prisma.carouselImage.delete({
+    // Find the image first to get the URL
+    const image = await prisma.carouselImage.findUnique({
       where: { id }
     })
+
+    if (image) {
+      // Delete the file from filesystem
+      await deleteUploadedFile(image.imageUrl)
+
+      // Delete from database
+      await prisma.carouselImage.delete({
+        where: { id }
+      })
+    }
 
     return NextResponse.json({ message: 'Carousel image deleted successfully' })
   } catch (error) {

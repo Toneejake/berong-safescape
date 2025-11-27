@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { NotificationService } from '@/lib/notification-service'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const videos = await prisma.video.findMany({
