@@ -52,10 +52,12 @@ export async function registerUser(username: string, password: string, name: str
     // Determine role based on age
     const role = age < 18 ? UserRole.kid : UserRole.adult;
 
-    // Create user
+    // Create user with auto-generated email if not provided
+    const autoEmail = `${username.toLowerCase()}@bfp-user.local`;
     const user = await prisma.user.create({
       data: {
         username,
+        email: autoEmail,
         password: hashedPassword,
         name,
         age,

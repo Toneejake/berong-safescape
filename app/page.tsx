@@ -5,6 +5,9 @@ import { TwoColumnBlock } from '@/components/ui/two-column-block';
 import { VideoHighlight } from '@/components/ui/video-highlight';
 import { Footer } from '@/components/footer';
 
+// Force dynamic rendering - this page fetches data from database
+export const dynamic = 'force-dynamic';
+
 export default function HomePage() {
   return (
     <div className="min-h-screen flex-col bg-background">
