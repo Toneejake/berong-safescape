@@ -28,7 +28,7 @@ const mockFeaturedCards: FeaturedCardItem[] = [
     id: 2,
     title: 'For Adults',
     description: 'Learn essential fire safety practices for your home, family, and workplace.',
-    imageUrl: '/adults_card.png', // Adult card image
+    imageUrl: '/adult_card.png', // Adult card image
     link: '/adult',
     requiredPermission: 'accessAdult',
   },
@@ -36,7 +36,7 @@ const mockFeaturedCards: FeaturedCardItem[] = [
     id: 3,
     title: 'For Kids',
     description: 'Fun and interactive modules to teach children about fire safety.',
-    imageUrl: '/kids_card.png', // Kids card image
+    imageUrl: '/kids_card.png.jpg', // Kids card image
     link: '/kids',
     requiredPermission: 'accessKids',
   },
