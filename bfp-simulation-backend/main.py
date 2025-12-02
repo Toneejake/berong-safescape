@@ -80,7 +80,19 @@ async def lifespan(app: FastAPI):
             print(f"  Loading model...")
             
             unet_model = UNet()
-            unet_model.load_state_dict(torch.load(model_path, map_location=device))
+            
+            # Load the checkpoint and handle different save formats
+            checkpoint = torch.load(model_path, map_location=device)
+            
+            # Check if it's a full checkpoint (with optimizer, epoch, etc.) or just state_dict
+            if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
+                # Full checkpoint format - extract just the model weights
+                print(f"  Detected checkpoint format, extracting model_state_dict...")
+                unet_model.load_state_dict(checkpoint['model_state_dict'])
+            else:
+                # Direct state_dict format
+                unet_model.load_state_dict(checkpoint)
+            
             unet_model.to(device)
             unet_model.eval()
             print(f"  [OK] U-Net model loaded successfully")
