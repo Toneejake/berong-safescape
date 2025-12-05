@@ -13,6 +13,7 @@ import sqlite3
 import json
 import base64
 import random
+import gc
 from datetime import datetime
 from PIL import Image
 from io import BytesIO
@@ -623,12 +624,22 @@ def run_simulation_task(job_id: str, config: SimulationConfig):
         # Update job status to complete
         update_job_status(job_id, "complete", result=result)
         
+        # Clean up memory after simulation
+        del env
+        del history
+        del grid
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        
     except Exception as e:
         # Update job status to failed
         print(f"[JOB {job_id[:8]}] FAILED with error: {str(e)}", flush=True)
         import traceback
         traceback.print_exc()
         update_job_status(job_id, "failed", error=str(e))
+        # Clean up on error too
+        gc.collect()
 
 @app.post("/api/run-simulation", response_model=JobResponse)
 async def run_simulation(config: SimulationConfig, background_tasks: BackgroundTasks):

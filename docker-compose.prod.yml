@@ -63,6 +63,7 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       - BACKEND_URL=http://python-backend:8000
+      - NODE_OPTIONS=--max-old-space-size=1536
     volumes:
       - uploads_data:/app/public/uploads
     expose:
@@ -79,7 +80,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 2G
           cpus: '1'
 
   # Python FastAPI Backend (AI/ML Simulation)
@@ -105,8 +106,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2G
-          cpus: '1.5'
+          memory: 3G
+          cpus: '2'
 
 volumes:
   postgres_data:
