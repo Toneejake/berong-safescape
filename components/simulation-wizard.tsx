@@ -353,7 +353,7 @@ export function SimulationWizard() {
           originalImage={data.originalImage}
           config={{
             ...data.config,
-            exits: data.userExits.map(e => [e.x, e.y] as [number, number])
+            exits: data.userExits.map(e => [e.y, e.x] as [number, number]) // [row, col] format
           }}
           onConfigUpdate={handleConfigUpdate}
           onRunSimulation={handleRunSimulation}

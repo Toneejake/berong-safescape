@@ -17,7 +17,7 @@ type TwoColumnBlockItem = {
 // Mock data for the two-column block - updated to show simulation content instead of blog
 const mockTwoColumnBlock: TwoColumnBlockItem = {
   id: 1,
-  title: 'Fire Spread Simulation',
+  title: 'Exit Drill In The Home (EDITH)',
   description: 'Interactive tool to visualize how fire spreads in different environments and conditions. Experience our AI-powered evacuation simulation.',
   imageUrl: '/Fire Spread Simulation.png', // Replace with a relevant simulation image
   link: '/adult', // Link to the adult section

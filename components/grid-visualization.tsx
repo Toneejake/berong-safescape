@@ -29,6 +29,9 @@ export function GridVisualization({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [hoveredCell, setHoveredCell] = useState<[number, number] | null>(null)
   const [backgroundImage, setBackgroundImage] = useState<HTMLImageElement | null>(null)
+  const [fireIconImage, setFireIconImage] = useState<HTMLImageElement | null>(null)
+  const [fireCellAges, setFireCellAges] = useState<Map<string, number>>(new Map())
+  const [agentImages, setAgentImages] = useState<HTMLImageElement[]>([])
 
   const cellSize = 3 // pixels per cell for 256x256 grid
   const canvasSize = grid.length * cellSize
@@ -44,6 +47,69 @@ export function GridVisualization({
     }
   }, [originalImage])
 
+  // Load fire icon image
+  useEffect(() => {
+    const img = new Image()
+    img.onload = () => setFireIconImage(img)
+    img.onerror = () => console.error('Failed to load fire icon')
+    img.src = '/fire-icon.png'
+  }, [])
+
+  // Animate fire cell ages for smooth transitions
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFireCellAges(prev => {
+        const next = new Map(prev)
+
+        // Collect all fire positions
+        const firePositionsSet = new Set<string>()
+        if (firePosition) {
+          firePositionsSet.add(`${firePosition[0]},${firePosition[1]}`)
+        }
+        if (fireMap) {
+          fireMap.forEach(([r, c]) => {
+            firePositionsSet.add(`${r},${c}`)
+          })
+        }
+
+        // Age existing fire cells
+        firePositionsSet.forEach(key => {
+          next.set(key, (next.get(key) || 0) + 16)
+        })
+
+        // Remove cells that are no longer on fire
+        for (const key of next.keys()) {
+          if (!firePositionsSet.has(key)) {
+            next.delete(key)
+          }
+        }
+
+        return next
+      })
+    }, 16)
+
+    return () => clearInterval(interval)
+  }, [firePosition, fireMap])
+
+  // Load agent images
+  useEffect(() => {
+    const images: HTMLImageElement[] = []
+    let loadedCount = 0
+
+    for (let i = 1; i <= 5; i++) {
+      const img = new Image()
+      img.onload = () => {
+        loadedCount++
+        if (loadedCount === 5) {
+          setAgentImages(images)
+        }
+      }
+      img.onerror = () => console.error(`Failed to load agent${i}.png`)
+      img.src = `/agent${i}.png`
+      images.push(img)
+    }
+  }, [])
+
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -57,7 +123,7 @@ export function GridVisualization({
     // Draw background image if available, otherwise draw grid-based walls
     if (backgroundImage) {
       ctx.drawImage(backgroundImage, 0, 0, canvasSize, canvasSize)
-      
+
       // Draw semi-transparent wall overlay if enabled
       if (showWallOverlay) {
         ctx.fillStyle = "rgba(31, 41, 55, 0.4)" // dark gray with transparency
@@ -100,56 +166,125 @@ export function GridVisualization({
     if (firePosition) {
       firePositions.push(firePosition)
     }
-    for (const pos of fireMap) {
-      firePositions.push(pos)
+    // fireMap is now expected to be an array of coordinates
+    if (fireMap && Array.isArray(fireMap)) {
+      firePositions.push(...fireMap)
     }
 
-    // Draw fire with realistic glow effect
-    for (const [r, c] of firePositions) {
-      const centerX = c * cellSize + cellSize / 2
-      const centerY = r * cellSize + cellSize / 2
-      
-      // Outer glow (orange)
-      const outerGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 10)
-      outerGradient.addColorStop(0, "rgba(251, 146, 60, 0.9)") // orange-400
-      outerGradient.addColorStop(0.5, "rgba(239, 68, 68, 0.6)") // red-500
-      outerGradient.addColorStop(1, "rgba(239, 68, 68, 0)")
-      ctx.beginPath()
-      ctx.arc(centerX, centerY, 10, 0, 2 * Math.PI)
-      ctx.fillStyle = outerGradient
-      ctx.fill()
+    // Draw fire using icon image or fallback to gradient
+    if (fireIconImage) {
+      for (const [r, c] of firePositions) {
+        const centerX = c * cellSize + cellSize / 2
+        const centerY = r * cellSize + cellSize / 2
+        const iconSize = Math.max(cellSize * 4, 12)
 
-      // Inner fire core (yellow-orange)
-      const innerGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 5)
-      innerGradient.addColorStop(0, "rgba(254, 240, 138, 1)") // yellow-200
-      innerGradient.addColorStop(0.4, "rgba(251, 146, 60, 1)") // orange-400
-      innerGradient.addColorStop(1, "rgba(239, 68, 68, 0.8)") // red-500
-      ctx.beginPath()
-      ctx.arc(centerX, centerY, 5, 0, 2 * Math.PI)
-      ctx.fillStyle = innerGradient
-      ctx.fill()
+        // Get age for smooth transition animation
+        const key = `${r},${c}`
+        const age = fireCellAges.get(key) || 0
+
+        // Grow animation: start at 30%, grow to 100% over 300ms
+        const growProgress = Math.min(age / 300, 1)
+        const scale = 0.3 + (growProgress * 0.7)
+
+        // Fade in: 0 to 1 over 200ms
+        const fadeProgress = Math.min(age / 200, 1)
+
+        // Flicker effect: subtle pulsing
+        const flicker = 0.85 + Math.sin(Date.now() / 100 + r * 10 + c * 10) * 0.15
+
+        // Combine alpha effects
+        const alpha = fadeProgress * flicker
+
+        ctx.save()
+        ctx.globalAlpha = alpha
+        ctx.translate(centerX, centerY)
+        ctx.scale(scale, scale)
+
+        // Optional rotation for variety
+        const rotation = (r + c) % 4 * (Math.PI / 8)
+        ctx.rotate(rotation)
+
+        ctx.drawImage(
+          fireIconImage,
+          -iconSize / 2,
+          -iconSize / 2,
+          iconSize,
+          iconSize
+        )
+        ctx.restore()
+      }
+    } else {
+      // Fallback: Draw fire with realistic glow effect
+      for (const [r, c] of firePositions) {
+        const centerX = c * cellSize + cellSize / 2
+        const centerY = r * cellSize + cellSize / 2
+
+        // Outer glow (orange)
+        const outerGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 10)
+        outerGradient.addColorStop(0, "rgba(251, 146, 60, 0.9)") // orange-400
+        outerGradient.addColorStop(0.5, "rgba(239, 68, 68, 0.6)") // red-500
+        outerGradient.addColorStop(1, "rgba(239, 68, 68, 0)")
+        ctx.beginPath()
+        ctx.arc(centerX, centerY, 10, 0, 2 * Math.PI)
+        ctx.fillStyle = outerGradient
+        ctx.fill()
+
+        // Inner fire core (yellow-orange)
+        const innerGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 5)
+        innerGradient.addColorStop(0, "rgba(254, 240, 138, 1)") // yellow-200
+        innerGradient.addColorStop(0.4, "rgba(251, 146, 60, 1)") // orange-400
+        innerGradient.addColorStop(1, "rgba(239, 68, 68, 0.8)") // red-500
+        ctx.beginPath()
+        ctx.arc(centerX, centerY, 5, 0, 2 * Math.PI)
+        ctx.fillStyle = innerGradient
+        ctx.fill()
+      }
     }
 
-    // Draw agents as larger blue circles with outline
-    for (const [r, c] of agentPositions) {
-      const centerX = c * cellSize + cellSize / 2
-      const centerY = r * cellSize + cellSize / 2
-      const radius = 6
+    // Draw agents using images or fallback to circles
+    if (agentImages.length === 5) {
+      agentPositions.forEach(([r, c], index) => {
+        const centerX = c * cellSize + cellSize / 2
+        const centerY = r * cellSize + cellSize / 2
+        const iconSize = Math.max(cellSize * 8, 20) // Larger size for better visibility
 
-      // Agent body
-      ctx.beginPath()
-      ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI)
-      ctx.fillStyle = "#3b82f6" // blue-500
-      ctx.fill()
-      ctx.strokeStyle = "#1d4ed8" // blue-700
-      ctx.lineWidth = 1.5
-      ctx.stroke()
+        // Select agent image (cycle through 5 images for variety)
+        const agentImage = agentImages[index % 5]
 
-      // Small inner highlight
-      ctx.beginPath()
-      ctx.arc(centerX - 1, centerY - 1, 2, 0, 2 * Math.PI)
-      ctx.fillStyle = "rgba(255, 255, 255, 0.4)"
-      ctx.fill()
+        ctx.save()
+        ctx.translate(centerX, centerY)
+
+        ctx.drawImage(
+          agentImage,
+          -iconSize / 2,
+          -iconSize / 2,
+          iconSize,
+          iconSize
+        )
+        ctx.restore()
+      })
+    } else {
+      // Fallback: Draw agents as blue circles
+      for (const [r, c] of agentPositions) {
+        const centerX = c * cellSize + cellSize / 2
+        const centerY = r * cellSize + cellSize / 2
+        const radius = 6
+
+        // Agent body
+        ctx.beginPath()
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI)
+        ctx.fillStyle = "#3b82f6" // blue-500
+        ctx.fill()
+        ctx.strokeStyle = "#1d4ed8" // blue-700
+        ctx.lineWidth = 1.5
+        ctx.stroke()
+
+        // Small inner highlight
+        ctx.beginPath()
+        ctx.arc(centerX - 1, centerY - 1, 2, 0, 2 * Math.PI)
+        ctx.fillStyle = "rgba(255, 255, 255, 0.4)"
+        ctx.fill()
+      }
     }
 
     // Draw hovered cell for interactive mode
@@ -174,7 +309,7 @@ export function GridVisualization({
         ctx.stroke()
       }
     }
-  }, [grid, originalImage, backgroundImage, showWallOverlay, firePosition, fireMap, agentPositions, exits, hoveredCell, canvasSize, cellSize, interactive])
+  }, [grid, originalImage, backgroundImage, showWallOverlay, firePosition, fireMap, agentPositions, exits, hoveredCell, canvasSize, cellSize, interactive, fireIconImage, fireCellAges, agentImages])
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!interactive || !onCellClick) return

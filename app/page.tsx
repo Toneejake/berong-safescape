@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex-col bg-background">
+    <div className="min-h-screen flex-col">
       <Navigation />
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {/* Hero Carousel */}

@@ -13,7 +13,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Berong E-Learning for BFP Sta Cruz",
   description: "Educational platform for fire safety training and awareness",
-    generator: 'v0.app'
+  generator: 'v0.app'
 }
 
 export default function RootLayout({
@@ -23,11 +23,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="antialiased">
-        <AuthProvider>
-          {children}
-          <Chatbot />
-        </AuthProvider>
+      <body className="antialiased relative min-h-screen">
+        {/* Background Image Layer - 20% opacity */}
+        <div
+          className="fixed inset-0 opacity-20 bg-cover bg-center z-0 pointer-events-none"
+          style={{ backgroundImage: "url('/bfp-firefighters-in-action.jpg')" }}
+        />
+
+        {/* Content Layer - Full opacity */}
+        <div className="relative z-10">
+          <AuthProvider>
+            {children}
+            <Chatbot />
+          </AuthProvider>
+        </div>
       </body>
     </html>
   )

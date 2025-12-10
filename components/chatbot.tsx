@@ -168,22 +168,44 @@ export function Chatbot() {
     <>
       {/* Chatbot Toggle Button */}
       {!isOpen && (
-        <Button
-          onClick={() => setIsOpen(true)}
-          // UPDATED: Added 'p-0' to remove padding and 'overflow-hidden' to clip the image
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-primary shadow-lg hover:bg-primary/90 z-50 p-0 overflow-hidden"
-          size="icon"
-        >
-          <Image
-            src="/RD Logo.png"
-            alt="Chatbot"
-            // UPDATED: Increased size to match button (56px = h-14)
-            width={56}
-            height={56}
-            // UPDATED: Changed to w-full h-full object-cover to fill the circle
-            className="w-full h-full object-cover"
-          />
-        </Button>
+        <>
+          {/* Speech Bubble Tooltip */}
+          <div className="fixed bottom-24 right-6 z-50 animate-bounce">
+            <div className="relative bg-white text-black px-4 py-2 rounded-lg shadow-lg">
+              <p className="text-sm font-medium whitespace-nowrap">
+                Hi, I'm Berong!
+              </p>
+
+              {/* Downward Arrow */}
+              <div
+                className="absolute -bottom-2 right-6 w-0 h-0"
+                style={{
+                  borderLeft: '8px solid transparent',
+                  borderRight: '8px solid transparent',
+                  borderTop: '8px solid white'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Chatbot Button */}
+          <Button
+            onClick={() => setIsOpen(true)}
+            // UPDATED: Added 'p-0' to remove padding and 'overflow-hidden' to clip the image
+            className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-primary shadow-lg hover:bg-primary/90 z-50 p-0 overflow-hidden"
+            size="icon"
+          >
+            <Image
+              src="/RD Logo.png"
+              alt="Chatbot"
+              // UPDATED: Increased size to match button (56px = h-14)
+              width={56}
+              height={56}
+              // UPDATED: Changed to w-full h-full object-cover to fill the circle
+              className="w-full h-full object-cover"
+            />
+          </Button>
+        </>
       )}
 
       {/* Chatbot Window */}
@@ -218,10 +240,10 @@ export function Chatbot() {
             </div>
           ) : Object.keys(quickQuestions).length > 0 && showQuickQuestions ? (
             <div className="p-4 bg-gray-50/50 border-b backdrop-blur-sm">
-              
+
               {/* Header with Icon */}
               <div className="flex items-center gap-2 mb-3">
-                <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"/>
+                <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Suggested Topics
                 </h4>
@@ -235,7 +257,7 @@ export function Chatbot() {
                     <h5 className="text-[10px] font-bold text-gray-400 mb-2 pl-1 uppercase">
                       {category}
                     </h5>
-                    
+
                     {/* Question Chips */}
                     <div className="flex flex-wrap gap-2">
                       {questions.slice(0, 4).map((question) => (
@@ -265,9 +287,8 @@ export function Chatbot() {
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[80%] rounded-lg p-3 ${
-                    message.sender === "user" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
-                  }`}
+                  className={`max-w-[80%] rounded-lg p-3 ${message.sender === "user" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
+                    }`}
                 >
                   <p className="text-sm">{message.text}</p>
                 </div>

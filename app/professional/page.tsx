@@ -61,7 +61,7 @@ export default function ProfessionalPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <Navigation />
         <div className="flex items-center justify-center h-96">
           <p className="text-muted-foreground">Loading...</p>
@@ -71,7 +71,7 @@ export default function ProfessionalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Navigation />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -100,7 +100,7 @@ export default function ProfessionalPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <Video className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Training Videos</CardTitle>
+                <CardTitle className="text-3xl">Training Videos</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
@@ -112,7 +112,7 @@ export default function ProfessionalPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-secondary" />
-                <CardTitle className="text-lg">BFP Manuals</CardTitle>
+                <CardTitle className="text-3xl">BFP Manuals</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
@@ -124,7 +124,7 @@ export default function ProfessionalPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-accent" />
-                <CardTitle className="text-lg">Fire Codes</CardTitle>
+                <CardTitle className="text-3xl">Fire Codes</CardTitle>
               </div>
             </CardHeader>
             <CardContent>

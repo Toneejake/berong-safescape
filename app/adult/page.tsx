@@ -64,7 +64,7 @@ export default function AdultPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <Navigation />
         <div className="flex items-center justify-center h-96">
           <p className="text-muted-foreground">Loading...</p>
@@ -74,7 +74,7 @@ export default function AdultPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Navigation />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -101,7 +101,7 @@ export default function AdultPage() {
             <CardHeader>
               <div className="flex items-center gap-3 mb-2">
                 <BookOpen className="h-6 w-6 text-accent" />
-                <CardTitle className="text-xl">Fire Safety Blogs</CardTitle>
+                <CardTitle className="text-2xl">Fire Safety Blogs</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
@@ -116,7 +116,7 @@ export default function AdultPage() {
             <CardHeader>
               <div className="flex items-center gap-3 mb-2">
                 <Zap className="h-6 w-6 text-secondary" />
-                <CardTitle className="text-xl">Fire Spread Simulation</CardTitle>
+                <CardTitle className="text-2xl">Fire Spread Simulation</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
