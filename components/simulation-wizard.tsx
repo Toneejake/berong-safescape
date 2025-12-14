@@ -5,11 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Upload, Grid3x3, Settings, Play, Loader2, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Upload, Grid3x3, Settings, Play, Loader2, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft, Pencil } from "lucide-react"
 import { FloorPlanUpload } from "@/components/floor-plan-upload"
 import { FloorPlanCanvas } from "@/components/floor-plan-canvas"
 import { SimulationSetup } from "@/components/simulation-setup"
 import { SimulationResults } from "@/components/simulation-results"
+import { FabricFloorPlanBuilder } from "@/components/fabric-floor-plan-builder"
 
 type Stage = "upload" | "exits" | "setup" | "running" | "results"
 
@@ -38,6 +40,7 @@ interface SimulationData {
 
 export function SimulationWizard() {
   const [stage, setStage] = useState<Stage>("upload")
+  const [inputMode, setInputMode] = useState<'upload' | 'draw'>('upload')
   const [exitMode, setExitMode] = useState<'view' | 'add-exit'>('view')
   const [data, setData] = useState<SimulationData>({
     imageFile: null,
@@ -303,7 +306,40 @@ export function SimulationWizard() {
 
       {/* Stage Content */}
       {stage === "upload" && (
-        <FloorPlanUpload onUpload={handleImageUpload} processing={processing} />
+        <Card>
+          <CardHeader>
+            <CardTitle>Step 1: Floor Plan Input</CardTitle>
+            <CardDescription>
+              Upload an existing floor plan image or draw your own using our built-in editor
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as 'upload' | 'draw')}>
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="upload" className="flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  Upload Image
+                </TabsTrigger>
+                <TabsTrigger value="draw" className="flex items-center gap-2">
+                  <Pencil className="h-4 w-4" />
+                  Draw Floor Plan
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="upload" className="mt-0">
+                <FloorPlanUpload onUpload={handleImageUpload} processing={processing} />
+              </TabsContent>
+              <TabsContent value="draw" className="mt-0">
+                <FabricFloorPlanBuilder
+                  onExport={(blob) => {
+                    const file = new File([blob], 'drawn-floorplan.png', { type: 'image/png' })
+                    handleImageUpload(file)
+                  }}
+                  processing={processing}
+                />
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       )}
 
       {stage === "exits" && data.grid && data.originalImage && data.gridSize && (
