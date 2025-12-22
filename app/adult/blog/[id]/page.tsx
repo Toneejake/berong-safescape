@@ -52,7 +52,7 @@ export default function BlogPostPage() {
   // --- Loading State ---
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen">
         <Navigation />
         <div className="flex flex-col items-center justify-center h-[60vh]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
@@ -65,7 +65,7 @@ export default function BlogPostPage() {
   // --- 404 State ---
   if (!blog) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen">
         <Navigation />
         <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <div className="bg-gray-50 rounded-2xl p-12 border border-gray-100">
@@ -86,15 +86,15 @@ export default function BlogPostPage() {
 
   // --- Main Article View ---
   return (
-    <div className="min-h-screen bg-white font-sans selection:bg-orange-100 selection:text-orange-900">
+    <div className="min-h-screen font-sans selection:bg-orange-100 selection:text-orange-900">
       <Navigation />
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        
+
         {/* Top Navigation */}
         <div className="mb-8">
-          <Link 
-            href="/adult" 
+          <Link
+            href="/adult"
             className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors group"
           >
             <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
@@ -156,25 +156,25 @@ export default function BlogPostPage() {
           {/* Note: 'prose-lg' creates nice readability. 'whitespace-pre-line' respects your database line breaks. */}
           <div className="prose prose-lg prose-slate max-w-none prose-headings:font-bold prose-p:text-gray-600 prose-img:rounded-xl">
             <div className="whitespace-pre-line leading-8">
-                {blog.content}
+              {blog.content}
             </div>
           </div>
 
           {/* Footer / Emergency Action */}
           <div className="mt-16 p-8 bg-red-50 rounded-2xl border border-red-100 flex flex-col sm:flex-row gap-6 items-start shadow-sm">
             <div className="p-3 bg-white rounded-full shrink-0 shadow-sm">
-               <Flame className="h-6 w-6 text-red-600" />
+              <Flame className="h-6 w-6 text-red-600" />
             </div>
             <div>
-                <h3 className="text-lg font-bold text-red-900 mb-2">Emergency Protocol</h3>
-                <p className="text-red-900/80 leading-relaxed">
-                    In case of a fire emergency, do not hesitate. Call <strong>911</strong> immediately. 
-                    Never put yourself at risk trying to fight a large fire. 
-                    <strong> Evacuate first</strong>, then call for help.
-                </p>
+              <h3 className="text-lg font-bold text-red-900 mb-2">Emergency Protocol</h3>
+              <p className="text-red-900/80 leading-relaxed">
+                In case of a fire emergency, do not hesitate. Call <strong>911</strong> immediately.
+                Never put yourself at risk trying to fight a large fire.
+                <strong> Evacuate first</strong>, then call for help.
+              </p>
             </div>
           </div>
-          
+
         </article>
       </main>
     </div>

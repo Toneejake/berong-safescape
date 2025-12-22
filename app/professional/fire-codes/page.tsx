@@ -30,7 +30,7 @@ export default function FireCodesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <Navigation />
         <div className="flex items-center justify-center h-96">
           <p className="text-muted-foreground">Loading...</p>
@@ -40,17 +40,17 @@ export default function FireCodesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Navigation />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <FileText className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">Fire Code & Regulations</h1>
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2">
+            <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Fire Code & Regulations</h1>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Philippine Fire Code of 2019 Revised - Complete reference and guidelines
           </p>
         </div>
@@ -59,13 +59,13 @@ export default function FireCodesPage() {
         <Alert className="mb-6 border-primary bg-primary/5">
           <Shield className="h-4 w-4 text-primary" />
           <AlertDescription className="text-foreground">
-            This section contains official fire safety regulations and compliance requirements. 
+            This section contains official fire safety regulations and compliance requirements.
             Information is sourced from the Philippine Fire Code of 2019 Revised.
           </AlertDescription>
         </Alert>
 
         {/* Quick Stats */}
-        <div className="grid md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <Card className="border-l-4 border-l-primary">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg text-primary">Chapters</CardTitle>
@@ -123,7 +123,7 @@ export default function FireCodesPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 border rounded-lg">
                   <h4 className="font-semibold mb-2">Implementation Guidelines</h4>
                   <p className="text-sm text-muted-foreground">

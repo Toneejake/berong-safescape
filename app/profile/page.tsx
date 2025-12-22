@@ -50,7 +50,7 @@ export default function ProfilePage() {
         role: user.role || "",
       })
     }
-    
+
     setLoading(false)
   }, [isAuthenticated, user, router])
 
@@ -101,7 +101,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <Navigation />
         <div className="flex items-center justify-center h-96">
           <p className="text-muted-foreground">Loading...</p>
@@ -111,17 +111,17 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Navigation />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <User className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">User Profile</h1>
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2">
+            <User className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">User Profile</h1>
           </div>
-          <p className="text-muted-foreground">Manage your account settings and preferences</p>
+          <p className="text-sm sm:text-base text-muted-foreground">Manage your account settings and preferences</p>
         </div>
 
         {/* Alerts */}
@@ -139,7 +139,7 @@ export default function ProfilePage() {
           </Alert>
         )}
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="space-y-6 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-8">
           {/* Profile Information */}
           <Card>
             <CardHeader>
@@ -250,7 +250,7 @@ export default function ProfilePage() {
           <CardContent>
             <div className="space-y-3">
               {user?.permissions ? (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="p-4 border rounded-lg text-center">
                     <div className={`inline-flex items-center justify-center h-12 w-12 rounded-full ${user.permissions.accessKids ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} mb-2`}>
                       {user.permissions.accessKids ? (

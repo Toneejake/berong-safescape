@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export type UserRole = "guest" | "kid" | "adult" | "professional" | "admin"
 
@@ -27,6 +28,7 @@ interface AuthContextType {
   register: (username: string, password: string, name: string, age: number) => Promise<{ success: boolean; error?: string }>
   logout: () => void
   isLoading: boolean
+  isLoggingOut: boolean
   isAuthenticated: boolean
   isAuthenticating: boolean
   getRedirectPath: () => string
@@ -37,19 +39,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 // Helper function to determine redirect path based on user role
 function determineRedirectPath(user: User | null): string {
   if (!user) return '/'
-  
+
   if (user.role === 'admin') return '/admin'
   if (user.role === 'professional') return '/professional'
   if (user.role === 'adult') return '/adult'
   if (user.role === 'kid') return '/kids'
-  
+
   return '/'
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [isAuthenticating, setIsAuthenticating] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     // Check for stored user session
@@ -126,10 +130,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(data.user)
       localStorage.setItem('user', JSON.stringify(data.user))
-      
+
       // Set cookie for middleware
       document.cookie = `bfp_user=${encodeURIComponent(JSON.stringify(data.user))}; path=/; max-age=${60 * 60 * 24 * 7}` // 7 days
-      
+
       return { success: true }
     } catch (error: any) {
       console.error('Registration error:', error)
@@ -158,10 +162,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(data.user)
       localStorage.setItem('user', JSON.stringify(data.user))
-      
+
       // Set cookie for middleware
       document.cookie = `bfp_user=${encodeURIComponent(JSON.stringify(data.user))}; path=/; max-age=${60 * 60 * 24 * 7}` // 7 days
-      
+
       return { success: true }
     } catch (error: any) {
       console.error('Login error:', error)
@@ -172,8 +176,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = () => {
-    setUser(null)
-    localStorage.removeItem('user')
+    setIsLoggingOut(true)
+
+    // Show loading screen for 1.5 seconds before clearing session
+    setTimeout(() => {
+      setUser(null)
+      localStorage.removeItem('user')
+      // Clear cookie
+      document.cookie = 'bfp_user=; path=/; max-age=0'
+      setIsLoggingOut(false)
+      router.push('/')
+    }, 1500)
   }
 
   const getRedirectPath = () => {
@@ -183,7 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAuthenticated = user !== null
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading, isAuthenticated, isAuthenticating, getRedirectPath }}>
+    <AuthContext.Provider value={{ user, login, register, logout, isLoading, isLoggingOut, isAuthenticated, isAuthenticating, getRedirectPath }}>
       {children}
     </AuthContext.Provider>
   )

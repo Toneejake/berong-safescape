@@ -12,6 +12,9 @@ import { Flame, Search, BookOpen, Calendar, User, ArrowRight, Zap, AlertCircle }
 import type { BlogPost } from "@/lib/mock-data"
 import Link from "next/link"
 import { Footer } from "@/components/footer"
+import SpotlightCard from "@/components/ui/spotlight-card"
+import "@/components/ui/spotlight-card.css"
+import TiltedCard from "@/components/ui/tilted-card"
 
 export default function AdultPage() {
   const router = useRouter()
@@ -63,14 +66,7 @@ export default function AdultPage() {
   )
 
   if (loading) {
-    return (
-      <div className="min-h-screen">
-        <Navigation />
-        <div className="flex items-center justify-center h-96">
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    )
+    return null // Global PageLoader handles loading
   }
 
   return (
@@ -79,12 +75,12 @@ export default function AdultPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Flame className="h-8 w-8 text-accent" />
-            <h1 className="text-3xl font-bold text-foreground">Adult Fire Safety Education</h1>
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2">
+            <Flame className="h-6 w-6 sm:h-8 sm:w-8 text-accent" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Adult Fire Safety Education</h1>
           </div>
-          <p className="text-muted-foreground">Comprehensive fire safety knowledge for adults and homeowners</p>
+          <p className="text-sm sm:text-base text-muted-foreground">Comprehensive fire safety knowledge for adults and homeowners</p>
         </div>
 
         {/* Access Notice */}
@@ -95,42 +91,46 @@ export default function AdultPage() {
           </AlertDescription>
         </Alert>
 
-        {/* Feature Cards */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-accent">
-            <CardHeader>
-              <div className="flex items-center gap-3 mb-2">
-                <BookOpen className="h-6 w-6 text-accent" />
-                <CardTitle className="text-2xl">Fire Safety Blogs</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4 text-pretty">
-                Read comprehensive articles on home fire safety, prevention tips, and emergency preparedness.
-              </p>
-              <p className="text-sm font-semibold text-accent">{blogs.length} articles available</p>
-            </CardContent>
-          </Card>
+        {/* Feature Cards - Compact on mobile */}
+        <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-6 mb-6 sm:mb-8">
+          <SpotlightCard spotlightColor="rgba(245, 158, 11, 0.15)">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-accent h-full">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-start gap-3">
+                  <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-accent flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-lg sm:text-2xl mb-1 sm:mb-2">Fire Safety Blogs</CardTitle>
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-4 line-clamp-2">
+                      Read comprehensive articles on home fire safety, prevention tips, and emergency preparedness.
+                    </p>
+                    <p className="text-xs sm:text-sm font-semibold text-accent">{blogs.length} articles available</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </SpotlightCard>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-secondary">
-            <CardHeader>
-              <div className="flex items-center gap-3 mb-2">
-                <Zap className="h-6 w-6 text-secondary" />
-                <CardTitle className="text-2xl">Fire Spread Simulation</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4 text-pretty">
-                Interactive tool to visualize how fire spreads in different environments and conditions.
-              </p>
-              <Link href="/adult/simulation">
-                <Button className="bg-secondary hover:bg-secondary/90 text-secondary-foreground">
-                  Launch Simulator
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          <SpotlightCard spotlightColor="rgba(139, 92, 246, 0.15)">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-secondary h-full">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-start gap-3">
+                  <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-secondary flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-lg sm:text-2xl mb-1 sm:mb-2">Fire Spread Simulation</CardTitle>
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-4 line-clamp-2">
+                      Interactive tool to visualize how fire spreads in different environments and conditions.
+                    </p>
+                    <Link href="/adult/simulation">
+                      <Button size="sm" className="bg-secondary hover:bg-secondary/90 text-secondary-foreground w-full sm:w-auto">
+                        Launch Simulator
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </SpotlightCard>
         </div>
 
         {/* Search Bar */}
@@ -163,36 +163,35 @@ export default function AdultPage() {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredBlogs.map((blog) => (
                 <Link key={blog.id} href={`/adult/blog/${blog.id}`}>
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-                    <CardHeader className="pb-3">
-                      {blog.imageUrl && (
-                        <div className="aspect-video bg-muted rounded-lg overflow-hidden mb-3">
-                          <img
-                            src={blog.imageUrl || "/placeholder.svg"}
-                            alt={blog.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = `/placeholder.svg?height=200&width=400&query=${encodeURIComponent(blog.title)}`
-                            }}
-                          />
-                        </div>
-                      )}
-                      <CardTitle className="text-lg line-clamp-2">{blog.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground line-clamp-3 mb-4">{blog.excerpt}</p>
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <User className="h-3 w-3" />
-                          <span>{blog.author}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          <span>{blog.createdAt}</span>
+                  <TiltedCard
+                    imageSrc={blog.imageUrl || "/placeholder.svg?height=300&width=400"}
+                    altText={blog.title}
+                    captionText="Click to read"
+                    containerHeight="280px"
+                    containerWidth="100%"
+                    imageHeight="280px"
+                    imageWidth="100%"
+                    scaleOnHover={1.05}
+                    rotateAmplitude={10}
+                    showTooltip={true}
+                    displayOverlayContent={true}
+                    overlayContent={
+                      <div className="text-white">
+                        <h3 className="font-bold text-lg line-clamp-2 mb-2">{blog.title}</h3>
+                        <p className="text-sm text-white/80 line-clamp-2 mb-3">{blog.excerpt}</p>
+                        <div className="flex items-center justify-between text-xs text-white/70">
+                          <div className="flex items-center gap-1">
+                            <User className="h-3 w-3" />
+                            <span>{blog.author}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>{blog.createdAt}</span>
+                          </div>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                    }
+                  />
                 </Link>
               ))}
             </div>
@@ -203,65 +202,69 @@ export default function AdultPage() {
         <div className="mt-12">
           <h2 className="text-2xl font-bold mb-6 text-foreground">Quick Safety Tips</h2>
           <div className="grid md:grid-cols-2 gap-6">
-            <Card className="bg-gradient-to-br from-accent/5 to-secondary/5">
-              <CardHeader>
-                <CardTitle className="text-lg">Home Fire Prevention</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm text-foreground">
-                  <li className="flex items-start gap-2">
-                    <span className="text-accent mt-1">•</span>
-                    <span>Install smoke detectors on every level of your home</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-accent mt-1">•</span>
-                    <span>Test smoke alarms monthly and replace batteries annually</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-accent mt-1">•</span>
-                    <span>Keep fire extinguishers in accessible locations</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-accent mt-1">•</span>
-                    <span>Never leave cooking unattended</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-accent mt-1">•</span>
-                    <span>Keep flammable materials away from heat sources</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+            <SpotlightCard spotlightColor="rgba(245, 158, 11, 0.2)">
+              <Card className="bg-gradient-to-br from-accent/5 to-secondary/5 h-full">
+                <CardHeader>
+                  <CardTitle className="text-lg">Home Fire Prevention</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm text-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span>Install smoke detectors on every level of your home</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span>Test smoke alarms monthly and replace batteries annually</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span>Keep fire extinguishers in accessible locations</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span>Never leave cooking unattended</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span>Keep flammable materials away from heat sources</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </SpotlightCard>
 
-            <Card className="bg-gradient-to-br from-secondary/5 to-primary/5">
-              <CardHeader>
-                <CardTitle className="text-lg">Emergency Response</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm text-foreground">
-                  <li className="flex items-start gap-2">
-                    <span className="text-secondary mt-1">•</span>
-                    <span>Create and practice a fire escape plan with your family</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-secondary mt-1">•</span>
-                    <span>Know two ways out of every room</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-secondary mt-1">•</span>
-                    <span>Establish a meeting point outside your home</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-secondary mt-1">•</span>
-                    <span>Call 911 immediately in case of fire</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-secondary mt-1">•</span>
-                    <span>Never go back inside a burning building</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+            <SpotlightCard spotlightColor="rgba(139, 92, 246, 0.2)">
+              <Card className="bg-gradient-to-br from-secondary/5 to-primary/5 h-full">
+                <CardHeader>
+                  <CardTitle className="text-lg">Emergency Response</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm text-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-secondary mt-1">•</span>
+                      <span>Create and practice a fire escape plan with your family</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-secondary mt-1">•</span>
+                      <span>Know two ways out of every room</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-secondary mt-1">•</span>
+                      <span>Establish a meeting point outside your home</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-secondary mt-1">•</span>
+                      <span>Call 911 immediately in case of fire</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-secondary mt-1">•</span>
+                      <span>Never go back inside a burning building</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </SpotlightCard>
           </div>
         </div>
       </main>

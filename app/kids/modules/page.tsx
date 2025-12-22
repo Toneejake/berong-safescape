@@ -100,7 +100,7 @@ export default function ModulesPage() {
     ]
 
     setModules(moduleData)
-    
+
     // Calculate overall progress
     const completedCount = moduleData.filter(m => m.isCompleted).length
     const totalCount = moduleData.length
@@ -109,7 +109,7 @@ export default function ModulesPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
           <p className="text-xl text-gray-600 font-semibold">Loading your lessons...</p>
@@ -119,7 +119,7 @@ export default function ModulesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen">
       <Navigation />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -181,17 +181,16 @@ export default function ModulesPage() {
         {/* Modules List */}
         <div className="space-y-4">
           <h2 className="text-2xl font-black text-gray-800 mb-4">📚 Learning Modules</h2>
-          
+
           {modules.map((module) => (
-            <Card 
+            <Card
               key={module.id}
-              className={`overflow-hidden transition-all hover:shadow-xl ${
-                module.isCompleted 
-                  ? 'border-4 border-green-500 bg-green-50' 
-                  : module.isLocked 
+              className={`overflow-hidden transition-all hover:shadow-xl ${module.isCompleted
+                  ? 'border-4 border-green-500 bg-green-50'
+                  : module.isLocked
                     ? 'border-4 border-gray-300 bg-gray-50 opacity-70'
                     : 'border-4 border-blue-400 bg-white hover:border-blue-600'
-              }`}
+                }`}
             >
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">

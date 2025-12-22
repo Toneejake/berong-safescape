@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Play, Lock, CheckCircle } from "lucide-react"
+import { Play, Lock, CheckCircle, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -53,9 +53,86 @@ export function ContentCard({ content, onClick }: ContentCardProps) {
     hard: "bg-red-500",
   }
 
-  const cardContent = (
+  // Mobile compact card layout (small vertical cards for 2-column grid)
+  const mobileCardContent = (
     <Card className={cn(
-      "overflow-hidden transition-all duration-300 border-4",
+      "overflow-hidden transition-all duration-300 sm:hidden border-2",
+      content.isLocked
+        ? "opacity-60 bg-gray-50 border-gray-200"
+        : "border-transparent hover:border-yellow-400 hover:shadow-lg active:scale-[0.98]"
+    )}>
+      {/* Compact Image/Emoji Section */}
+      <div className={cn(
+        "relative h-20 flex items-center justify-center bg-gradient-to-br",
+        typeColors[content.type]
+      )}>
+        {/* Status badges */}
+        {content.isNew && (
+          <div className="absolute top-1 right-1">
+            <Badge className="bg-red-500 text-white text-[9px] px-1 py-0 shadow animate-pulse">
+              NEW
+            </Badge>
+          </div>
+        )}
+        {content.isCompleted && (
+          <div className="absolute top-1 right-1">
+            <Badge className="bg-green-500 text-white text-[9px] px-1 py-0 shadow">
+              ✓
+            </Badge>
+          </div>
+        )}
+
+        {/* Lock overlay */}
+        {content.isLocked && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <Lock className="h-6 w-6 text-white" />
+          </div>
+        )}
+
+        {/* Content display */}
+        {content.emoji ? (
+          <div className="text-3xl">{content.emoji}</div>
+        ) : content.imageUrl && !imageError ? (
+          <img
+            src={content.imageUrl}
+            alt={content.title}
+            className="w-full h-full object-cover"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="text-3xl">{typeIcons[content.type]}</div>
+        )}
+
+        {/* Difficulty badge */}
+        {content.difficulty && (
+          <div className="absolute bottom-1 right-1">
+            <Badge className={cn(difficultyColors[content.difficulty], "text-white text-[8px] px-1 py-0")}>
+              {content.difficulty}
+            </Badge>
+          </div>
+        )}
+      </div>
+
+      {/* Content Section */}
+      <CardContent className="p-2 bg-white">
+        <h3 className="font-bold text-[11px] text-gray-800 line-clamp-2 leading-tight mb-1">
+          {content.title}
+        </h3>
+
+        {!content.isLocked && (
+          <div className="flex items-center gap-0.5 text-blue-600 font-semibold text-[10px]">
+            <span>{content.type === "game" ? "Play" : content.type === "video" ? "Watch" : "Start"}</span>
+            <Play className="h-2.5 w-2.5" />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+
+  // Desktop/Tablet full card layout
+  const desktopCardContent = (
+    <Card className={cn(
+      "overflow-hidden transition-all duration-300 border-4 hidden sm:block",
       content.isLocked
         ? "opacity-60 border-gray-300 bg-gray-50"
         : "border-transparent hover:border-yellow-400 hover:shadow-2xl hover:-translate-y-2"
@@ -123,7 +200,7 @@ export function ContentCard({ content, onClick }: ContentCardProps) {
         <h3 className="font-black text-xl mb-2 text-gray-800 line-clamp-2 group-hover:text-blue-600 transition-colors">
           {content.title}
         </h3>
-        
+
         {content.description && (
           <p className="text-sm text-gray-600 mb-3 line-clamp-2">
             {content.description}
@@ -161,14 +238,17 @@ export function ContentCard({ content, onClick }: ContentCardProps) {
   if (content.isLocked) {
     return (
       <div onClick={onClick} className="group block">
-        {cardContent}
+        {mobileCardContent}
+        {desktopCardContent}
       </div>
     )
   }
 
   return (
     <Link href={content.href} onClick={onClick} className="group block cursor-pointer">
-      {cardContent}
+      {mobileCardContent}
+      {desktopCardContent}
     </Link>
   )
 }
+

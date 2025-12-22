@@ -50,7 +50,7 @@ export default function SafeScapeModulePage() {
     const handleMessage = async (event: MessageEvent) => {
       if (event.data?.type === "SAFESCAPE_SECTION_COMPLETE") {
         const { moduleNum, sectionData, completed } = event.data;
-        
+
         try {
           await fetch("/api/kids/safescape/progress", {
             method: "POST",
@@ -69,7 +69,7 @@ export default function SafeScapeModulePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-orange-50 to-red-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <Navigation />
         <div className="flex items-center justify-center h-96">
           <p className="text-muted-foreground">Loading Module {moduleId}...</p>
@@ -79,14 +79,14 @@ export default function SafeScapeModulePage() {
   }
 
   const moduleTitle = MODULE_TITLES[moduleId] || `Module ${moduleId}`;
-  
+
   // Build iframe URL with user params
-  const iframeSrc = user 
+  const iframeSrc = user
     ? `/modules/module_${moduleId}/index.html?userId=${user.id}&userName=${encodeURIComponent(user.name)}`
     : `/modules/module_${moduleId}/index.html`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-red-50">
+    <div className="min-h-screen">
       <Navigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Section */}

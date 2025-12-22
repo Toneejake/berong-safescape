@@ -4,6 +4,10 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/lib/auth-context"
 import { Chatbot } from "@/components/chatbot"
+import { Suspense } from "react"
+import { PageLoader } from "@/components/page-loader"
+import { LogoutLoader } from "@/components/logout-loader"
+import { LoginLoader } from "@/components/login-loader"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,10 +28,15 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="antialiased relative min-h-screen">
+        {/* Page Loader for transitions */}
+        <Suspense fallback={null}>
+          <PageLoader />
+        </Suspense>
+
         {/* Background Image Layer - 20% opacity */}
         <div
-          className="fixed inset-0 opacity-20 bg-cover bg-center z-0 pointer-events-none"
-          style={{ backgroundImage: "url('/bfp-firefighters-in-action.jpg')" }}
+          className="fixed inset-0 opacity-20 bg-cover z-0 pointer-events-none"
+          style={{ backgroundImage: "url('/web-background-image.jpg')", backgroundPosition: 'center 80%' }}
         />
 
         {/* Content Layer - Full opacity */}
@@ -35,9 +44,12 @@ export default function RootLayout({
           <AuthProvider>
             {children}
             <Chatbot />
+            <LoginLoader />
+            <LogoutLoader />
           </AuthProvider>
         </div>
       </body>
     </html>
   )
 }
+

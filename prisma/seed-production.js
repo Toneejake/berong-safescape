@@ -91,7 +91,7 @@ async function main() {
       {
         title: 'BFP Firefighters in Action',
         altText: 'BFP Firefighters in Action',
-        imageUrl: '/bfp-firefighters-in-action.jpg',
+        imageUrl: '/web-background-image.jpg',
         order: 1,
         isActive: true,
       },

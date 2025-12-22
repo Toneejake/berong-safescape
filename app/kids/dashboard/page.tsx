@@ -9,6 +9,7 @@ import { KidsNavBar, ContentCategory } from "@/components/kids-nav-bar"
 import { ContentGrid } from "@/components/content-grid"
 import { ContentCardData } from "@/components/content-card"
 import { Footer } from "@/components/footer"
+import Particles from "@/components/ui/particles"
 
 export default function KidsDashboardPage() {
   const router = useRouter()
@@ -111,7 +112,7 @@ export default function KidsDashboardPage() {
         description: "Defend your house from fire hazards in this strategy game",
         type: "game",
         emoji: "🏠",
-        href: "/kids/games/House-Player-Defense",
+        href: "/kids/games/house-player-defense",
         difficulty: "hard",
         category: "games"
       },
@@ -166,39 +167,61 @@ export default function KidsDashboardPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-xl text-gray-600 font-semibold">Loading your learning adventure...</p>
-        </div>
-      </div>
-    )
+    return null // Global PageLoader handles loading
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-purple-50 to-pink-50">
-      <Navigation />
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Animated Particles Background - Fire themed */}
+      <Particles
+        className="z-0"
+        quantity={100}
+        color="#ef4444"
+        size={2.5}
+        staticity={30}
+        ease={80}
+      />
+      <Particles
+        className="z-0"
+        quantity={60}
+        color="#f97316"
+        size={3}
+        staticity={50}
+        ease={60}
+      />
+      <Particles
+        className="z-0"
+        quantity={40}
+        color="#fbbf24"
+        size={2}
+        staticity={40}
+        ease={70}
+      />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Banner */}
-        <KidsWelcomeBanner />
+      <div className="relative z-10">
+        <Navigation />
 
-        {/* Navigation Bar */}
-        <KidsNavBar 
-          activeCategory={activeCategory}
-          onCategoryChange={setActiveCategory}
-        />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Welcome Banner */}
+          <KidsWelcomeBanner />
 
-        {/* Content Grid */}
-        <ContentGrid 
-          contents={filteredContent}
-          emptyMessage={`No ${activeCategory === "all" ? "" : activeCategory} content available yet. Check back soon! 🎉`}
-        />
-      </main>
+          {/* Navigation Bar */}
+          <KidsNavBar
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+          />
 
-      {/* Footer */}
-      <Footer />
+          {/* Content Grid */}
+          <ContentGrid
+            contents={filteredContent}
+            emptyMessage={`No ${activeCategory === "all" ? "" : activeCategory} content available yet. Check back soon! 🎉`}
+          />
+        </main>
+
+        {/* Footer */}
+        <Footer />
+      </div>
     </div>
   )
 }
+

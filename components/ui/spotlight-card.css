@@ -1,0 +1,25 @@
+.spotlight-card-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.spotlight-card-wrapper:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.25);
+}
+
+.spotlight-gradient {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    transition: opacity 0.4s ease;
+    border-radius: inherit;
+}
+
+/* Ensure child cards fill the wrapper */
+.spotlight-card-wrapper>*:first-child {
+    height: 100%;
+}

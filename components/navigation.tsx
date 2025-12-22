@@ -1,12 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Bell, LogOut, User, Menu, X, Home, Users, Briefcase, Baby, Shield } from "lucide-react"
 import Image from "next/image"
 import { NotificationPopover } from "@/components/ui/notification-popover"
+import GooeyNav, { GooeyNavItem } from "@/components/ui/gooey-nav"
 
 export function Navigation() {
   const { user, logout, isAuthenticated } = useAuth()
@@ -33,11 +34,11 @@ export function Navigation() {
   }, [])
 
   return (
-    <nav className="bg-red-700 sticky top-0 z-50 shadow-xl relative overflow-hidden">
+    <nav className="bg-red-700 sticky top-0 z-50 shadow-xl relative">
       {/* Background Image Layer - 10% opacity */}
       <div
         className="absolute inset-0 opacity-10 bg-cover bg-center"
-        style={{ backgroundImage: "url('/bfp-firefighters-in-action.jpg')" }}
+        style={{ backgroundImage: "url('/web-background-image.jpg')" }}
       />
 
       {/* Content Layer - Full opacity */}
@@ -46,70 +47,48 @@ export function Navigation() {
           <div className="flex items-center justify-between gap-4">
 
             {/* LEFT SECTION: Logo + Branding */}
-            <div className="flex items-center gap-3 flex-shrink-0">
+            <Link href="/" className="flex items-center gap-2 sm:gap-3 flex-shrink-0 hover:opacity-90 transition-opacity cursor-pointer">
               {/* Logo */}
               <Image
                 src="/bfp logo.png"
                 alt="Bureau of Fire Protection Logo"
                 width={55}
                 height={55}
-                className="rounded-full bg-white p-1 object-contain shadow-md"
+                className="rounded-full bg-white p-1 object-contain shadow-md w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14"
               />
 
-              {/* Branding */}
-              <div>
-                <h1 className="text-white text-sm md:text-base font-bold leading-tight whitespace-nowrap">
-                  BUREAU OF FIRE PROTECTION STA CRUZ LAGUNA
+              {/* Branding - Compact on mobile */}
+              <div className="min-w-0">
+                {/* Full branding on desktop, abbreviated on mobile */}
+                <h1 className="text-white font-bold leading-tight">
+                  <span className="hidden sm:inline text-sm md:text-base">BUREAU OF FIRE PROTECTION STA CRUZ LAGUNA</span>
+                  <span className="sm:hidden text-sm">BFP Sta Cruz</span>
                 </h1>
-                <p className="text-yellow-400 font-semibold text-xs md:text-sm">Berong E-Learning</p>
-                <p className="text-gray-300 text-xs">Fire Safety Education Platform</p>
+                <p className="text-yellow-400 font-semibold text-xs">Berong E-Learning</p>
+                <p className="text-gray-300 text-xs hidden sm:block">Fire Safety Education Platform</p>
               </div>
-            </div>
+            </Link>
 
-            {/* CENTER SECTION: Nav Links - Desktop */}
-            <div className="hidden lg:flex items-center gap-1 flex-grow justify-center">
-              <Link
-                href="/"
-                className="text-white font-semibold text-xs hover:bg-red-600 transition-colors px-3 py-1 rounded"
-              >
-                DASHBOARD
-              </Link>
-
-              {isAuthenticated && user?.permissions.accessProfessional && (
-                <Link
-                  href="/professional"
-                  className="text-white font-semibold text-xs hover:bg-red-600 transition-colors px-3 py-1 rounded"
-                >
-                  PROFESSIONAL
-                </Link>
-              )}
-
-              {isAuthenticated && user?.permissions.accessAdult && (
-                <Link
-                  href="/adult"
-                  className="text-white font-semibold text-xs hover:bg-red-600 transition-colors px-3 py-1 rounded"
-                >
-                  ADULTS
-                </Link>
-              )}
-
-              {isAuthenticated && user?.permissions.accessKids && (
-                <Link
-                  href="/kids"
-                  className="text-white font-semibold text-xs hover:bg-red-600 transition-colors px-3 py-1 rounded"
-                >
-                  KIDS
-                </Link>
-              )}
-
-              {isAuthenticated && user?.role === "admin" && (
-                <Link
-                  href="/admin"
-                  className="text-white font-semibold text-xs hover:bg-red-600 transition-colors px-3 py-1 rounded"
-                >
-                  ADMIN
-                </Link>
-              )}
+            {/* CENTER SECTION: GooeyNav Links - Desktop */}
+            <div className="hidden lg:flex items-center flex-grow justify-center">
+              <GooeyNav
+                items={[
+                  { label: 'DASHBOARD', href: '/' },
+                  ...(isAuthenticated && user?.permissions.accessProfessional
+                    ? [{ label: 'PROFESSIONAL', href: '/professional' }]
+                    : []),
+                  ...(isAuthenticated && user?.permissions.accessAdult
+                    ? [{ label: 'ADULTS', href: '/adult' }]
+                    : []),
+                  ...(isAuthenticated && user?.permissions.accessKids
+                    ? [{ label: 'KIDS', href: '/kids' }]
+                    : []),
+                  ...(isAuthenticated && user?.role === 'admin'
+                    ? [{ label: 'ADMIN', href: '/admin' }]
+                    : []),
+                ]}
+                particleCount={12}
+              />
             </div>
 
             {/* RIGHT SECTION: Time + User Info + Icon Buttons */}
@@ -127,27 +106,42 @@ export function Navigation() {
                 )}
               </div>
 
-              {/* Icon Buttons */}
+              {/* Icon Buttons with hover animations */}
               {isAuthenticated ? (
                 <div className="flex gap-2">
-                  <NotificationPopover />
-                  <Link href="/profile">
+                  <div className="relative group">
+                    <NotificationPopover />
+                    <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/90 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[9999] pointer-events-none">
+                      Notifications
+                    </span>
+                  </div>
+                  <div className="relative group">
+                    <Link href="/profile">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 border-white/50 text-white bg-transparent hover:bg-white hover:text-red-700 hover:border-white transition-all hover:scale-110"
+                      >
+                        <User className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/90 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[9999] pointer-events-none">
+                      Profile
+                    </span>
+                  </div>
+                  <div className="relative group">
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-9 w-9 border-white text-white hover:bg-red-600 hover:border-white bg-transparent"
+                      onClick={logout}
+                      className="h-9 w-9 border-white text-white hover:bg-red-600 hover:border-white bg-transparent transition-transform hover:scale-110"
                     >
-                      <User className="h-4 w-4" />
+                      <LogOut className="h-4 w-4" />
                     </Button>
-                  </Link>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={logout}
-                    className="h-9 w-9 border-white text-white hover:bg-red-600 hover:border-white bg-transparent"
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </Button>
+                    <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/90 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[9999] pointer-events-none">
+                      Logout
+                    </span>
+                  </div>
                 </div>
               ) : (
                 <Link href="/auth">
@@ -157,11 +151,11 @@ export function Navigation() {
                 </Link>
               )}
 
-              {/* Mobile Menu Button */}
+              {/* Mobile Menu Button - More prominent */}
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
-                className="lg:hidden text-white hover:bg-red-600"
+                className="lg:hidden text-white border-white/50 hover:bg-white hover:text-red-700 h-10 w-10"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}

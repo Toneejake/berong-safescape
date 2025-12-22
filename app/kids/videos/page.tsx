@@ -54,7 +54,7 @@ export default function KidsVideosPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
           <p className="text-xl text-gray-600 font-semibold">Loading videos...</p>
@@ -64,7 +64,7 @@ export default function KidsVideosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50">
+    <div className="min-h-screen">
       <Navigation />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -118,11 +118,10 @@ export default function KidsVideosPage() {
             <Card
               key={video.id}
               onClick={() => setSelectedVideo(video)}
-              className={`cursor-pointer transition-all border-4 hover:shadow-xl hover:-translate-y-1 ${
-                selectedVideo.id === video.id 
-                  ? 'border-purple-500 bg-purple-50 scale-105' 
+              className={`cursor-pointer transition-all border-4 hover:shadow-xl hover:-translate-y-1 ${selectedVideo.id === video.id
+                  ? 'border-purple-500 bg-purple-50 scale-105'
                   : 'border-transparent hover:border-purple-300'
-              }`}
+                }`}
             >
               <CardContent className="p-5">
                 {/* Thumbnail */}
@@ -132,7 +131,7 @@ export default function KidsVideosPage() {
                     <Play className="h-16 w-16 text-white drop-shadow-lg" />
                   </div>
                 </div>
-                
+
                 {/* Info */}
                 <h3 className="font-black text-lg text-gray-800 mb-2 line-clamp-2">
                   {video.title}
@@ -140,7 +139,7 @@ export default function KidsVideosPage() {
                 <p className="text-sm text-gray-600 line-clamp-2">
                   {video.description}
                 </p>
-                
+
                 {selectedVideo.id === video.id && (
                   <div className="mt-3 flex items-center gap-2 text-purple-600 font-bold text-sm">
                     <Play className="h-4 w-4" />

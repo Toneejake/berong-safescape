@@ -114,7 +114,7 @@ export default function QuizPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-secondary/20 to-secondary/10">
+      <div className="min-h-screen">
         <Navigation />
         <div className="flex items-center justify-center h-96">
           <p className="text-muted-foreground">Loading...</p>
@@ -126,7 +126,7 @@ export default function QuizPage() {
   if (quizComplete) {
     const percentage = (score / quizQuestions.length) * 100
     return (
-      <div className="min-h-screen bg-gradient-to-b from-secondary/20 to-secondary/10">
+      <div className="min-h-screen">
         <Navigation />
         <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Card className="border-4 border-secondary">
@@ -179,7 +179,7 @@ export default function QuizPage() {
   const question = quizQuestions[currentQuestion]
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-secondary/20 to-secondary/10">
+    <div className="min-h-screen">
       <Navigation />
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -207,8 +207,7 @@ export default function QuizPage() {
                   key={index}
                   onClick={() => handleAnswerSelect(index)}
                   disabled={showResult}
-                  className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
-                    selectedAnswer === index
+                  className={`w-full p-4 text-left rounded-lg border-2 transition-all ${selectedAnswer === index
                       ? showResult
                         ? index === question.correctAnswer
                           ? "border-chart-4 bg-chart-4/10"
@@ -217,7 +216,7 @@ export default function QuizPage() {
                       : showResult && index === question.correctAnswer
                         ? "border-chart-4 bg-chart-4/10"
                         : "border-border hover:border-secondary hover:bg-secondary/5"
-                  } ${showResult ? "cursor-not-allowed" : "cursor-pointer"}`}
+                    } ${showResult ? "cursor-not-allowed" : "cursor-pointer"}`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-foreground">{option}</span>

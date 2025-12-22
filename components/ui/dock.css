@@ -1,0 +1,91 @@
+.dock-outer-fixed {
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 50;
+}
+
+.dock-panel-fixed {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    height: 44px;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    background-color: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0 0.5rem;
+}
+
+.dock-item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.2s ease;
+    flex-shrink: 0;
+}
+
+.dock-item:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.dock-item:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
+
+.dock-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+/* Label appearing BELOW the icon */
+.dock-label-below {
+    position: absolute;
+    bottom: -2rem;
+    left: 50%;
+    width: fit-content;
+    white-space: pre;
+    border-radius: 0.375rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background-color: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(10px);
+    padding: 0.2rem 0.6rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #fff;
+    transform: translateX(-50%);
+    z-index: 9999;
+    pointer-events: none;
+}
+
+/* Notification badge styling for dock */
+.dock-notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background-color: #eab308;
+    color: #7c2d12;
+    font-size: 0.625rem;
+    font-weight: bold;
+    min-width: 1rem;
+    height: 1rem;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.25rem;
+}

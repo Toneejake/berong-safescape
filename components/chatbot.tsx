@@ -4,8 +4,11 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { MessageCircle, X, Send } from "lucide-react"
+import { MessageCircle, X, Send, Sparkles } from "lucide-react"
 import Image from "next/image"
+import { motion, AnimatePresence } from "motion/react"
+import { useAuth } from "@/lib/auth-context"
+import Link from "next/link"
 
 interface Message {
   id: string
@@ -22,6 +25,7 @@ interface QuickQuestion {
 }
 
 export function Chatbot() {
+  const { isAuthenticated } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState("")
@@ -48,10 +52,14 @@ export function Chatbot() {
     if (isOpen) {
       // Add initial welcome message when the chatbot opens
       if (messages.length === 0) {
+        const welcomeMessage = isAuthenticated
+          ? "Hello! I'm Berong the BFP Sta Cruz assistant. I'm powered by AI to help you with fire safety questions. Ask me anything!"
+          : "Hello! I'm Berong the BFP Sta Cruz assistant. How can I help you with fire safety today?\n\n💡 Tip: Sign in to unlock AI-powered responses for more personalized help!"
+
         setMessages([
           {
             id: "1",
-            text: "Hello! I'm Berong the BFP Sta Cruz assistant. How can I help you with fire safety today?",
+            text: welcomeMessage,
             sender: "bot",
             timestamp: new Date(),
           }
@@ -66,7 +74,7 @@ export function Chatbot() {
         loadQuickQuestions()
       }
     }
-  }, [isOpen, messages.length, quickQuestions])
+  }, [isOpen, messages.length, quickQuestions, isAuthenticated])
 
   const handleSend = async () => {
     if (!inputValue.trim()) return
@@ -114,8 +122,13 @@ export function Chatbot() {
   }
 
   const generateBotResponse = async (input: string): Promise<string> => {
+    // Only use AI for authenticated users
+    if (!isAuthenticated) {
+      return generateRuleBasedResponse(input) + "\n\n💡 Sign in for AI-powered responses!"
+    }
+
     try {
-      // First try the AI backend
+      // Use AI backend for logged-in users
       const response = await fetch('/api/chatbot/ai-response', {
         method: 'POST',
         headers: {
@@ -166,163 +179,210 @@ export function Chatbot() {
 
   return (
     <>
-      {/* Chatbot Toggle Button */}
-      {!isOpen && (
-        <>
-          {/* Speech Bubble Tooltip */}
-          <div className="fixed bottom-24 right-6 z-50 animate-bounce">
-            <div className="relative bg-white text-black px-4 py-2 rounded-lg shadow-lg">
-              <p className="text-sm font-medium whitespace-nowrap">
-                Hi, I'm Berong!
-              </p>
+      {/* Chatbot Toggle Button - Always visible */}
+      <div className="fixed bottom-6 right-6 z-[60]">
+        {/* Speech Bubble Tooltip - Only show when closed */}
+        <AnimatePresence>
+          {!isOpen && (
+            <motion.div
+              className="absolute -top-16 right-0"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className="relative bg-white text-black px-4 py-2 rounded-lg shadow-lg animate-bounce">
+                <p className="text-sm font-medium whitespace-nowrap">
+                  Hi, I'm Berong!
+                </p>
 
-              {/* Downward Arrow */}
-              <div
-                className="absolute -bottom-2 right-6 w-0 h-0"
-                style={{
-                  borderLeft: '8px solid transparent',
-                  borderRight: '8px solid transparent',
-                  borderTop: '8px solid white'
-                }}
-              />
-            </div>
-          </div>
+                {/* Downward Arrow */}
+                <div
+                  className="absolute -bottom-2 right-6 w-0 h-0"
+                  style={{
+                    borderLeft: '8px solid transparent',
+                    borderRight: '8px solid transparent',
+                    borderTop: '8px solid white'
+                  }}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          {/* Chatbot Button */}
+        {/* Chatbot Button - Always visible, toggles window */}
+        <motion.div
+          animate={{ scale: isOpen ? 0.9 : 1 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+        >
           <Button
-            onClick={() => setIsOpen(true)}
-            // UPDATED: Added 'p-0' to remove padding and 'overflow-hidden' to clip the image
-            className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-primary shadow-lg hover:bg-primary/90 z-50 p-0 overflow-hidden"
+            onClick={() => setIsOpen(!isOpen)}
+            className={`h-14 w-14 rounded-full shadow-lg p-0 overflow-hidden transition-all duration-200 ${isOpen
+              ? 'bg-red-600 hover:bg-red-700 ring-2 ring-white ring-offset-2'
+              : 'bg-primary hover:bg-primary/90 hover:scale-110'
+              }`}
             size="icon"
           >
-            <Image
-              src="/RD Logo.png"
-              alt="Chatbot"
-              // UPDATED: Increased size to match button (56px = h-14)
-              width={56}
-              height={56}
-              // UPDATED: Changed to w-full h-full object-cover to fill the circle
-              className="w-full h-full object-cover"
-            />
-          </Button>
-        </>
-      )}
-
-      {/* Chatbot Window */}
-      {isOpen && (
-        <Card className="fixed bottom-6 right-6 w-full max-w-sm h-[70vh] min-h-[400px] flex flex-col shadow-2xl z-50 border-secondary p-0 overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b bg-primary text-primary-foreground rounded-t-lg">
-            <div className="flex items-center gap-2">
+            {isOpen ? (
+              <X className="h-6 w-6 text-white" />
+            ) : (
               <Image
                 src="/RD Logo.png"
-                alt="BFP Assistant"
-                width={20}
-                height={20}
-                className="h-5 w-5 object-contain rounded-full"
+                alt="Chatbot"
+                width={56}
+                height={56}
+                className="w-full h-full object-cover"
               />
-              <h3 className="font-semibold">BFP Assistant</h3>
-            </div>
-            <Button
-              onClick={() => setIsOpen(false)}
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+            )}
+          </Button>
+        </motion.div>
+      </div>
 
-          {/* Quick Questions Section */}
-          {loadingQuestions ? (
-            <div className="p-6 text-center">
-              <div className="animate-pulse text-xs text-muted-foreground">Loading suggestions...</div>
-            </div>
-          ) : Object.keys(quickQuestions).length > 0 && showQuickQuestions ? (
-            <div className="p-4 bg-gray-50/50 border-b backdrop-blur-sm">
-
-              {/* Header with Icon */}
-              <div className="flex items-center gap-2 mb-3">
-                <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Suggested Topics
-                </h4>
+      {/* Chatbot Window - Positioned above chathead */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{
+              opacity: 0,
+              scale: 0,
+              originX: 1,
+              originY: 1
+            }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              originX: 1,
+              originY: 1
+            }}
+            exit={{
+              opacity: 0,
+              scale: 0,
+              originX: 1,
+              originY: 1
+            }}
+            transition={{
+              type: "spring",
+              stiffness: 350,
+              damping: 30,
+              mass: 0.8
+            }}
+            className="fixed bottom-24 right-6 z-50"
+            style={{ transformOrigin: 'bottom right' }}
+          >
+            <Card className="w-full max-w-sm h-[60vh] min-h-[380px] max-h-[500px] flex flex-col shadow-2xl border-secondary p-0 gap-0 overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b bg-primary text-primary-foreground rounded-t-lg">
+                <div className="flex items-center gap-2">
+                  <Image
+                    src="/RD Logo.png"
+                    alt="BFP Assistant"
+                    width={20}
+                    height={20}
+                    className="h-5 w-5 object-contain rounded-full"
+                  />
+                  <h3 className="font-semibold">BFP Assistant</h3>
+                </div>
+                <Button
+                  onClick={() => setIsOpen(false)}
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
+              {/* Quick Questions Section */}
+              {loadingQuestions ? (
+                <div className="p-3 text-center">
+                  <div className="animate-pulse text-xs text-muted-foreground">Loading suggestions...</div>
+                </div>
+              ) : Object.keys(quickQuestions).length > 0 && showQuickQuestions ? (
+                <div className="py-2 px-3 bg-gray-50/50 border-b backdrop-blur-sm">
 
-              {/* Scrollable Area - Hidden Scrollbar */}
-              <div className="max-h-[110px] overflow-y-auto pr-1 space-y-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full">
-                {Object.entries(quickQuestions).map(([category, questions]) => (
-                  <div key={category} className="first:mt-0">
-                    {/* Category Header */}
-                    <h5 className="text-[10px] font-bold text-gray-400 mb-2 pl-1 uppercase">
-                      {category}
-                    </h5>
+                  {/* Header with Icon */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Suggested Topics
+                    </h4>
+                  </div>
 
-                    {/* Question Chips */}
-                    <div className="flex flex-wrap gap-2">
-                      {questions.slice(0, 4).map((question) => (
-                        <button
-                          key={question.id}
-                          onClick={() => handleQuickQuestion(question.questionText, question.responseText)}
-                          className="
+                  {/* Scrollable Area - Hidden Scrollbar */}
+                  <div className="max-h-[110px] overflow-y-auto pr-1 space-y-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full">
+                    {Object.entries(quickQuestions).map(([category, questions]) => (
+                      <div key={category} className="first:mt-0">
+                        {/* Category Header */}
+                        <h5 className="text-[10px] font-bold text-gray-400 mb-2 pl-1 uppercase">
+                          {category}
+                        </h5>
+
+                        {/* Question Chips */}
+                        <div className="flex flex-wrap gap-2">
+                          {questions.slice(0, 4).map((question) => (
+                            <button
+                              key={question.id}
+                              onClick={() => handleQuickQuestion(question.questionText, question.responseText)}
+                              className="
                             text-xs text-left px-3 py-2 rounded-xl
                             bg-white border border-gray-200 shadow-sm
                             text-gray-700 transition-all duration-200
                             hover:border-red-200 hover:bg-red-50 hover:text-red-700 hover:shadow-md
                             active:scale-95
                           "
-                        >
-                          {question.questionText}
-                        </button>
-                      ))}
+                            >
+                              {question.questionText}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {messages.map((message) => (
+                  <div key={message.id} className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}>
+                    <div
+                      className={`max-w-[80%] rounded-lg p-3 ${message.sender === "user" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
+                        }`}
+                    >
+                      <p className="text-sm">{message.text}</p>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          ) : null}
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((message) => (
-              <div key={message.id} className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}>
-                <div
-                  className={`max-w-[80%] rounded-lg p-3 ${message.sender === "user" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
-                    }`}
-                >
-                  <p className="text-sm">{message.text}</p>
+              {/* Input */}
+              <div className="p-4 border-t">
+                <div className="flex gap-2">
+                  <Input
+                    value={inputValue}
+                    onChange={(e) => {
+                      setInputValue(e.target.value);
+                      // Hide quick questions when user starts typing
+                      if (e.target.value.trim() !== '') {
+                        setShowQuickQuestions(false);
+                      }
+                    }}
+                    onKeyPress={(e) => e.key === "Enter" && handleSend()}
+                    placeholder="Ask about fire safety..."
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={handleSend}
+                    size="icon"
+                    className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-            ))}
-          </div>
-
-          {/* Input */}
-          <div className="p-4 border-t">
-            <div className="flex gap-2">
-              <Input
-                value={inputValue}
-                onChange={(e) => {
-                  setInputValue(e.target.value);
-                  // Hide quick questions when user starts typing
-                  if (e.target.value.trim() !== '') {
-                    setShowQuickQuestions(false);
-                  }
-                }}
-                onKeyPress={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Ask about fire safety..."
-                className="flex-1"
-              />
-              <Button
-                onClick={handleSend}
-                size="icon"
-                className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </Card>
-      )}
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 };

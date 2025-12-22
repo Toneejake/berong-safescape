@@ -68,7 +68,7 @@ export function NotificationPopover() {
       });
 
       if (response.ok) {
-        setNotifications(notifications.map(n => 
+        setNotifications(notifications.map(n =>
           n.id === id ? { ...n, isRead: true } : n
         ));
       } else {
@@ -105,7 +105,7 @@ export function NotificationPopover() {
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
- };
+  };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -139,19 +139,19 @@ export function NotificationPopover() {
       default:
         return "bg-primary";
     }
- };
+  };
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="border-red-200 text-red-700 hover:bg-red-50 relative"
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-9 w-9 border-white/50 text-white bg-transparent hover:bg-white hover:text-red-700 hover:border-white transition-all hover:scale-110 relative"
         >
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
-            <Badge 
+            <Badge
               className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
               variant="destructive"
             >
@@ -164,9 +164,9 @@ export function NotificationPopover() {
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="font-semibold">Notifications</h3>
           {unreadCount > 0 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={markAllAsRead}
               className="h-auto p-1 text-xs"
             >
@@ -194,11 +194,10 @@ export function NotificationPopover() {
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-3 rounded-md transition-colors ${
-                      !notification.isRead 
-                        ? "bg-accent/50 hover:bg-accent/70" 
-                        : "hover:bg-muted/50"
-                    }`}
+                    className={`p-3 rounded-md transition-colors ${!notification.isRead
+                      ? "bg-accent/50 hover:bg-accent/70"
+                      : "hover:bg-muted/50"
+                      }`}
                   >
                     <div className="flex items-start gap-3">
                       <div className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full ${getNotificationBadge(notification.type)}`}>

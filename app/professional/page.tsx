@@ -14,6 +14,8 @@ import { Shield, Video, Clock, Search, BookOpen, FileText, AlertCircle, Play } f
 import type { VideoContent } from "@/lib/mock-data"
 import { ManualsDialog } from "@/components/ui/manuals-dialog"
 import { Footer } from "@/components/footer"
+import SpotlightCard from "@/components/ui/spotlight-card"
+import "@/components/ui/spotlight-card.css"
 
 export default function ProfessionalPage() {
   const router = useRouter()
@@ -76,12 +78,12 @@ export default function ProfessionalPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Shield className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">Professional Training</h1>
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2">
+            <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Professional Training</h1>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Advanced firefighting techniques and professional development resources
           </p>
         </div>
@@ -94,43 +96,49 @@ export default function ProfessionalPage() {
           </AlertDescription>
         </Alert>
 
-        {/* Quick Links */}
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-primary">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Video className="h-5 w-5 text-primary" />
-                <CardTitle className="text-3xl">Training Videos</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">{videos.length} professional training videos</p>
-            </CardContent>
-          </Card>
+        {/* Quick Links - Horizontal on mobile, grid on desktop */}
+        <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-4 mb-6 sm:mb-8">
+          <SpotlightCard spotlightColor="rgba(220, 38, 38, 0.15)">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-primary h-full">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-3">
+                  <Video className="h-5 w-5 text-primary flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-base sm:text-xl">Training Videos</CardTitle>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">{videos.length} professional training videos</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </SpotlightCard>
 
-          <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-secondary">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-secondary" />
-                <CardTitle className="text-3xl">BFP Manuals</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Standard operating procedures and guidelines</p>
-            </CardContent>
-          </Card>
+          <SpotlightCard spotlightColor="rgba(139, 92, 246, 0.15)">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-secondary h-full">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-3">
+                  <BookOpen className="h-5 w-5 text-secondary flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-base sm:text-xl">BFP Manuals</CardTitle>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">Standard operating procedures and guidelines</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </SpotlightCard>
 
-          <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-accent">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-accent" />
-                <CardTitle className="text-3xl">Fire Codes</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Fire safety regulations and compliance</p>
-            </CardContent>
-          </Card>
+          <SpotlightCard spotlightColor="rgba(245, 158, 11, 0.15)">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-accent h-full">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-3">
+                  <FileText className="h-5 w-5 text-accent flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-base sm:text-xl">Fire Codes</CardTitle>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">Fire safety regulations and compliance</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </SpotlightCard>
         </div>
 
         {/* Search Bar */}
@@ -232,46 +240,50 @@ export default function ProfessionalPage() {
         <div className="mt-12">
           <h2 className="text-2xl font-bold mb-6 text-foreground">Additional Resources</h2>
           <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <BookOpen className="h-6 w-6 text-secondary" />
-                  <CardTitle>BFP Standard Operating Procedures</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4 text-pretty">
-                  Access comprehensive manuals covering firefighting operations, emergency response protocols, and
-                  safety procedures.
-                </p>
-                <ManualsDialog>
-                  <Button className="bg-secondary hover:bg-secondary/90 text-secondary-foreground cursor-pointer">
-                    <FileText className="h-4 w-4 mr-2" />
-                    View Manuals
-                  </Button>
-                </ManualsDialog>
-              </CardContent>
-            </Card>
+            <SpotlightCard spotlightColor="rgba(139, 92, 246, 0.2)">
+              <Card className="h-full">
+                <CardHeader>
+                  <div className="flex items-center gap-3 mb-2">
+                    <BookOpen className="h-6 w-6 text-secondary" />
+                    <CardTitle>BFP Standard Operating Procedures</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4 text-pretty">
+                    Access comprehensive manuals covering firefighting operations, emergency response protocols, and
+                    safety procedures.
+                  </p>
+                  <ManualsDialog>
+                    <Button className="bg-secondary hover:bg-secondary/90 text-secondary-foreground cursor-pointer">
+                      <FileText className="h-4 w-4 mr-2" />
+                      View Manuals
+                    </Button>
+                  </ManualsDialog>
+                </CardContent>
+              </Card>
+            </SpotlightCard>
 
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <FileText className="h-6 w-6 text-accent" />
-                  <CardTitle>Fire Code & Regulations</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4 text-pretty">
-                  Stay updated with the latest fire safety codes, building regulations, and compliance requirements.
-                </p>
-                <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" asChild>
-                  <Link href="/professional/fire-codes">
-                    <FileText className="h-4 w-4 mr-2" />
-                    View Fire Codes
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+            <SpotlightCard spotlightColor="rgba(245, 158, 11, 0.2)">
+              <Card className="h-full">
+                <CardHeader>
+                  <div className="flex items-center gap-3 mb-2">
+                    <FileText className="h-6 w-6 text-accent" />
+                    <CardTitle>Fire Code & Regulations</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4 text-pretty">
+                    Stay updated with the latest fire safety codes, building regulations, and compliance requirements.
+                  </p>
+                  <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" asChild>
+                    <Link href="/professional/fire-codes">
+                      <FileText className="h-4 w-4 mr-2" />
+                      View Fire Codes
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </SpotlightCard>
           </div>
         </div>
       </main>

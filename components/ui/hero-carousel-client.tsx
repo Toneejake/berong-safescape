@@ -34,7 +34,7 @@ export function HeroCarouselClient({ images }: HeroCarouselClientProps) {
                 <CarouselContent>
                     {images.map((image) => (
                         <CarouselItem key={image.id}>
-                            <div className="relative w-full h-96 overflow-hidden rounded-lg shadow-lg group/slide">
+                            <div className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden rounded-lg shadow-lg group/slide">
                                 <Image
                                     src={image.imageUrl}
                                     alt={image.altText}
@@ -44,10 +44,10 @@ export function HeroCarouselClient({ images }: HeroCarouselClientProps) {
                                 />
 
                                 {/* Gradient Overlay */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-8 pointer-events-none">
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4 sm:p-6 md:p-8 pointer-events-none">
                                     <div className="text-white">
-                                        <h2 className="text-3xl font-bold mb-2">{image.title}</h2>
-                                        <p className="text-lg opacity-90">Learn more about fire safety with BFP Berong.</p>
+                                        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2">{image.title}</h2>
+                                        <p className="text-sm sm:text-base md:text-lg opacity-90 line-clamp-2">Learn more about fire safety with BFP Berong.</p>
                                     </div>
                                 </div>
 
@@ -58,9 +58,9 @@ export function HeroCarouselClient({ images }: HeroCarouselClientProps) {
                                     aria-label={`View full screen image: ${image.title}`}
                                 >
                                     {/* Maximize Icon (Top Right) */}
-                                    <div className="absolute top-4 right-4 opacity-0 group-hover/slide:opacity-100 transition-opacity duration-300">
-                                        <div className="bg-black/50 backdrop-blur-sm rounded-full p-2 text-white shadow-sm">
-                                            <Maximize2 className="h-5 w-5" />
+                                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 opacity-0 group-hover/slide:opacity-100 transition-opacity duration-300">
+                                        <div className="bg-black/50 backdrop-blur-sm rounded-full p-1.5 sm:p-2 text-white shadow-sm">
+                                            <Maximize2 className="h-4 w-4 sm:h-5 sm:w-5" />
                                         </div>
                                     </div>
                                 </button>
@@ -68,8 +68,9 @@ export function HeroCarouselClient({ images }: HeroCarouselClientProps) {
                         </CarouselItem>
                     ))}
                 </CarouselContent>
-                <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-20" />
-                <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-20" />
+                {/* Hide arrows on mobile, show on tablet+ */}
+                <CarouselPrevious className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 hidden sm:flex" />
+                <CarouselNext className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 hidden sm:flex" />
             </Carousel>
 
             {/* Image Viewer Modal */}

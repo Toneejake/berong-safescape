@@ -112,7 +112,7 @@ export default function MemoryGamePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-orange-50 to-yellow-50">
+      <div className="min-h-screen">
         <Navigation />
         <div className="flex items-center justify-center h-96">
           <p className="text-gray-500">Loading...</p>
@@ -122,7 +122,7 @@ export default function MemoryGamePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-yellow-50">
+    <div className="min-h-screen">
       <Navigation />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -166,13 +166,12 @@ export default function MemoryGamePage() {
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`h-5 w-5 ${
-                          moves <= 15
+                        className={`h-5 w-5 ${moves <= 15
                             ? "text-yellow-400 fill-yellow-400"
                             : i < 3
                               ? "text-yellow-400 fill-yellow-400"
                               : "text-gray-300"
-                        }`}
+                          }`}
                       />
                     ))}
                   </div>
@@ -186,11 +185,10 @@ export default function MemoryGamePage() {
                   key={card.id}
                   onClick={() => handleCardClick(card.id)}
                   disabled={card.matched || card.flipped}
-                  className={`aspect-square rounded-lg text-4xl flex items-center justify-center transition-all transform hover:scale-105 ${
-                    card.flipped || card.matched
+                  className={`aspect-square rounded-lg text-4xl flex items-center justify-center transition-all transform hover:scale-105 ${card.flipped || card.matched
                       ? "bg-white border-2 border-bfp-blue"
                       : "bg-gradient-to-br from-bfp-blue to-purple-500 hover:from-bfp-blue/90 hover:to-purple-500/90"
-                  } ${card.matched ? "opacity-50" : ""}`}
+                    } ${card.matched ? "opacity-50" : ""}`}
                 >
                   {card.flipped || card.matched ? card.emoji : "❓"}
                 </button>

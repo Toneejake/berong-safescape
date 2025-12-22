@@ -17,11 +17,14 @@ import type { CarouselImage, BlogPost } from "@/lib/mock-data"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { SortableCarouselList } from "@/components/sortable-carousel-list"
+import { LoadingOverlay } from "@/components/ui/loading-overlay"
 
 export default function AdminPage() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuth()
   const [loading, setLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submittingMessage, setSubmittingMessage] = useState("")
   const [success, setSuccess] = useState("")
   const [error, setError] = useState("")
 
@@ -227,6 +230,10 @@ export default function AdminPage() {
       "add-quick-question",
       async () => {
         try {
+          setIsSubmitting(true);
+          setSubmittingMessage("Adding quick question...");
+          closeConfirmationDialog();
+
           const response = await fetch('/api/admin/quick-questions', {
             method: 'POST',
             headers: {
@@ -248,7 +255,7 @@ export default function AdminPage() {
           console.error('Error adding quick question:', error)
           setError("Network error occurred")
         } finally {
-          closeConfirmationDialog();
+          setIsSubmitting(false);
         }
       }
     );
@@ -294,6 +301,10 @@ export default function AdminPage() {
       "add-carousel-image",
       async () => {
         try {
+          setIsSubmitting(true);
+          setSubmittingMessage("Adding carousel image...");
+          closeConfirmationDialog();
+
           const response = await fetch('/api/admin/carousel', {
             method: 'POST',
             headers: {
@@ -316,7 +327,7 @@ export default function AdminPage() {
           console.error('Error adding carousel image:', error)
           setError("Network error occurred")
         } finally {
-          closeConfirmationDialog();
+          setIsSubmitting(false);
         }
       }
     );
@@ -398,6 +409,10 @@ export default function AdminPage() {
       "add-blog-post",
       async () => {
         try {
+          setIsSubmitting(true);
+          setSubmittingMessage("Adding blog post...");
+          closeConfirmationDialog();
+
           const blogData = {
             ...newBlog,
             authorId: user?.id || 1, // Default to first user if no current user
@@ -425,7 +440,7 @@ export default function AdminPage() {
           console.error('Error adding blog post:', error)
           setError("Network error occurred")
         } finally {
-          closeConfirmationDialog();
+          setIsSubmitting(false);
         }
       }
     );
@@ -472,6 +487,10 @@ export default function AdminPage() {
       "add-video",
       async () => {
         try {
+          setIsSubmitting(true);
+          setSubmittingMessage("Adding video...");
+          closeConfirmationDialog();
+
           const response = await fetch('/api/admin/videos', {
             method: 'POST',
             headers: {
@@ -493,7 +512,7 @@ export default function AdminPage() {
           console.error('Error adding video:', error);
           setError("Network error occurred");
         } finally {
-          closeConfirmationDialog();
+          setIsSubmitting(false);
         }
       }
     );
@@ -570,6 +589,10 @@ export default function AdminPage() {
       "add-fire-code",
       async () => {
         try {
+          setIsSubmitting(true);
+          setSubmittingMessage("Adding fire code section...");
+          closeConfirmationDialog();
+
           const response = await fetch('/api/admin/fire-codes', {
             method: 'POST',
             headers: {
@@ -591,7 +614,7 @@ export default function AdminPage() {
           console.error('Error adding fire code section:', error)
           setError("Network error occurred")
         } finally {
-          closeConfirmationDialog();
+          setIsSubmitting(false);
         }
       }
     );
@@ -628,7 +651,7 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <Navigation />
         <div className="flex items-center justify-center h-96">
           <p className="text-muted-foreground">Loading...</p>
@@ -638,17 +661,20 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Navigation />
+
+      {/* Loading Overlay for content submissions */}
+      <LoadingOverlay isLoading={isSubmitting} message={submittingMessage} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Shield className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">Admin Panel</h1>
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2">
+            <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Admin Panel</h1>
           </div>
-          <p className="text-muted-foreground">Manage content, users, and platform settings</p>
+          <p className="text-sm sm:text-base text-muted-foreground">Manage content, users, and platform settings</p>
         </div>
 
         {/* Alerts */}
@@ -668,30 +694,49 @@ export default function AdminPage() {
 
         {/* Admin Tabs */}
         <Tabs defaultValue="carousel" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 lg:w-auto">
-            <TabsTrigger value="carousel">
-              <ImageIcon className="h-4 w-4 mr-2" />
-              Carousel
+          {/* Mobile: Icons only, evenly spaced */}
+          <TabsList className="flex w-full sm:grid sm:grid-cols-6 bg-muted/50 p-1.5 rounded-xl gap-1">
+            <TabsTrigger
+              value="carousel"
+              className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all rounded-lg py-2.5 sm:py-2 px-1 sm:px-4"
+            >
+              <ImageIcon className="h-5 w-5 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden sm:inline text-sm">Carousel</span>
             </TabsTrigger>
-            <TabsTrigger value="blogs">
-              <FileText className="h-4 w-4 mr-2" />
-              Blogs
+            <TabsTrigger
+              value="blogs"
+              className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all rounded-lg py-2.5 sm:py-2 px-1 sm:px-4"
+            >
+              <FileText className="h-5 w-5 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden sm:inline text-sm">Blogs</span>
             </TabsTrigger>
-            <TabsTrigger value="videos">
-              <Video className="h-4 w-4 mr-2" />
-              Videos
+            <TabsTrigger
+              value="videos"
+              className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all rounded-lg py-2.5 sm:py-2 px-1 sm:px-4"
+            >
+              <Video className="h-5 w-5 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden sm:inline text-sm">Videos</span>
             </TabsTrigger>
-            <TabsTrigger value="users">
-              <Users className="h-4 w-4 mr-2" />
-              Users
+            <TabsTrigger
+              value="users"
+              className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all rounded-lg py-2.5 sm:py-2 px-1 sm:px-4"
+            >
+              <Users className="h-5 w-5 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden sm:inline text-sm">Users</span>
             </TabsTrigger>
-            <TabsTrigger value="quick-questions">
-              <HelpCircle className="h-4 w-4 mr-2" />
-              Quick Questions
+            <TabsTrigger
+              value="quick-questions"
+              className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all rounded-lg py-2.5 sm:py-2 px-1 sm:px-4"
+            >
+              <HelpCircle className="h-5 w-5 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden sm:inline text-sm">Q&A</span>
             </TabsTrigger>
-            <TabsTrigger value="fire-codes">
-              <BookOpen className="h-4 w-4 mr-2" />
-              Fire Codes
+            <TabsTrigger
+              value="fire-codes"
+              className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all rounded-lg py-2.5 sm:py-2 px-1 sm:px-4"
+            >
+              <BookOpen className="h-5 w-5 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden sm:inline text-sm">Fire Codes</span>
             </TabsTrigger>
           </TabsList>
 

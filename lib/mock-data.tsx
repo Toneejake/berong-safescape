@@ -28,7 +28,7 @@ export interface VideoContent {
 export const carouselImages: CarouselImage[] = [
   {
     id: "1",
-    url: "/bfp-firefighters-in-action.jpg",
+    url: "/web-background-image.jpg",
     altText: "BFP Firefighters in Action",
     title: "Serving and Protecting Our Community",
   },
