@@ -31,6 +31,8 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${POSTGRES_USER:-bfp_user}:${POSTGRES_PASSWORD:-bfp_secret_password}@postgres:5432/${POSTGRES_DB:-bfp_berong}?schema=public
       - BACKEND_URL=http://python-backend:8000
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-key}
     volumes:
       - uploads_data:/app/public/uploads
     depends_on:
