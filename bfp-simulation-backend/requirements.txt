@@ -13,3 +13,4 @@ pydantic
 nltk
 tensorflow
 keras
+google-generativeai

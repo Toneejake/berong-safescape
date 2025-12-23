@@ -56,17 +56,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   useEffect(() => {
-    // Check for stored user session
-    const storedUser = localStorage.getItem('user')
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser))
-      } catch (error) {
-        console.error('Failed to parse stored user:', error)
-        localStorage.removeItem('user')
+    // Check for stored user session from both localStorage and cookie
+    const checkAuth = async () => {
+      // First, try localStorage
+      const storedUser = localStorage.getItem('user')
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser))
+          setIsLoading(false)
+          return
+        } catch (error) {
+          console.error('Failed to parse stored user:', error)
+          localStorage.removeItem('user')
+        }
       }
+
+      // If no localStorage, check if there's a cookie by making a request
+      try {
+        const response = await fetch('/api/auth/me', {
+          method: 'GET',
+          credentials: 'include',
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.user) {
+            setUser(data.user)
+            localStorage.setItem('user', JSON.stringify(data.user))
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check auth status:', error)
+      }
+      
+      setIsLoading(false)
     }
-    setIsLoading(false)
+
+    checkAuth()
   }, [])
 
   const determinePermissions = (role: UserRole, isAdmin = false) => {

@@ -22,6 +22,7 @@ import nltk
 from nltk.stem import WordNetLemmatizer
 import tensorflow as tf
 from tensorflow.keras.models import load_model
+import google.generativeai as genai
 
 from stable_baselines3 import PPO
 from sb3_contrib import MaskablePPO
@@ -170,13 +171,30 @@ async def lifespan(app: FastAPI):
         print(f"  Chatbot will not be available, but simulation will work.")
         chatbot_model = None
     
+    # Try to initialize Gemini API
+    gemini_api_key = os.environ.get("GEMINI_API_KEY")
+    if gemini_api_key and gemini_api_key != "your-gemini-api-key":
+        try:
+            print("\\n  Initializing Google Gemini AI...")
+            genai.configure(api_key=gemini_api_key)
+            gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+            use_gemini = True
+            print("  [OK] Gemini API configured successfully")
+        except Exception as e:
+            print(f"  [WARN] Gemini API initialization failed: {e}")
+            print("  Falling back to TensorFlow chatbot model")
+            use_gemini = False
+    else:
+        print("  [INFO] GEMINI_API_KEY not configured, using TensorFlow model")
+        use_gemini = False
+    
     # Print summary
     print("\n" + "=" * 60)
     print("STARTUP SUMMARY:")
     print("=" * 60)
     print(f"  U-Net Model:     {'[OK] Loaded' if unet_model else '[FAIL] FAILED'}")
     print(f"  PPO Model:       {'[OK] Loaded' if ppo_model else '[FAIL] FAILED'}")
-    print(f"  Chatbot:         {'[OK] Loaded' if chatbot_model else '[WARN] Not Available'}")
+    print(f"  Chatbot:         {'[OK] Gemini API' if use_gemini else ('[OK] TensorFlow' if chatbot_model else '[WARN] Not Available')}")
     print("=" * 60)
     
     if not unet_model or not ppo_model:
@@ -282,6 +300,33 @@ def get_response(ints, intents_json):
 
 def chatbot_response(msg):
     """Main function to get chatbot response"""
+    global use_gemini, gemini_model
+    
+    # Use Gemini if available
+    if use_gemini and gemini_model:
+        try:
+            # Create a fire safety-focused system prompt
+            system_prompt = """You are a fire safety expert chatbot for the Bureau of Fire Protection (BFP) in the Philippines. 
+            Your role is to:
+            - Provide accurate fire safety information
+            - Explain fire prevention tips in simple Filipino and English (Taglish)
+            - Guide people on emergency procedures
+            - Be friendly, helpful, and community-oriented
+            - Keep responses concise (2-3 sentences) unless detailed explanation is needed
+            
+            Always prioritize safety and provide actionable advice."""
+            
+            # Combine system prompt with user message
+            full_prompt = f"{system_prompt}\n\nUser question: {msg}\n\nYour response:"
+            
+            response = gemini_model.generate_content(full_prompt)
+            return response.text
+        except Exception as e:
+            print(f"Gemini API error: {e}")
+            # Fallback to TensorFlow model if Gemini fails
+            pass
+    
+    # Fallback: Use TensorFlow model
     ints = predict_class(msg)
     res = get_response(ints, intents)
     return res
