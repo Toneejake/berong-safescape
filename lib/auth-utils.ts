@@ -15,7 +15,26 @@ async function ensureConnection() {
   }
 }
 
-export async function registerUser(username: string, password: string, name: string, age: number) {
+export async function registerUser(
+  username: string, 
+  password: string, 
+  name: string, 
+  age: number,
+  enhancedFields?: {
+    gender?: string;
+    barangay?: string;
+    school?: string;
+    schoolOther?: string;
+    occupation?: string;
+    occupationOther?: string;
+    gradeLevel?: string;
+    dataPrivacyConsent?: boolean;
+    profileCompleted?: boolean;
+    preTestScore?: number | null;
+    preTestCompletedAt?: Date | null;
+    engagementPoints?: number;
+  }
+) {
   try {
     await ensureConnection();
     
@@ -62,6 +81,19 @@ export async function registerUser(username: string, password: string, name: str
         name,
         age,
         role,
+        // Enhanced fields
+        gender: enhancedFields?.gender,
+        barangay: enhancedFields?.barangay,
+        school: enhancedFields?.school,
+        schoolOther: enhancedFields?.schoolOther,
+        occupation: enhancedFields?.occupation,
+        occupationOther: enhancedFields?.occupationOther,
+        gradeLevel: enhancedFields?.gradeLevel,
+        dataPrivacyConsent: enhancedFields?.dataPrivacyConsent ?? false,
+        profileCompleted: enhancedFields?.profileCompleted ?? false,
+        preTestScore: enhancedFields?.preTestScore,
+        preTestCompletedAt: enhancedFields?.preTestCompletedAt,
+        engagementPoints: enhancedFields?.engagementPoints ?? 0,
       },
       select: {
         id: true,
@@ -71,6 +103,15 @@ export async function registerUser(username: string, password: string, name: str
         age: true,
         isActive: true,
         createdAt: true,
+        barangay: true,
+        school: true,
+        occupation: true,
+        gender: true,
+        gradeLevel: true,
+        preTestScore: true,
+        postTestScore: true,
+        profileCompleted: true,
+        engagementPoints: true,
       },
     });
 
@@ -138,6 +179,15 @@ export async function loginUser(identifier: string, password: string) {
         permissions,
         isActive: user.isActive,
         createdAt: user.createdAt.toISOString(),
+        // Enhanced profile fields
+        profileCompleted: user.profileCompleted,
+        barangay: user.barangay,
+        school: user.school,
+        occupation: user.occupation,
+        gender: user.gender,
+        preTestScore: user.preTestScore,
+        postTestScore: user.postTestScore,
+        engagementPoints: user.engagementPoints,
       },
     };
   } catch (error: any) {

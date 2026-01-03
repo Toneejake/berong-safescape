@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Shield, ImageIcon, FileText, Video, Users, Plus, Trash2, AlertCircle, CheckCircle, HelpCircle, BookOpen, Search } from "lucide-react"
+import { Shield, ImageIcon, FileText, Video, Users, Plus, Trash2, AlertCircle, CheckCircle, HelpCircle, BookOpen, Search, BarChart3 } from "lucide-react"
 import type { CarouselImage, BlogPost } from "@/lib/mock-data"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
@@ -670,11 +670,23 @@ export default function AdminPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
-          <div className="flex items-center gap-2 sm:gap-3 mb-2">
-            <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Admin Panel</h1>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Admin Panel</h1>
+              </div>
+              <p className="text-sm sm:text-base text-muted-foreground">Manage content, users, and platform settings</p>
+            </div>
+            <Button 
+              onClick={() => router.push("/admin/analytics")}
+              className="bg-orange-500 hover:bg-orange-600"
+            >
+              <BarChart3 className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Community Analytics</span>
+              <span className="sm:hidden">Analytics</span>
+            </Button>
           </div>
-          <p className="text-sm sm:text-base text-muted-foreground">Manage content, users, and platform settings</p>
         </div>
 
         {/* Alerts */}

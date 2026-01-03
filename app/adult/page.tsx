@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Flame, Search, BookOpen, Calendar, User, ArrowRight, Zap, AlertCircle } from "lucide-react"
+import { Flame, Search, BookOpen, Calendar, User, ArrowRight, Zap, AlertCircle, Trophy } from "lucide-react"
 import type { BlogPost } from "@/lib/mock-data"
 import Link from "next/link"
 import { Footer } from "@/components/footer"
@@ -92,7 +92,7 @@ export default function AdultPage() {
         </Alert>
 
         {/* Feature Cards - Compact on mobile */}
-        <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-6 mb-6 sm:mb-8">
+        <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-6 mb-6 sm:mb-8">
           <SpotlightCard spotlightColor="rgba(245, 158, 11, 0.15)">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-accent h-full">
               <CardContent className="p-4 sm:p-6">
@@ -118,11 +118,33 @@ export default function AdultPage() {
                   <div className="min-w-0 flex-1">
                     <CardTitle className="text-lg sm:text-2xl mb-1 sm:mb-2">Fire Spread Simulation</CardTitle>
                     <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-4 line-clamp-2">
-                      Interactive tool to visualize how fire spreads in different environments and conditions.
+                      Interactive tool to visualize how fire spreads in different environments.
                     </p>
                     <Link href="/adult/simulation">
                       <Button size="sm" className="bg-secondary hover:bg-secondary/90 text-secondary-foreground w-full sm:w-auto">
                         Launch Simulator
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </SpotlightCard>
+
+          <SpotlightCard spotlightColor="rgba(34, 197, 94, 0.15)">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-green-500 h-full">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-start gap-3">
+                  <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-green-500 flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-lg sm:text-2xl mb-1 sm:mb-2">Post-Test Assessment</CardTitle>
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-4 line-clamp-2">
+                      Measure your fire safety knowledge improvement after learning.
+                    </p>
+                    <Link href="/assessment/post-test">
+                      <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white w-full sm:w-auto">
+                        Take Post-Test
                         <ArrowRight className="h-4 w-4 ml-2" />
                       </Button>
                     </Link>

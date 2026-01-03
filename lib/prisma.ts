@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 
+// Prisma Client singleton for Next.js
+// Includes all models: User, FloorPlan, BlogPost, etc.
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }

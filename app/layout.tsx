@@ -8,6 +8,7 @@ import { Suspense } from "react"
 import { PageLoader } from "@/components/page-loader"
 import { LogoutLoader } from "@/components/logout-loader"
 import { LoginLoader } from "@/components/login-loader"
+import { ProfileCheckWrapper } from "@/components/profile-check-wrapper"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -42,7 +43,9 @@ export default function RootLayout({
         {/* Content Layer - Full opacity */}
         <div className="relative z-10">
           <AuthProvider>
-            {children}
+            <ProfileCheckWrapper>
+              {children}
+            </ProfileCheckWrapper>
             <Chatbot />
             <LoginLoader />
             <LogoutLoader />

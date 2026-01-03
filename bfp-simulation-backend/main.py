@@ -28,8 +28,8 @@ from stable_baselines3 import PPO
 from sb3_contrib import MaskablePPO
 
 from unet import UNet
-from inference import create_grid_from_image
-from simulation import EvacuationEnv
+from inference import create_grid_from_image, analyze_floor_plan_brightness
+from simulation import EvacuationEnv, run_heuristic_simulation
 
 # Configuration
 PPO_MODEL_VERSION = "500k_steps"  # Options: "v1.5", "v2.0_lite", "500k_steps", "v2.0"
@@ -175,7 +175,7 @@ async def lifespan(app: FastAPI):
     gemini_api_key = os.environ.get("GEMINI_API_KEY")
     if gemini_api_key and gemini_api_key != "your-gemini-api-key":
         try:
-            print("\\n  Initializing Google Gemini AI...")
+            print("\n  Initializing Google Gemini AI...")
             genai.configure(api_key=gemini_api_key)
             gemini_model = genai.GenerativeModel('gemini-1.5-flash')
             use_gemini = True
@@ -352,9 +352,29 @@ init_db()
 # Pydantic Models
 class SimulationConfig(BaseModel):
     grid: List[List[int]]
-    exits: Optional[List[Tuple[int, int]]] = None  # User-placed exits (will be distributed to 248)
-    fire_position: Tuple[int, int]
-    agent_positions: List[Tuple[int, int]]
+    exits: Optional[List[Tuple[int, int]]] = None  # User-placed exits (row, col format from frontend)
+    fire_position: Tuple[int, int]  # (row, col) format from frontend
+    agent_positions: List[Tuple[int, int]]  # [(row, col), ...] format from frontend
+    # New configuration options
+    use_rl: bool = True  # If False, use heuristic mode (no 10-agent limit)
+    threshold: float = 0.5  # U-Net segmentation threshold
+    invert_mask: bool = True  # Whether to invert the mask
+    extended_fire_steps: int = 0  # Continue fire spread after all agents done
+    assembly_point: Optional[Tuple[int, int]] = None  # (row, col) for assembly area
+
+
+# Coordinate conversion utilities
+def frontend_to_backend(row: int, col: int) -> Tuple[int, int]:
+    """Convert frontend (row, col) to backend (x, y) coordinates.
+    Frontend uses row=y, col=x convention.
+    Backend A* and agent positions use (x, y).
+    """
+    return (col, row)  # x=col, y=row
+
+
+def backend_to_frontend(x: int, y: int) -> Tuple[int, int]:
+    """Convert backend (x, y) to frontend (row, col) coordinates."""
+    return (y, x)  # row=y, col=x
 
 class JobResponse(BaseModel):
     job_id: str
@@ -400,13 +420,16 @@ def distribute_exits_to_model(user_exits: List[Tuple[int, int]], grid: np.ndarra
     """
     Distribute 248 model exits across user-defined exit points.
     
+    IMPORTANT: Input exits should be in (x, y) format (backend convention).
+    Frontend sends (row, col) which should be converted to (x, y) = (col, row) before calling.
+    
     Example:
     - 1 user exit -> all 248 model exits at that location (with small offsets)
     - 2 user exits -> 124 exits each
     - 3 user exits -> 83, 83, 82 exits
     
     Args:
-        user_exits: List of (x, y) tuples where user clicked
+        user_exits: List of (x, y) tuples (backend format)
         grid: The grid array (256x256) where 0=free, 1=wall
         total_model_exits: Total exits needed for model (default 248)
     
@@ -423,7 +446,7 @@ def distribute_exits_to_model(user_exits: List[Tuple[int, int]], grid: np.ndarra
     
     distributed_exits = []
     
-    for i, (user_x, user_y) in enumerate(user_exits):
+    for i, (exit_x, exit_y) in enumerate(user_exits):
         # Calculate how many exits for this location
         count = exits_per_location + (1 if i < remainder else 0)
         
@@ -434,19 +457,22 @@ def distribute_exits_to_model(user_exits: List[Tuple[int, int]], grid: np.ndarra
             offset_x = int(radius * np.cos(angle))
             offset_y = int(radius * np.sin(angle))
             
-            exit_x = user_x + offset_x
-            exit_y = user_y + offset_y
+            new_x = exit_x + offset_x
+            new_y = exit_y + offset_y
             
             # Clamp to grid bounds
-            exit_x = max(0, min(255, exit_x))
-            exit_y = max(0, min(255, exit_y))
+            new_x = max(0, min(255, new_x))
+            new_y = max(0, min(255, new_y))
             
-            # Validate it's on free space, if not use original position
-            if grid[exit_y][exit_x] == 0:
-                distributed_exits.append((exit_x, exit_y))
+            # Validate it's on free space (grid uses [y][x] indexing!)
+            if 0 <= new_y < grid.shape[0] and 0 <= new_x < grid.shape[1]:
+                if grid[new_y][new_x] == 0:
+                    distributed_exits.append((new_x, new_y))
+                else:
+                    # Fallback to original user position
+                    distributed_exits.append((exit_x, exit_y))
             else:
-                # Fallback to original user position
-                distributed_exits.append((user_x, user_y))
+                distributed_exits.append((exit_x, exit_y))
     
     # Ensure exactly total_model_exits
     while len(distributed_exits) < total_model_exits:
@@ -513,8 +539,18 @@ async def get_chatbot_response(request: ChatbotRequest):
         return ChatbotResponse(response="I'm sorry, I encountered an error processing your request.")
 
 @app.post("/api/process-image")
-async def process_image(file: UploadFile = File(...)):
-    """Process uploaded floor plan image and return grid with original image"""
+async def process_image(
+    file: UploadFile = File(...),
+    threshold: float = 0.5,
+    invert_mask: Optional[bool] = None  # None = auto-detect
+):
+    """Process uploaded floor plan image and return grid with original image.
+    
+    Args:
+        file: Floor plan image file
+        threshold: Segmentation threshold (0.0-1.0). Lower = more walls detected.
+        invert_mask: True=rooms are bright/white, False=walls are bright/white, None=auto-detect
+    """
     # Check if U-Net model is loaded
     if unet_model is None:
         raise HTTPException(
@@ -529,6 +565,12 @@ async def process_image(file: UploadFile = File(...)):
             temp_file.write(content)
             temp_path = temp_file.name
         
+        # Auto-detect inversion if not specified
+        if invert_mask is None:
+            analysis = analyze_floor_plan_brightness(temp_path, IMAGE_SIZE)
+            invert_mask = analysis["should_invert"]
+            print(f"[PROCESS-IMAGE] Auto-detected invert_mask={invert_mask} (edge={analysis['edge_brightness']:.1f}, center={analysis['center_brightness']:.1f})")
+        
         # Load original image for base64 encoding
         original_image = Image.open(temp_path)
         # Resize to match grid size for overlay alignment
@@ -539,8 +581,15 @@ async def process_image(file: UploadFile = File(...)):
         original_image.save(buffered, format="PNG")
         img_base64 = base64.b64encode(buffered.getvalue()).decode()
         
-        # Process image with U-Net model
-        grid = create_grid_from_image(unet_model, temp_path, IMAGE_SIZE, device)
+        # Process image with U-Net model (using configurable threshold and inversion)
+        grid = create_grid_from_image(
+            unet_model, 
+            temp_path, 
+            IMAGE_SIZE, 
+            device,
+            threshold=threshold,
+            invert_mask=invert_mask
+        )
         
         # Clean up temp file
         os.unlink(temp_path)
@@ -554,11 +603,177 @@ async def process_image(file: UploadFile = File(...)):
         return {
             "grid": grid_list,
             "originalImage": f"data:image/png;base64,{img_base64}",
-            "gridSize": {"width": IMAGE_SIZE, "height": IMAGE_SIZE}
+            "gridSize": {"width": IMAGE_SIZE, "height": IMAGE_SIZE},
+            "threshold": threshold,
+            "invertMask": invert_mask
         }
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
+
+
+@app.post("/api/process-image-gemini")
+async def process_image_gemini(file: UploadFile = File(...)):
+    """Process floor plan using Gemini Vision API for semantic analysis.
+    
+    Returns enhanced grid with door/window detection and room labeling.
+    Falls back to U-Net if Gemini is unavailable.
+    """
+    gemini_api_key = os.environ.get("GEMINI_API_KEY")
+    if not gemini_api_key or gemini_api_key == "your-gemini-api-key":
+        raise HTTPException(
+            status_code=503,
+            detail="Gemini API key not configured. Set GEMINI_API_KEY environment variable."
+        )
+    
+    try:
+        # Save uploaded file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
+            content = await file.read()
+            temp_file.write(content)
+            temp_path = temp_file.name
+        
+        # Load and resize image
+        original_image = Image.open(temp_path)
+        original_image = original_image.resize((IMAGE_SIZE, IMAGE_SIZE), Image.Resampling.LANCZOS)
+        
+        # Convert to base64 for Gemini
+        buffered = BytesIO()
+        original_image.save(buffered, format="PNG")
+        img_bytes = buffered.getvalue()
+        img_base64 = base64.b64encode(img_bytes).decode()
+        
+        # Configure Gemini
+        genai.configure(api_key=gemini_api_key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # Analyze with Gemini Vision
+        prompt = """Analyze this floor plan image and identify:
+1. All WALLS - areas that block movement (usually thick black/dark lines)
+2. All DOORS - entry/exit points (usually gaps in walls or door symbols)
+3. All WINDOWS - openings in walls (usually thin lines or glass symbols)
+4. ROOMS - open areas for movement
+
+Return a JSON object with this EXACT structure:
+{
+    "walls": [[row1_start, col1_start, row1_end, col1_end], ...],
+    "doors": [[row, col, width, height], ...],
+    "windows": [[row, col, width, height], ...],
+    "suggested_exits": [[row, col], ...],
+    "room_centers": [[row, col], ...],
+    "analysis": "Brief description of the floor plan"
+}
+
+All coordinates should be normalized to a 256x256 grid (0-255 range).
+Doors are important for fire spread simulation - they allow passage but fire spreads through them.
+Windows are semi-permeable - fire spreads faster through them.
+"""
+        
+        # Create image part for Gemini
+        image_part = {
+            "mime_type": "image/png",
+            "data": img_base64
+        }
+        
+        response = model.generate_content([prompt, image_part])
+        
+        # Parse Gemini response
+        response_text = response.text
+        
+        # Extract JSON from response (handle markdown code blocks)
+        if "```json" in response_text:
+            json_str = response_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in response_text:
+            json_str = response_text.split("```")[1].split("```")[0].strip()
+        else:
+            json_str = response_text.strip()
+        
+        try:
+            gemini_analysis = json.loads(json_str)
+        except json.JSONDecodeError:
+            print(f"[GEMINI] Failed to parse response: {response_text[:500]}")
+            gemini_analysis = {
+                "walls": [],
+                "doors": [],
+                "windows": [],
+                "suggested_exits": [],
+                "room_centers": [],
+                "analysis": "Failed to parse Gemini response"
+            }
+        
+        # Create enhanced grid from Gemini analysis
+        # Grid values: 0=free, 1=wall, 2=door, 3=window
+        enhanced_grid = np.zeros((IMAGE_SIZE, IMAGE_SIZE), dtype=int)
+        
+        # Draw walls (value=1)
+        for wall in gemini_analysis.get("walls", []):
+            if len(wall) >= 4:
+                r1, c1, r2, c2 = [int(v) for v in wall[:4]]
+                r1, r2 = max(0, min(r1, r2, 255)), min(255, max(r1, r2))
+                c1, c2 = max(0, min(c1, c2, 255)), min(255, max(c1, c2))
+                enhanced_grid[r1:r2+1, c1:c2+1] = 1
+        
+        # Draw doors (value=2)
+        for door in gemini_analysis.get("doors", []):
+            if len(door) >= 4:
+                r, c, w, h = [int(v) for v in door[:4]]
+                r, c = max(0, min(r, 255)), max(0, min(c, 255))
+                w, h = min(w, 255-c), min(h, 255-r)
+                enhanced_grid[r:r+h, c:c+w] = 2
+        
+        # Draw windows (value=3)
+        for window in gemini_analysis.get("windows", []):
+            if len(window) >= 4:
+                r, c, w, h = [int(v) for v in window[:4]]
+                r, c = max(0, min(r, 255)), max(0, min(c, 255))
+                w, h = min(w, 255-c), min(h, 255-r)
+                enhanced_grid[r:r+h, c:c+w] = 3
+        
+        # If Gemini didn't detect enough walls, fall back to U-Net
+        wall_count = np.sum(enhanced_grid == 1)
+        if wall_count < 1000 and unet_model is not None:
+            print(f"[GEMINI] Low wall detection ({wall_count} cells), falling back to U-Net")
+            unet_grid = create_grid_from_image(
+                unet_model, temp_path, IMAGE_SIZE, device, 
+                threshold=0.5, invert_mask=True
+            )
+            if unet_grid is not None:
+                # Merge: U-Net walls + Gemini doors/windows
+                enhanced_grid = np.where(
+                    (enhanced_grid == 2) | (enhanced_grid == 3),
+                    enhanced_grid,  # Keep doors/windows
+                    unet_grid.astype(int)  # Use U-Net for walls
+                )
+        
+        # Clean up
+        os.unlink(temp_path)
+        
+        return {
+            "grid": enhanced_grid.tolist(),
+            "originalImage": f"data:image/png;base64,{img_base64}",
+            "gridSize": {"width": IMAGE_SIZE, "height": IMAGE_SIZE},
+            "analysis": gemini_analysis,
+            "method": "gemini",
+            "gridLegend": {
+                "0": "free_space",
+                "1": "wall",
+                "2": "door",
+                "3": "window"
+            }
+        }
+        
+    except Exception as e:
+        print(f"[GEMINI] Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        # Clean up temp file on error
+        try:
+            os.unlink(temp_path)
+        except:
+            pass
+        
+        raise HTTPException(status_code=500, detail=f"Gemini processing error: {str(e)}")
 
 
 # Background simulation runner
@@ -568,10 +783,45 @@ def run_simulation_task(job_id: str, config: SimulationConfig):
         # Convert grid to numpy array
         grid = np.array(config.grid)
         
-        # Distribute user exits to 248 model exits
+        # Convert frontend (row, col) coordinates to backend (x, y) format
+        # Frontend sends: (row, col) where row=y, col=x
+        # Backend expects: (x, y)
+        agent_positions_xy = [frontend_to_backend(row, col) for row, col in config.agent_positions]
+        fire_position_xy = frontend_to_backend(config.fire_position[0], config.fire_position[1])
+        
+        # Convert exit positions to (x, y) format if provided
         if config.exits and len(config.exits) > 0:
-            distributed_exits = distribute_exits_to_model(config.exits, grid, total_model_exits=248)
-            print(f"[JOB {job_id[:8]}] Distributed {len(config.exits)} user exits -> 248 model exits", flush=True)
+            exits_xy = [frontend_to_backend(row, col) for row, col in config.exits]
+            print(f"[JOB {job_id[:8]}] Converted {len(config.exits)} exits from (row,col) to (x,y) format", flush=True)
+        else:
+            exits_xy = None
+        
+        print(f"[JOB {job_id[:8]}] Fire position: frontend={config.fire_position} -> backend={fire_position_xy}", flush=True)
+        print(f"[JOB {job_id[:8]}] Agent positions converted: {len(agent_positions_xy)} agents", flush=True)
+        
+        # Choose simulation mode based on config
+        num_agents = len(agent_positions_xy)
+        use_heuristic = not config.use_rl or num_agents > 10 or ppo_model is None
+        
+        if use_heuristic:
+            print(f"[JOB {job_id[:8]}] Using HEURISTIC mode (agents={num_agents}, use_rl={config.use_rl})", flush=True)
+            result = run_heuristic_simulation(
+                grid=grid,
+                agent_positions=agent_positions_xy,
+                fire_position=fire_position_xy,
+                exits=exits_xy,
+                max_steps=500,
+                extended_fire_steps=config.extended_fire_steps,
+                assembly_point=frontend_to_backend(config.assembly_point[0], config.assembly_point[1]) if config.assembly_point else None
+            )
+            update_job_status(job_id, "complete", result=result)
+            gc.collect()
+            return
+        
+        # RL Mode: Distribute user exits to 248 model exits
+        if exits_xy and len(exits_xy) > 0:
+            distributed_exits = distribute_exits_to_model(exits_xy, grid, total_model_exits=248)
+            print(f"[JOB {job_id[:8]}] Distributed {len(exits_xy)} user exits -> 248 model exits", flush=True)
         else:
             distributed_exits = auto_detect_exits(grid, max_exits=248)
             print(f"[JOB {job_id[:8]}] Auto-detected {len(distributed_exits)} exits from grid boundaries", flush=True)
@@ -579,10 +829,10 @@ def run_simulation_task(job_id: str, config: SimulationConfig):
         # Create environment
         env = EvacuationEnv(
             grid=grid,
-            num_agents=len(config.agent_positions),
+            num_agents=len(agent_positions_xy),
             max_steps=500,
-            agent_start_positions=config.agent_positions,
-            fire_start_position=config.fire_position,
+            agent_start_positions=agent_positions_xy,
+            fire_start_position=fire_position_xy,
             exits=distributed_exits,  # Use distributed exits
             max_agents=10  # Zero-padding for 500k_steps model compatibility
         )
@@ -594,7 +844,7 @@ def run_simulation_task(job_id: str, config: SimulationConfig):
         step_count = 0
         max_steps = 500
         
-        print(f"[JOB {job_id[:8]}] Starting simulation: {len(config.agent_positions)} agents, {len(env.exits)} exits", flush=True)
+        print(f"[JOB {job_id[:8]}] Starting RL simulation: {len(agent_positions_xy)} agents, {len(env.exits)} exits", flush=True)
         
         while not terminated and not truncated and step_count < max_steps:
             if USE_MASKABLE_PPO:
@@ -614,18 +864,20 @@ def run_simulation_task(job_id: str, config: SimulationConfig):
             
             # Log progress every 50 steps
             if step_count % 50 == 0:
-                active = sum(1 for a in env.agents if a.status == 'active')
+                active = sum(1 for a in env.agents if a.status == 'evacuating')
                 escaped = sum(1 for a in env.agents if a.status == 'escaped')
                 burned = sum(1 for a in env.agents if a.status == 'burned')
                 print(f"[JOB {job_id[:8]}] Step {step_count}/{max_steps}: {active} active, {escaped} escaped, {burned} burned", flush=True)
             
-            # Store frame data
-            fire_coords = np.argwhere(env.fire_sim.fire_map == 1).tolist()
+            # Store frame data (convert fire coords from [y,x] to [row,col] for frontend)
+            fire_coords = np.argwhere(env.fire_sim.fire_map == 1).tolist()  # Already [y,x] = [row,col]
             
             agents_data = []
             for agent in env.agents:
+                # Convert agent position from (x,y) to [row,col] for frontend
+                agent_pos_frontend = [agent.pos[1], agent.pos[0]]  # [y, x] = [row, col]
                 agents_data.append({
-                    "pos": agent.pos,
+                    "pos": agent_pos_frontend,
                     "status": agent.status,
                     "state": agent.state,
                     "tripped": agent.tripped_timer > 0
@@ -635,6 +887,27 @@ def run_simulation_task(job_id: str, config: SimulationConfig):
                 "fire_map": fire_coords,
                 "agents": agents_data
             })
+        
+        # Extended fire steps: continue fire spread after all agents are done
+        if config.extended_fire_steps > 0:
+            print(f"[JOB {job_id[:8]}] Running {config.extended_fire_steps} extended fire steps...", flush=True)
+            for extra_step in range(config.extended_fire_steps):
+                env.fire_sim.step()
+                fire_coords = np.argwhere(env.fire_sim.fire_map == 1).tolist()
+                # Keep last agent positions frozen
+                agents_data = []
+                for agent in env.agents:
+                    agent_pos_frontend = [agent.pos[1], agent.pos[0]]
+                    agents_data.append({
+                        "pos": agent_pos_frontend,
+                        "status": agent.status,
+                        "state": agent.state,
+                        "tripped": False
+                    })
+                history.append({
+                    "fire_map": fire_coords,
+                    "agents": agents_data
+                })
         
         # Calculate final statistics
         escaped = sum(1 for agent in env.agents if agent.status == "escaped")
@@ -653,6 +926,14 @@ def run_simulation_task(job_id: str, config: SimulationConfig):
                 "path_length": agent.steps_taken if hasattr(agent, 'steps_taken') else step_count
             })
         
+        # Convert exits to frontend format [row, col] for visualization
+        exits_frontend = [[y, x] for x, y in (exits_xy if exits_xy else [])]
+        
+        # Convert assembly point to frontend format if provided
+        assembly_point_frontend = None
+        if config.assembly_point:
+            assembly_point_frontend = [config.assembly_point[0], config.assembly_point[1]]  # Already in (row, col)
+        
         # Prepare result with correct structure for frontend
         result = {
             "total_agents": total_agents,
@@ -660,10 +941,13 @@ def run_simulation_task(job_id: str, config: SimulationConfig):
             "burned_count": burned,
             "time_steps": step_count,
             "agent_results": agent_results,
+            "exits": exits_frontend,  # Include exits for visualization
+            "assembly_point": assembly_point_frontend,  # Include assembly point
             "commander_actions": history[:100] if history else [],  # Limit to first 100 actions
             "animation_data": {
                 "history": history
-            }
+            },
+            "mode": "rl"
         }
         
         # Update job status to complete

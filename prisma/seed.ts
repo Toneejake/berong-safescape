@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
-import { NotificationService } from '../lib/notification-service'
+// Commenting out NotificationService as it's causing import issues in ts-node
+// import { NotificationService } from '../lib/notification-service'
 
 const prisma = new PrismaClient()
 
@@ -238,13 +239,8 @@ async function main() {
       data: post,
     })
 
-    // Create notification for the blog post
-    await NotificationService.createNotification({
-      title: `New Blog Post: ${post.title}`,
-      message: `A new blog post "${post.title}" has been published in the ${post.category} section.`,
-      type: 'blog',
-      category: post.category
-    })
+    // Skip notification creation for seeding as it requires a user
+    // Notifications will be created by the application when users interact
   }
   console.log('✅ Seeded blog posts')
 

@@ -20,6 +20,15 @@ export interface User {
   }
   isActive: boolean
   createdAt: string
+  // Enhanced profile fields
+  profileCompleted?: boolean
+  barangay?: string
+  school?: string
+  occupation?: string
+  gender?: string
+  preTestScore?: number
+  postTestScore?: number
+  engagementPoints?: number
 }
 
 interface AuthContextType {

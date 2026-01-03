@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,13 +14,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Shield, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { RegistrationWizard } from "@/components/registration-wizard"
 
 export default function AuthPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { login, register, isAuthenticating, getRedirectPath } = useAuth()
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [isLogin, setIsLogin] = useState(true)
+  const [showRegistrationWizard, setShowRegistrationWizard] = useState(false)
+  const defaultTab = searchParams.get("tab") || "login"
 
   const [loginData, setLoginData] = useState({ username: "", password: "" })
   const [registerData, setRegisterData] = useState({
@@ -129,6 +133,18 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 flex items-center justify-center p-4">
+      {/* Registration Wizard Modal */}
+      {showRegistrationWizard && (
+        <RegistrationWizard
+          onComplete={() => {
+            setShowRegistrationWizard(false)
+            const redirectPath = getRedirectPath()
+            router.push(redirectPath)
+          }}
+          onCancel={() => setShowRegistrationWizard(false)}
+        />
+      )}
+      
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
@@ -155,7 +171,7 @@ export default function AuthPage() {
             <CardDescription>Sign in or create an account to access learning materials</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs defaultValue={defaultTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Sign In</TabsTrigger>
                 <TabsTrigger value="register">Register</TabsTrigger>
@@ -210,95 +226,26 @@ export default function AuthPage() {
 
               {/* Register Tab */}
               <TabsContent value="register">
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="register-name">Full Name</Label>
-                    <Input
-                      id="register-name"
-                      type="text"
-                      placeholder="Juan Dela Cruz"
-                      value={registerData.name}
-                      onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
-                      required
-                    />
-                    {validationErrors.name && (
-                      <p className="mt-1 text-sm text-red-600">{validationErrors.name}</p>
-                    )}
+                <div className="space-y-4 py-4">
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold mb-2">Create Your Account</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Join our fire safety community and help protect Santa Cruz, Laguna
+                    </p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-age">Age</Label>
-                    <Input
-                      id="register-age"
-                      type="number"
-                      placeholder="18"
-                      min="1"
-                      max="120"
-                      value={registerData.age}
-                      onChange={(e) => setRegisterData({ ...registerData, age: e.target.value })}
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">Your age determines which sections you can access</p>
-                    {validationErrors.age && (
-                      <p className="mt-1 text-sm text-red-600">{validationErrors.age}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-username">Username</Label>
-                    <Input
-                      id="register-username"
-                      type="text"
-                      placeholder="your_username"
-                      value={registerData.username}
-                      onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
-                      required
-                      autoComplete="username"
-                    />
-                    {validationErrors.username && (
-                      <p className="mt-1 text-sm text-red-600">{validationErrors.username}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-password">Password</Label>
-                    <Input
-                      id="register-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={registerData.password}
-                      onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                      required
-                      autoComplete="new-password"
-                    />
-                    {validationErrors.password && (
-                      <p className="mt-1 text-sm text-red-600">{validationErrors.password}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-confirm">Confirm Password</Label>
-                    <Input
-                      id="register-confirm"
-                      type="password"
-                      placeholder="••••••••"
-                      value={registerData.confirmPassword}
-                      onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
-                      required
-                    />
-                  </div>
-
-                  {error && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
-
-                  <Button
-                    type="submit"
+                  
+                  <Button 
                     className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-                    disabled={loading}
+                    onClick={() => setShowRegistrationWizard(true)}
+                    size="lg"
                   >
-                    {loading ? "Creating account..." : "Create Account"}
+                    Start Registration
                   </Button>
-                </form>
+                  
+                  <p className="text-xs text-center text-muted-foreground">
+                    Registration includes a quick fire safety assessment to personalize your learning experience.
+                  </p>
+                </div>
               </TabsContent>
             </Tabs>
 

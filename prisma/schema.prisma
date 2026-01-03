@@ -17,11 +17,39 @@ model User {
   isActive      Boolean        @default(true)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  blogPosts     BlogPost[]
-  progress           UserProgress[]
-  quizResults        QuizResult[]
-  notifications      Notification[]
-  safeScapeProgress  SafeScapeProgress[]
+  
+  // Enhanced Profile Fields (Analytics Module)
+  barangay              String?
+  school                String?
+  schoolOther           String?  // For "Other (specify)" option
+  occupation            String?
+  occupationOther       String?  // For "Other (specify)" option
+  gender                String?
+  gradeLevel            String?  // For kids/students
+  
+  // Assessment Scores
+  preTestScore          Int?
+  postTestScore         Int?
+  preTestCompletedAt    DateTime?
+  postTestCompletedAt   DateTime?
+  
+  // Engagement Tracking
+  engagementPoints      Int      @default(0)
+  totalTimeSpentMinutes Int      @default(0)
+  lastActiveAt          DateTime @default(now())
+  
+  // Data Privacy & Profile Status
+  dataPrivacyConsent    Boolean  @default(false)
+  profileCompleted      Boolean  @default(false)
+  
+  blogPosts             BlogPost[]
+  progress              UserProgress[]
+  quizResults           QuizResult[]
+  notifications         Notification[]
+  safeScapeProgress     SafeScapeProgress[]
+  assessmentAnswers     UserAnswer[]
+  engagementLogs        EngagementLog[]
+  floorPlans            FloorPlan[]
 
   @@map("users")
 }
@@ -185,4 +213,106 @@ model SafeScapeProgress {
 
   @@unique([userId, moduleNum])
   @@map("safescape_progress")
+}
+
+// ============================================
+// ENHANCED ANALYTICS & ASSESSMENT MODELS
+// ============================================
+
+model AssessmentQuestion {
+  id              Int            @id @default(autoincrement())
+  question        String
+  options         Json           // Array of 4 options: string[]
+  correctAnswer   Int            // Index of correct answer (0-3)
+  explanation     String
+  category        String         // From ASSESSMENT_CATEGORIES
+  difficulty      String         @default("Medium") // Easy, Medium, Hard
+  isActive        Boolean        @default(true)
+  forRoles        String[]       // ["kid", "adult", "professional"]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  userAnswers     UserAnswer[]
+
+  @@map("assessment_questions")
+}
+
+model UserAnswer {
+  id             Int                 @id @default(autoincrement())
+  userId         Int
+  questionId     Int
+  selectedAnswer Int                 // Index of selected answer (0-3)
+  isCorrect      Boolean
+  testType       String              // "preTest" or "postTest"
+  answeredAt     DateTime            @default(now())
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question       AssessmentQuestion  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("user_answers")
+}
+
+model EngagementLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  eventType   String   // "quiz", "game", "video", "module", "login", "preTest", "postTest"
+  eventData   Json?    // Additional data: { quizType, score, duration, etc }
+  points      Int      @default(0)
+  loggedAt    DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, loggedAt])
+  @@map("engagement_logs")
+}
+
+model AnalyticsCache {
+  id          Int      @id @default(autoincrement())
+  cacheKey    String   @unique
+  cacheData   Json
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([cacheKey, expiresAt])
+  @@map("analytics_cache")
+}
+
+// Floor Plan Library for Simulation
+model FloorPlan {
+  id              Int         @id @default(autoincrement())
+  name            String
+  description     String?
+  gridData        Json        // The 256x256 grid as JSON array
+  thumbnail       String?     // Base64 thumbnail image
+  originalImage   String?     // Base64 original floor plan image
+  
+  // Ownership & Visibility
+  userId          Int
+  uploaderName    String      // Denormalized for display
+  isPublic        Boolean     @default(false)
+  
+  // Clone tracking (like git)
+  clonedFromId    Int?        // ID of parent floor plan if cloned
+  clonedFrom      FloorPlan?  @relation("FloorPlanClones", fields: [clonedFromId], references: [id])
+  clones          FloorPlan[] @relation("FloorPlanClones")
+  
+  // Metadata
+  gridWidth       Int         @default(256)
+  gridHeight      Int         @default(256)
+  exitCount       Int         @default(0)
+  
+  // Processing info
+  processingMethod String     @default("unet") // "unet", "gemini", "manual"
+  threshold        Float?     // U-Net threshold used
+  invertMask       Boolean?   // Whether mask was inverted
+  
+  // Timestamps
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  // Relations
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isPublic])
+  @@index([clonedFromId])
+  @@map("floor_plans")
 }
