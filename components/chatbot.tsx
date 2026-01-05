@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -32,6 +32,12 @@ export function Chatbot() {
   const [quickQuestions, setQuickQuestions] = useState<Record<string, QuickQuestion[]>>({})
   const [loadingQuestions, setLoadingQuestions] = useState(true)
   const [showQuickQuestions, setShowQuickQuestions] = useState(true)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
 
   // Load quick questions when the component mounts
   useEffect(() => {
@@ -179,63 +185,33 @@ export function Chatbot() {
 
   return (
     <>
-      {/* Chatbot Toggle Button - Always visible */}
-      <div className="fixed bottom-6 right-6 z-[60]">
-        {/* Speech Bubble Tooltip - Only show when closed */}
+      {/* Chatbot Toggle - Berong Character on the right side */}
+      <div className="fixed bottom-0 right-0 z-[60] pointer-events-none">
+        {/* Berong Character - Clickable to toggle chat, hidden when chat is open */}
         <AnimatePresence>
           {!isOpen && (
             <motion.div
-              className="absolute -top-16 right-0"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ delay: 0.3 }}
+              className="pointer-events-auto cursor-pointer"
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 100 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              onClick={() => setIsOpen(true)}
             >
-              <div className="relative bg-white text-black px-4 py-2 rounded-lg shadow-lg animate-bounce">
-                <p className="text-sm font-medium whitespace-nowrap">
-                  Hi, I'm Berong!
-                </p>
-
-                {/* Downward Arrow */}
-                <div
-                  className="absolute -bottom-2 right-6 w-0 h-0"
-                  style={{
-                    borderLeft: '8px solid transparent',
-                    borderRight: '8px solid transparent',
-                    borderTop: '8px solid white'
-                  }}
-                />
-              </div>
+              <Image
+                src="/berong_chatbot.png"
+                alt="Berong - BFP Assistant"
+                width={180}
+                height={180}
+                className="drop-shadow-2xl select-none"
+                draggable={false}
+                priority
+              />
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Chatbot Button - Always visible, toggles window */}
-        <motion.div
-          animate={{ scale: isOpen ? 0.9 : 1 }}
-          transition={{ type: "spring", stiffness: 400, damping: 25 }}
-        >
-          <Button
-            onClick={() => setIsOpen(!isOpen)}
-            className={`h-14 w-14 rounded-full shadow-lg p-0 overflow-hidden transition-all duration-200 ${isOpen
-              ? 'bg-red-600 hover:bg-red-700 ring-2 ring-white ring-offset-2'
-              : 'bg-primary hover:bg-primary/90 hover:scale-110'
-              }`}
-            size="icon"
-          >
-            {isOpen ? (
-              <X className="h-6 w-6 text-white" />
-            ) : (
-              <Image
-                src="/RD Logo.png"
-                alt="Chatbot"
-                width={56}
-                height={56}
-                className="w-full h-full object-cover"
-              />
-            )}
-          </Button>
-        </motion.div>
       </div>
 
       {/* Chatbot Window - Positioned above chathead */}
@@ -269,7 +245,7 @@ export function Chatbot() {
             className="fixed bottom-24 right-6 z-50"
             style={{ transformOrigin: 'bottom right' }}
           >
-            <Card className="w-full max-w-sm h-[60vh] min-h-[380px] max-h-[500px] flex flex-col shadow-2xl border-secondary p-0 gap-0 overflow-hidden">
+            <Card className="w-[480px] max-w-[90vw] h-[70vh] min-h-[450px] max-h-[620px] flex flex-col shadow-2xl border-secondary p-0 gap-0 overflow-hidden">
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b bg-primary text-primary-foreground rounded-t-lg">
                 <div className="flex items-center gap-2">
@@ -352,6 +328,8 @@ export function Chatbot() {
                     </div>
                   </div>
                 ))}
+                {/* Scroll anchor for auto-scroll */}
+                <div ref={messagesEndRef} />
               </div>
 
               {/* Input */}

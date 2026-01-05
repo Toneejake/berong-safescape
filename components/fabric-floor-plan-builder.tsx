@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
+import { Input } from "@/components/ui/input"
 import {
     Square,
     DoorOpen,
@@ -14,9 +15,18 @@ import {
     Download,
     Upload,
     Grid3X3,
-    Loader2
+    Loader2,
+    Save,
+    FolderOpen
 } from "lucide-react"
 import * as fabric from "fabric"
+
+// Saved floor plan type
+interface SavedFloorPlan {
+    name: string
+    data: string // JSON serialized canvas
+    createdAt: string
+}
 
 interface FabricFloorPlanBuilderProps {
     onExport: (pngBlob: Blob) => void
@@ -34,6 +44,11 @@ export function FabricFloorPlanBuilder({ onExport, processing = false }: FabricF
     const [showGrid, setShowGrid] = useState(true)
     const [wallThickness, setWallThickness] = useState(8)
     const [objectCount, setObjectCount] = useState({ walls: 0, doors: 0 })
+
+    // Save/Load state
+    const [savedPlans, setSavedPlans] = useState<SavedFloorPlan[]>([])
+    const [planName, setPlanName] = useState("")
+    const [showSaveLoad, setShowSaveLoad] = useState(false)
 
     // Canvas dimensions
     const CANVAS_SIZE = 512
@@ -75,6 +90,20 @@ export function FabricFloorPlanBuilder({ onExport, processing = false }: FabricF
         return () => {
             canvas.dispose()
             fabricRef.current = null
+        }
+    }, [])
+
+    // Load saved floor plans from localStorage on mount
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('floorPlans')
+            if (saved) {
+                try {
+                    setSavedPlans(JSON.parse(saved))
+                } catch (e) {
+                    console.error('Failed to load saved floor plans:', e)
+                }
+            }
         }
     }, [])
 
@@ -194,6 +223,19 @@ export function FabricFloorPlanBuilder({ onExport, processing = false }: FabricF
                 originX: "left",
                 originY: "top",
             })
+            // Disable corner controls, keep edge controls for resizing
+            wall.setControlsVisibility({
+                tl: false, // top-left corner
+                tr: false, // top-right corner
+                bl: false, // bottom-left corner
+                br: false, // bottom-right corner
+                mtr: false, // rotation control
+                // Keep these for width/height resizing:
+                mt: true,  // middle-top
+                mb: true,  // middle-bottom
+                ml: true,  // middle-left
+                mr: true,  // middle-right
+            })
                 ; (wall as any).objectType = "wall"
             canvas.add(wall)
             canvas.setActiveObject(wall)
@@ -210,6 +252,19 @@ export function FabricFloorPlanBuilder({ onExport, processing = false }: FabricF
                 originY: "top",
                 rx: 2,
                 ry: 2,
+            })
+            // Disable corner controls, keep edge controls for resizing
+            door.setControlsVisibility({
+                tl: false, // top-left corner
+                tr: false, // top-right corner
+                bl: false, // bottom-left corner
+                br: false, // bottom-right corner
+                mtr: false, // rotation control
+                // Keep these for width/height resizing:
+                mt: true,  // middle-top
+                mb: true,  // middle-bottom
+                ml: true,  // middle-left
+                mr: true,  // middle-right
             })
                 ; (door as any).objectType = "door"
             canvas.add(door)
@@ -253,6 +308,84 @@ export function FabricFloorPlanBuilder({ onExport, processing = false }: FabricF
         const objects = canvas.getObjects().filter(obj => (obj as any).objectType)
         objects.forEach(obj => canvas.remove(obj))
         canvas.renderAll()
+    }
+
+    // Save floor plan to localStorage
+    const saveFloorPlan = () => {
+        const canvas = fabricRef.current
+        if (!canvas) return
+
+        const name = planName.trim() || `Floor Plan ${savedPlans.length + 1}`
+
+        // Get only the wall/door objects (not grid lines)
+        const objectsToSave = canvas.getObjects().filter(obj => (obj as any).objectType)
+        const canvasData = JSON.stringify(objectsToSave.map(obj => obj.toObject(['objectType'])))
+
+        const newPlan: SavedFloorPlan = {
+            name,
+            data: canvasData,
+            createdAt: new Date().toISOString()
+        }
+
+        // Check if name already exists - update it
+        const existingIndex = savedPlans.findIndex(p => p.name === name)
+        let updatedPlans: SavedFloorPlan[]
+
+        if (existingIndex >= 0) {
+            updatedPlans = [...savedPlans]
+            updatedPlans[existingIndex] = newPlan
+        } else {
+            updatedPlans = [...savedPlans, newPlan]
+        }
+
+        setSavedPlans(updatedPlans)
+        localStorage.setItem('floorPlans', JSON.stringify(updatedPlans))
+        setPlanName("")
+        alert(`Floor plan "${name}" saved!`)
+    }
+
+    // Load floor plan from saved data
+    const loadFloorPlan = (plan: SavedFloorPlan) => {
+        const canvas = fabricRef.current
+        if (!canvas) return
+
+        // Clear existing objects (except grid)
+        const objects = canvas.getObjects().filter(obj => (obj as any).objectType)
+        objects.forEach(obj => canvas.remove(obj))
+
+        try {
+            const objectsData = JSON.parse(plan.data)
+
+            objectsData.forEach((objData: any) => {
+                const rect = new fabric.Rect({
+                    ...objData,
+                })
+                // Restore control visibility (hide corners)
+                rect.setControlsVisibility({
+                    tl: false, tr: false, bl: false, br: false, mtr: false,
+                    mt: true, mb: true, ml: true, mr: true,
+                })
+                    ; (rect as any).objectType = objData.objectType
+                canvas.add(rect)
+            })
+
+            canvas.renderAll()
+            setPlanName(plan.name)
+            setShowSaveLoad(false)
+            updateObjectCount()
+        } catch (e) {
+            console.error('Failed to load floor plan:', e)
+            alert('Failed to load floor plan')
+        }
+    }
+
+    // Delete a saved floor plan
+    const deleteFloorPlan = (name: string) => {
+        if (!confirm(`Delete "${name}"?`)) return
+
+        const updatedPlans = savedPlans.filter(p => p.name !== name)
+        setSavedPlans(updatedPlans)
+        localStorage.setItem('floorPlans', JSON.stringify(updatedPlans))
     }
 
     // Export canvas to PNG
@@ -300,7 +433,7 @@ export function FabricFloorPlanBuilder({ onExport, processing = false }: FabricF
                             Draw Floor Plan
                         </CardTitle>
                         <CardDescription>
-                            Click to place walls and doors. Drag to move, resize handles to adjust size.
+                            Click to place walls and doors. Drag to move. Delete with trash icon.
                         </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
@@ -371,7 +504,66 @@ export function FabricFloorPlanBuilder({ onExport, processing = false }: FabricF
                     >
                         <RotateCcw className="h-4 w-4" />
                     </Button>
+
+                    {/* Save/Load separator and buttons */}
+                    <div className="border-l pl-2 ml-2 flex gap-1">
+                        <Button
+                            variant={showSaveLoad ? "secondary" : "ghost"}
+                            size="sm"
+                            onClick={() => setShowSaveLoad(!showSaveLoad)}
+                            title="Save/Load Plans"
+                        >
+                            <FolderOpen className="h-4 w-4" />
+                            <span className="ml-1 hidden sm:inline">Plans</span>
+                        </Button>
+                    </div>
                 </div>
+
+                {/* Save/Load Panel */}
+                {showSaveLoad && (
+                    <div className="p-3 bg-muted rounded-lg space-y-3">
+                        <div className="flex gap-2 items-end">
+                            <div className="flex-1">
+                                <label className="text-xs text-muted-foreground mb-1 block">Floor Plan Name</label>
+                                <Input
+                                    value={planName}
+                                    onChange={(e) => setPlanName(e.target.value)}
+                                    placeholder={`Floor Plan ${savedPlans.length + 1}`}
+                                    className="h-8"
+                                />
+                            </div>
+                            <Button size="sm" onClick={saveFloorPlan} disabled={objectCount.walls === 0 && objectCount.doors === 0}>
+                                <Save className="h-4 w-4 mr-1" />
+                                Save
+                            </Button>
+                        </div>
+
+                        {savedPlans.length > 0 && (
+                            <div className="space-y-2">
+                                <label className="text-xs text-muted-foreground">Saved Floor Plans</label>
+                                <div className="max-h-32 overflow-y-auto space-y-1">
+                                    {savedPlans.map((plan) => (
+                                        <div key={plan.name} className="flex items-center justify-between p-2 bg-background rounded border">
+                                            <span className="text-sm font-medium truncate flex-1">{plan.name}</span>
+                                            <div className="flex gap-1">
+                                                <Button size="sm" variant="ghost" onClick={() => loadFloorPlan(plan)}>
+                                                    Load
+                                                </Button>
+                                                <Button size="sm" variant="ghost" onClick={() => deleteFloorPlan(plan.name)} className="text-red-500 hover:text-red-700">
+                                                    <Trash2 className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {savedPlans.length === 0 && (
+                            <p className="text-xs text-muted-foreground text-center py-2">No saved floor plans yet</p>
+                        )}
+                    </div>
+                )}
 
                 {/* Canvas Container */}
                 <div className="flex justify-center">
@@ -389,7 +581,7 @@ export function FabricFloorPlanBuilder({ onExport, processing = false }: FabricF
                     <ul className="list-disc list-inside space-y-1 ml-2">
                         <li>Select <strong>Wall</strong> tool and click on the canvas to add walls (black rectangles)</li>
                         <li>Select <strong>Door</strong> tool to add door openings (brown rectangles)</li>
-                        <li>Drag objects to move them. Use corner handles to resize.</li>
+                        <li>Drag objects to move them. Select and delete with the trash button.</li>
                         <li>Walls should form room boundaries. Doors are openings where agents can pass.</li>
                     </ul>
                 </div>

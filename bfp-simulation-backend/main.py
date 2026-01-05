@@ -604,8 +604,8 @@ async def process_image(
             "grid": grid_list,
             "originalImage": f"data:image/png;base64,{img_base64}",
             "gridSize": {"width": IMAGE_SIZE, "height": IMAGE_SIZE},
-            "threshold": threshold,
-            "invertMask": invert_mask
+            "threshold": float(threshold),
+            "invertMask": bool(invert_mask)  # Convert numpy.bool to Python bool
         }
     
     except Exception as e:
@@ -889,25 +889,59 @@ def run_simulation_task(job_id: str, config: SimulationConfig):
             })
         
         # Extended fire steps: continue fire spread after all agents are done
-        if config.extended_fire_steps > 0:
-            print(f"[JOB {job_id[:8]}] Running {config.extended_fire_steps} extended fire steps...", flush=True)
-            for extra_step in range(config.extended_fire_steps):
-                env.fire_sim.step()
-                fire_coords = np.argwhere(env.fire_sim.fire_map == 1).tolist()
-                # Keep last agent positions frozen
-                agents_data = []
-                for agent in env.agents:
-                    agent_pos_frontend = [agent.pos[1], agent.pos[0]]
-                    agents_data.append({
-                        "pos": agent_pos_frontend,
-                        "status": agent.status,
-                        "state": agent.state,
-                        "tripped": False
+        if config.extended_fire_steps != 0:
+            if config.extended_fire_steps == -1:
+                # Burn until complete - continue fire until no more cells can burn
+                print(f"[JOB {job_id[:8]}] Burn until complete mode - spreading fire until fully consumed", flush=True)
+                max_burn_steps = 2000  # Safety limit
+                burn_step = 0
+                while burn_step < max_burn_steps:
+                    prev_fire_count = np.sum(env.fire_sim.fire_map)
+                    env.fire_sim.step()
+                    new_fire_count = np.sum(env.fire_sim.fire_map)
+                    
+                    fire_coords = np.argwhere(env.fire_sim.fire_map == 1).tolist()
+                    # Keep last agent positions frozen
+                    agents_data = []
+                    for agent in env.agents:
+                        agent_pos_frontend = [agent.pos[1], agent.pos[0]]
+                        agents_data.append({
+                            "pos": agent_pos_frontend,
+                            "status": agent.status,
+                            "state": agent.state,
+                            "tripped": False
+                        })
+                    history.append({
+                        "fire_map": fire_coords,
+                        "agents": agents_data
                     })
-                history.append({
-                    "fire_map": fire_coords,
-                    "agents": agents_data
-                })
+                    
+                    burn_step += 1
+                    
+                    # Stop if fire stopped spreading (no new cells burned)
+                    if new_fire_count == prev_fire_count:
+                        print(f"[JOB {job_id[:8]}] Fire fully spread after {burn_step} extra steps", flush=True)
+                        break
+            else:
+                # Fixed number of extended steps
+                print(f"[JOB {job_id[:8]}] Running {config.extended_fire_steps} extended fire steps...", flush=True)
+                for extra_step in range(config.extended_fire_steps):
+                    env.fire_sim.step()
+                    fire_coords = np.argwhere(env.fire_sim.fire_map == 1).tolist()
+                    # Keep last agent positions frozen
+                    agents_data = []
+                    for agent in env.agents:
+                        agent_pos_frontend = [agent.pos[1], agent.pos[0]]
+                        agents_data.append({
+                            "pos": agent_pos_frontend,
+                            "status": agent.status,
+                            "state": agent.state,
+                            "tripped": False
+                        })
+                    history.append({
+                        "fire_map": fire_coords,
+                        "agents": agents_data
+                    })
         
         # Calculate final statistics
         escaped = sum(1 for agent in env.agents if agent.status == "escaped")

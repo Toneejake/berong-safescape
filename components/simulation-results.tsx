@@ -35,10 +35,11 @@ interface SimulationResultsProps {
   }
   grid: number[][]
   originalImage?: string | null
+  userExits?: [number, number][] // User-placed exits to display during playback
   onReset: () => void
 }
 
-export function SimulationResults({ results, grid, originalImage, onReset }: SimulationResultsProps) {
+export function SimulationResults({ results, grid, originalImage, userExits = [], onReset }: SimulationResultsProps) {
   const successRate = (results.escaped_count / results.total_agents) * 100
   const isSuccess = results.escaped_count === results.total_agents
 
@@ -137,9 +138,10 @@ export function SimulationResults({ results, grid, originalImage, onReset }: Sim
                   originalImage={originalImage}
                   showWallOverlay={showWallOverlay}
                   agentPositions={currentFrame.agents ? currentFrame.agents.map((a: any) => a.pos) : []}
-                  exits={[]} // Exits are static in base grid or we can pass them if needed
-                  fireMap={currentFrame.fire_map}
+                  exits={userExits} // User-placed exits passed from wizard
+                  fireMap={currentFrame.fire_map as [number, number][]}
                   firePosition={null}
+                  showExitsAlways={true} // Always show exits during simulation
                 />
               </div>
 

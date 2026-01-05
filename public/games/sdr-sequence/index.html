@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDR Sequence Challenge - Fire Safety Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+        }
+
+        .sdr-trap-arena {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #334155;
+        }
+
+        .sdr-word {
+            position: absolute;
+            padding: 12px 24px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            animation: wordPop 0.3s ease-out;
+            user-select: none;
+            z-index: 10;
+        }
+
+        .sdr-word:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .sdr-word.correct {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+        }
+
+        .sdr-word.decoy {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .sdr-word.fade-out {
+            animation: wordFade 0.3s ease-out forwards;
+        }
+
+        .sdr-word.clicked-correct {
+            animation: correctClick 0.3s ease-out;
+            background: #4ade80 !important;
+        }
+
+        .sdr-word.clicked-wrong {
+            animation: wrongClick 0.5s ease-out;
+            background: #f87171 !important;
+        }
+
+        @keyframes wordPop {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            70% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes wordFade {
+            to {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes correctClick {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.3);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes wrongClick {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20%,
+            60% {
+                transform: translateX(-10px);
+            }
+
+            40%,
+            80% {
+                transform: translateX(10px);
+            }
+        }
+
+        .round-indicator {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .round-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #475569;
+            transition: all 0.3s;
+        }
+
+        .round-dot.active {
+            background: #f59e0b;
+            transform: scale(1.2);
+        }
+
+        .round-dot.complete {
+            background: #22c55e;
+        }
+
+        .sequence-tracker {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 12px;
+        }
+
+        .seq-step {
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.875rem;
+            background: #334155;
+            color: #64748b;
+            transition: all 0.3s;
+        }
+
+        .seq-step.next {
+            background: #fbbf24;
+            color: #1e293b;
+        }
+
+        .seq-step.done {
+            background: #22c55e;
+            color: white;
+        }
+
+        .toast {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body class="text-slate-100 font-sans">
+
+    <div class="max-w-4xl mx-auto p-6 space-y-8">
+        <!-- Header -->
+        <div class="text-center">
+            <h1
+                class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-yellow-400 mb-4">
+                <i class="fa-solid fa-crosshairs text-yellow-400 mr-3"></i>SDR Sequence Challenge
+            </h1>
+            <p class="text-slate-300 text-lg max-w-2xl mx-auto">
+                Click <strong class="text-red-400">STOP</strong> → <strong class="text-orange-400">DROP</strong> →
+                <strong class="text-green-400">ROLL</strong> in the correct order!
+                Avoid the decoys like RUN, JUMP, and HIDE.
+            </p>
+        </div>
+
+        <!-- Info Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-red-900/30 p-4 rounded-xl border border-red-700">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">✋</span>
+                    <div>
+                        <h3 class="font-bold text-white">1. STOP</h3>
+                        <p class="text-xs text-slate-400">Stop right where you are</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-orange-900/30 p-4 rounded-xl border border-orange-700">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">⬇️</span>
+                    <div>
+                        <h3 class="font-bold text-white">2. DROP</h3>
+                        <p class="text-xs text-slate-400">Drop to the ground flat</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-green-900/30 p-4 rounded-xl border border-green-700">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">🔄</span>
+                    <div>
+                        <h3 class="font-bold text-white">3. ROLL</h3>
+                        <p class="text-xs text-slate-400">Roll to smother flames</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Area -->
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+            <!-- Round Indicator -->
+            <div class="text-center mb-4">
+                <div class="text-sm text-slate-500 font-mono mb-2">ROUND</div>
+                <div class="round-indicator" id="round-indicator">
+                    <div class="round-dot" data-round="1"></div>
+                    <div class="round-dot" data-round="2"></div>
+                    <div class="round-dot" data-round="3"></div>
+                </div>
+                <div id="round-difficulty" class="text-xs text-slate-500 mt-1">Easy</div>
+            </div>
+
+            <!-- Game Arena -->
+            <div class="sdr-trap-arena" id="sdr-trap-arena">
+                <div id="trap-game-overlay"
+                    class="absolute inset-0 bg-slate-900/90 flex items-center justify-center z-20">
+                    <div class="text-center">
+                        <i class="fa-solid fa-fire-flame-curved text-6xl text-orange-500 mb-4"></i>
+                        <h3 class="text-xl font-bold text-white mb-2">Ready for the Challenge?</h3>
+                        <p class="text-slate-400 text-sm mb-4">Click words in order: STOP → DROP → ROLL<br>Avoid RUN,
+                            JUMP, HIDE!</p>
+                        <button onclick="startTrapGame()"
+                            class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full">
+                            <i class="fa-solid fa-play mr-2"></i>Start Challenge
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Words spawn here dynamically -->
+            </div>
+
+            <!-- Sequence Tracker -->
+            <div class="sequence-tracker" id="sequence-tracker">
+                <div class="seq-step next" data-step="stop">STOP</div>
+                <div class="seq-step" data-step="drop">DROP</div>
+                <div class="seq-step" data-step="roll">ROLL</div>
+            </div>
+
+            <!-- Game Status -->
+            <div id="trap-game-status" class="text-center mt-4 text-sm font-mono text-slate-400">
+                Complete all 3 rounds to master SDR!
+            </div>
+
+            <!-- Result Screen (Hidden by default) -->
+            <div id="trap-game-result" class="hidden text-center mt-4 p-6 bg-slate-900 rounded-lg">
+                <div id="trap-result-icon" class="text-5xl mb-3"></div>
+                <h3 id="trap-result-title" class="text-xl font-bold text-white mb-2"></h3>
+                <p id="trap-result-desc" class="text-slate-400 mb-4"></p>
+                <button onclick="restartTrapGame()" id="trap-retry-btn"
+                    class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-full">
+                    <i class="fa-solid fa-redo mr-2"></i>Try Again
+                </button>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+            <h4 class="font-bold text-white mb-3"><i class="fa-solid fa-lightbulb text-yellow-400 mr-2"></i>How to Play
+            </h4>
+            <ul class="text-sm text-slate-300 space-y-2">
+                <li>• Words will spawn randomly on screen. Click them in the correct order: <span
+                        class="text-red-400">STOP</span> → <span class="text-orange-400">DROP</span> → <span
+                        class="text-green-400">ROLL</span></li>
+                <li>• <span class="text-red-400">Avoid decoy words</span> like RUN, JUMP, and HIDE - clicking them ends
+                    the game!</li>
+                <li>• Each round gets harder with faster spawns and more decoys</li>
+                <li>• Complete all 3 rounds to master the Stop, Drop, Roll technique!</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+
+    <script>
+        // Sound Effects
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            switch (type) {
+                case 'spawn':
+                    oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.1);
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.1);
+                    break;
+                case 'correct':
+                    oscillator.frequency.setValueAtTime(523, audioCtx.currentTime);
+                    oscillator.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1);
+                    oscillator.frequency.setValueAtTime(784, audioCtx.currentTime + 0.2);
+                    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.3);
+                    break;
+                case 'wrong':
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.3);
+                    break;
+                case 'win':
+                    const notes = [523, 659, 784, 1047];
+                    notes.forEach((freq, i) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.15);
+                        gain.gain.setValueAtTime(0.12, audioCtx.currentTime + i * 0.15);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.15 + 0.2);
+                        osc.start(audioCtx.currentTime + i * 0.15);
+                        osc.stop(audioCtx.currentTime + i * 0.15 + 0.2);
+                    });
+                    break;
+                case 'roundUp':
+                    oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.2);
+                    gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.25);
+                    break;
+            }
+        }
+
+        // Game Config
+        const trapGameConfig = {
+            rounds: [
+                { wordDuration: 3000, spawnInterval: 1500, decoys: ['RUN'], name: 'Easy' },
+                { wordDuration: 2000, spawnInterval: 1000, decoys: ['RUN', 'JUMP'], name: 'Medium' },
+                { wordDuration: 1200, spawnInterval: 700, decoys: ['RUN', 'JUMP', 'HIDE'], name: 'Hard' }
+            ],
+            correctSequence: ['STOP', 'DROP', 'ROLL'],
+            spawnPositions: [
+                { top: '10%', left: '10%' },
+                { top: '10%', left: '40%' },
+                { top: '10%', right: '10%' },
+                { top: '40%', left: '10%' },
+                { top: '40%', left: '40%' },
+                { top: '40%', right: '10%' },
+                { bottom: '15%', left: '10%' },
+                { bottom: '15%', left: '40%' },
+                { bottom: '15%', right: '10%' }
+            ]
+        };
+
+        let trapGameState = {
+            active: false,
+            currentRound: 0,
+            sequenceIndex: 0,
+            spawnTimer: null,
+            activeWords: [],
+            usedPositions: []
+        };
+
+        function startTrapGame() {
+            initAudio();
+            trapGameState = {
+                active: true,
+                currentRound: 0,
+                sequenceIndex: 0,
+                spawnTimer: null,
+                activeWords: [],
+                usedPositions: []
+            };
+
+            document.getElementById('trap-game-overlay').classList.add('hidden');
+            document.getElementById('trap-game-result').classList.add('hidden');
+
+            startRound();
+        }
+
+        function startRound() {
+            const config = trapGameConfig.rounds[trapGameState.currentRound];
+
+            // Update round indicators
+            document.querySelectorAll('.round-dot').forEach((dot, i) => {
+                dot.classList.remove('active', 'complete');
+                if (i < trapGameState.currentRound) dot.classList.add('complete');
+                if (i === trapGameState.currentRound) dot.classList.add('active');
+            });
+            document.getElementById('round-difficulty').textContent = config.name;
+
+            // Reset sequence tracker
+            trapGameState.sequenceIndex = 0;
+            updateSequenceTracker();
+
+            // Clear arena
+            clearArena();
+
+            // Start spawning
+            spawnWord();
+            trapGameState.spawnTimer = setInterval(spawnWord, config.spawnInterval);
+
+            document.getElementById('trap-game-status').textContent = `Round ${trapGameState.currentRound + 1}: ${config.name} - Click STOP → DROP → ROLL`;
+        }
+
+        function spawnWord() {
+            if (!trapGameState.active) return;
+
+            const config = trapGameConfig.rounds[trapGameState.currentRound];
+            const arena = document.getElementById('sdr-trap-arena');
+
+            // Remove expired words
+            trapGameState.activeWords = trapGameState.activeWords.filter(w => {
+                if (Date.now() - w.created > config.wordDuration) {
+                    w.element.classList.add('fade-out');
+                    setTimeout(() => {
+                        if (w.element.parentNode) w.element.remove();
+                        trapGameState.usedPositions = trapGameState.usedPositions.filter(p => p !== w.posIndex);
+                    }, 300);
+                    return false;
+                }
+                return true;
+            });
+
+            // Decide what word to spawn
+            let word;
+            const nextCorrect = trapGameConfig.correctSequence[trapGameState.sequenceIndex];
+            const hasCorrectOnScreen = trapGameState.activeWords.some(w => w.word === nextCorrect);
+
+            if (!hasCorrectOnScreen && Math.random() > 0.3) {
+                word = nextCorrect;
+            } else {
+                const allWords = [...config.decoys, ...trapGameConfig.correctSequence.filter(w => w !== nextCorrect)];
+                word = allWords[Math.floor(Math.random() * allWords.length)];
+            }
+
+            // Find available position
+            const availablePositions = trapGameConfig.spawnPositions.map((p, i) => i)
+                .filter(i => !trapGameState.usedPositions.includes(i));
+
+            if (availablePositions.length === 0) return;
+
+            const posIndex = availablePositions[Math.floor(Math.random() * availablePositions.length)];
+            const pos = trapGameConfig.spawnPositions[posIndex];
+            trapGameState.usedPositions.push(posIndex);
+
+            // Create element
+            const el = document.createElement('div');
+            el.className = `sdr-word ${config.decoys.includes(word) ? 'decoy' : 'correct'}`;
+            el.textContent = word;
+            Object.assign(el.style, pos);
+            el.onclick = () => handleWordClick(word, el);
+
+            arena.appendChild(el);
+            trapGameState.activeWords.push({ word, element: el, created: Date.now(), posIndex });
+
+            playSound('spawn');
+        }
+
+        function handleWordClick(word, element) {
+            if (!trapGameState.active) return;
+
+            const config = trapGameConfig.rounds[trapGameState.currentRound];
+
+            // Check if decoy
+            if (config.decoys.includes(word)) {
+                element.classList.add('clicked-wrong');
+                playSound('wrong');
+                endGame(false, `You clicked ${word}! That's wrong - never run from fire!`);
+                return;
+            }
+
+            // Check sequence
+            const expected = trapGameConfig.correctSequence[trapGameState.sequenceIndex];
+            if (word === expected) {
+                element.classList.add('clicked-correct');
+                playSound('correct');
+
+                // Remove word
+                setTimeout(() => {
+                    element.remove();
+                    trapGameState.activeWords = trapGameState.activeWords.filter(w => w.element !== element);
+                }, 300);
+
+                // Advance sequence
+                trapGameState.sequenceIndex++;
+                updateSequenceTracker();
+
+                // Check round complete
+                if (trapGameState.sequenceIndex >= trapGameConfig.correctSequence.length) {
+                    clearInterval(trapGameState.spawnTimer);
+
+                    if (trapGameState.currentRound >= trapGameConfig.rounds.length - 1) {
+                        // All rounds complete
+                        playSound('win');
+                        endGame(true, 'You mastered Stop, Drop, Roll!');
+                    } else {
+                        // Next round
+                        playSound('roundUp');
+                        trapGameState.currentRound++;
+                        setTimeout(startRound, 1000);
+                    }
+                }
+            } else {
+                element.classList.add('clicked-wrong');
+                playSound('wrong');
+                endGame(false, `Wrong order! You clicked ${word} but needed ${expected}.`);
+            }
+        }
+
+        function updateSequenceTracker() {
+            document.querySelectorAll('.seq-step').forEach((step, i) => {
+                step.classList.remove('next', 'done');
+                if (i < trapGameState.sequenceIndex) step.classList.add('done');
+                if (i === trapGameState.sequenceIndex) step.classList.add('next');
+            });
+        }
+
+        function clearArena() {
+            const arena = document.getElementById('sdr-trap-arena');
+            arena.querySelectorAll('.sdr-word').forEach(el => el.remove());
+            trapGameState.activeWords = [];
+            trapGameState.usedPositions = [];
+        }
+
+        function endGame(won, message) {
+            trapGameState.active = false;
+            clearInterval(trapGameState.spawnTimer);
+
+            const result = document.getElementById('trap-game-result');
+            document.getElementById('trap-result-icon').textContent = won ? '🎉' : '😞';
+            document.getElementById('trap-result-title').textContent = won ? 'CONGRATULATIONS!' : 'GAME OVER';
+            document.getElementById('trap-result-title').className = `text-xl font-bold mb-2 ${won ? 'text-green-400' : 'text-red-400'}`;
+            document.getElementById('trap-result-desc').textContent = message;
+            document.getElementById('trap-retry-btn').textContent = won ? 'Play Again' : 'Try Again';
+            result.classList.remove('hidden');
+
+            if (won) {
+                showToast('success', '🎉 SDR Sequence Challenge completed!');
+            }
+        }
+
+        function restartTrapGame() {
+            clearArena();
+            document.getElementById('trap-game-result').classList.add('hidden');
+            document.getElementById('trap-game-overlay').classList.remove('hidden');
+        }
+
+        function showToast(type, message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2`;
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+
+</html>

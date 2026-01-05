@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Element Mixer Lab - Fire Safety Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+        }
+
+        .flame {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #ffeb3b 0%, #ff9800 40%, #f44336 80%);
+            border-radius: 50% 50% 20% 20%;
+            filter: blur(5px);
+            animation: burn 0.5s infinite alternate;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .flame.active {
+            opacity: 1;
+        }
+
+        @keyframes burn {
+            0% {
+                transform: translateX(-50%) scale(1) skewX(0deg);
+            }
+
+            50% {
+                transform: translateX(-50%) scale(1.1) skewX(2deg);
+            }
+
+            100% {
+                transform: translateX(-50%) scale(0.9) skewX(-2deg);
+            }
+        }
+
+        .drop-zone.drag-over {
+            border-color: #fb923c;
+            background-color: rgba(251, 146, 60, 0.1);
+            transform: scale(1.02);
+        }
+
+        .draggable {
+            cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .draggable:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .draggable:active {
+            cursor: grabbing;
+        }
+
+        .pit-item {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .toast {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body class="text-slate-100 font-sans">
+
+    <div class="max-w-4xl mx-auto p-6 space-y-8">
+        <!-- Header -->
+        <div class="text-center">
+            <h1
+                class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500 mb-4">
+                <i class="fa-solid fa-flask text-purple-400 mr-3"></i>Element Mixer Lab
+            </h1>
+            <p class="text-slate-300 text-lg max-w-2xl mx-auto">
+                Learn about the <strong class="text-orange-400">Fire Triangle</strong>!
+                Fire needs three things to burn: <span class="text-red-400">Heat</span>,
+                <span class="text-amber-400">Fuel</span>, and <span class="text-blue-400">Oxygen</span>.
+                Drag and drop items to create fire!
+            </p>
+        </div>
+
+        <!-- Info Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-fire-burner text-2xl text-red-400"></i>
+                    <div>
+                        <h3 class="font-bold text-white">Heat</h3>
+                        <p class="text-xs text-slate-400">Something hot like a spark</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-tree text-2xl text-amber-400"></i>
+                    <div>
+                        <h3 class="font-bold text-white">Fuel</h3>
+                        <p class="text-xs text-slate-400">Anything that can burn</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-wind text-2xl text-blue-400"></i>
+                    <div>
+                        <h3 class="font-bold text-white">Oxygen</h3>
+                        <p class="text-xs text-slate-400">Fire needs air to breathe</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Area -->
+        <div class="bg-slate-800 rounded-2xl p-8 shadow-2xl border border-slate-700">
+            <div class="flex flex-col lg:flex-row gap-10 items-center justify-center select-none">
+
+                <!-- INVENTORY -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="draggable bg-amber-900 hover:bg-amber-800 p-4 rounded-xl border border-amber-700 text-center w-32 shadow-lg"
+                        draggable="true" ondragstart="drag(event)" id="fuel" data-type="fuel">
+                        <i class="fa-solid fa-tree text-3xl text-amber-300 mb-2 pointer-events-none"></i>
+                        <p class="font-bold text-amber-100 pointer-events-none">Wood</p>
+                        <p class="text-xs text-amber-400 pointer-events-none">Fuel</p>
+                    </div>
+                    <div class="draggable bg-red-900 hover:bg-red-800 p-4 rounded-xl border border-red-700 text-center w-32 shadow-lg"
+                        draggable="true" ondragstart="drag(event)" id="heat" data-type="heat">
+                        <i class="fa-solid fa-fire-burner text-3xl text-red-300 mb-2 pointer-events-none"></i>
+                        <p class="font-bold text-red-100 pointer-events-none">Spark</p>
+                        <p class="text-xs text-red-400 pointer-events-none">Heat</p>
+                    </div>
+                    <div class="draggable bg-blue-900 hover:bg-blue-800 p-4 rounded-xl border border-blue-700 text-center w-32 shadow-lg"
+                        draggable="true" ondragstart="drag(event)" id="oxygen" data-type="oxygen">
+                        <i class="fa-solid fa-wind text-3xl text-blue-300 mb-2 pointer-events-none"></i>
+                        <p class="font-bold text-blue-100 pointer-events-none">Fan</p>
+                        <p class="text-xs text-blue-400 pointer-events-none">Oxygen</p>
+                    </div>
+                    <div class="draggable bg-cyan-900 hover:bg-cyan-800 p-4 rounded-xl border border-cyan-700 text-center w-32 shadow-lg"
+                        draggable="true" ondragstart="drag(event)" id="water" data-type="water">
+                        <i class="fa-solid fa-bucket text-3xl text-cyan-300 mb-2 pointer-events-none"></i>
+                        <p class="font-bold text-cyan-100 pointer-events-none">Water</p>
+                        <p class="text-xs text-cyan-400 pointer-events-none">Remover</p>
+                    </div>
+                </div>
+
+                <!-- THE FIRE PIT -->
+                <div class="relative">
+                    <div id="pit"
+                        class="drop-zone w-72 h-72 rounded-full border-4 border-dashed border-slate-600 bg-slate-900 flex flex-col items-center justify-center relative overflow-hidden transition-all"
+                        ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                        <div id="flame-effect" class="flame z-20"></div>
+                        <p id="pit-placeholder" class="text-slate-600 font-bold z-10 pointer-events-none">DROP ITEMS
+                            HERE</p>
+                        <div id="active-items"
+                            class="absolute inset-0 flex items-center justify-center gap-2 z-30 pointer-events-none">
+                        </div>
+                    </div>
+                    <div class="text-center mt-4 h-12">
+                        <p id="game-status" class="text-slate-400 transition-colors duration-300">The pit is empty.</p>
+                    </div>
+                    <div class="text-center mt-2">
+                        <button onclick="resetPit()" class="text-xs text-slate-500 hover:text-white underline">Clear Pit
+                            & Restart</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success Message -->
+            <div id="success-message"
+                class="hidden mt-8 bg-green-900/30 border border-green-500 rounded-xl p-6 text-center">
+                <i class="fa-solid fa-circle-check text-4xl text-green-400 mb-3"></i>
+                <h3 class="text-xl font-bold text-green-400 mb-2">Fire Triangle Complete!</h3>
+                <p class="text-slate-300">You've learned that fire needs Heat + Fuel + Oxygen to burn!</p>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+            <h4 class="font-bold text-white mb-3"><i class="fa-solid fa-lightbulb text-yellow-400 mr-2"></i>How to Play
+            </h4>
+            <ul class="text-sm text-slate-300 space-y-2">
+                <li>• Drag <span class="text-amber-400">Fuel (Wood)</span>, <span class="text-red-400">Heat
+                        (Spark)</span>, and <span class="text-blue-400">Oxygen (Fan)</span> into the pit</li>
+                <li>• When all three elements are present, fire starts!</li>
+                <li>• Use <span class="text-cyan-400">Water</span> to remove heat and put out the fire</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+
+    <script>
+        const pitState = { fuel: false, heat: false, oxygen: false };
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+            document.getElementById('pit').classList.add('drag-over');
+        }
+
+        function dragLeave(ev) {
+            document.getElementById('pit').classList.remove('drag-over');
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("type", ev.target.dataset.type);
+            ev.dataTransfer.setData("icon", ev.target.querySelector('i').className);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            document.getElementById('pit').classList.remove('drag-over');
+            const type = ev.dataTransfer.getData("type");
+            const iconClass = ev.dataTransfer.getData("icon");
+            handleItemDrop(type, iconClass);
+        }
+
+        function handleItemDrop(type, iconClass) {
+            const statusEl = document.getElementById('game-status');
+
+            if (type === 'water') {
+                if (pitState.heat) {
+                    pitState.heat = false;
+                    updateVisuals("removed", "heat");
+                    statusEl.innerText = "💦 Sizzle! Water removed the Heat.";
+                    statusEl.className = "text-cyan-400 font-bold";
+                } else {
+                    statusEl.innerText = "Water added, but there was no heat to cool.";
+                    statusEl.className = "text-slate-400";
+                }
+                checkFire();
+                return;
+            }
+
+            if (!pitState[type]) {
+                pitState[type] = true;
+                const itemContainer = document.getElementById('active-items');
+                const span = document.createElement('span');
+                span.className = `pit-item text-2xl p-2 rounded-full bg-slate-800 shadow-md border border-slate-600 ${iconClass}`;
+                span.id = `visual-${type}`;
+                if (type === 'fuel') span.classList.add('text-amber-400');
+                if (type === 'heat') span.classList.add('text-red-400');
+                if (type === 'oxygen') span.classList.add('text-blue-400');
+                itemContainer.appendChild(span);
+                statusEl.innerText = `Added ${type.toUpperCase()}.`;
+                statusEl.className = "text-slate-300";
+            } else {
+                statusEl.innerText = `You already have ${type}.`;
+                statusEl.className = "text-slate-500";
+            }
+            checkFire();
+        }
+
+        function updateVisuals(action, type) {
+            if (action === "removed") {
+                const el = document.getElementById(`visual-${type}`);
+                if (el) el.remove();
+            }
+        }
+
+        function checkFire() {
+            const flame = document.getElementById('flame-effect');
+            const statusEl = document.getElementById('game-status');
+            const pit = document.getElementById('pit');
+            const successMessage = document.getElementById('success-message');
+
+            if (pitState.fuel && pitState.heat && pitState.oxygen) {
+                flame.classList.add('active');
+                statusEl.innerHTML = "<i class='fa-solid fa-triangle-exclamation'></i> FIRE STARTED! The Triangle is complete!";
+                statusEl.className = "text-orange-500 font-bold animate-pulse";
+                pit.classList.add('border-orange-500');
+                pit.classList.remove('border-slate-600');
+                successMessage.classList.remove('hidden');
+                showToast('success', '🎉 You created fire! Fire Triangle complete!');
+            } else {
+                flame.classList.remove('active');
+                pit.classList.remove('border-orange-500');
+                pit.classList.add('border-slate-600');
+                successMessage.classList.add('hidden');
+
+                if (pitState.fuel || pitState.heat || pitState.oxygen) {
+                    let missing = [];
+                    if (!pitState.fuel) missing.push("Fuel");
+                    if (!pitState.heat) missing.push("Heat");
+                    if (!pitState.oxygen) missing.push("Oxygen");
+                    if (missing.length > 0 && missing.length < 3) {
+                        statusEl.innerText = `No fire yet. Missing: ${missing.join(', ')}.`;
+                        statusEl.className = "text-slate-400";
+                    }
+                }
+            }
+
+            const hasItems = pitState.fuel || pitState.heat || pitState.oxygen;
+            document.getElementById('pit-placeholder').style.opacity = hasItems ? '0' : '1';
+        }
+
+        function resetPit() {
+            pitState.fuel = false;
+            pitState.heat = false;
+            pitState.oxygen = false;
+            document.getElementById('active-items').innerHTML = '';
+            document.getElementById('game-status').innerText = "Pit cleared.";
+            document.getElementById('game-status').className = "text-slate-400";
+            checkFire();
+        }
+
+        function showToast(type, message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2`;
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+
+</html>

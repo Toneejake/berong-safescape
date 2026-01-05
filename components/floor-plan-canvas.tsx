@@ -107,11 +107,11 @@ export function FloorPlanCanvas({
 
     const canvas = canvasRef.current
     const rect = canvas.getBoundingClientRect()
-    
+
     // Calculate scale factor between displayed size and actual canvas size
     const scaleX = canvas.width / rect.width
     const scaleY = canvas.height / rect.height
-    
+
     // Get click position relative to canvas, accounting for scaling
     const x = Math.floor((e.clientX - rect.left) * scaleX)
     const y = Math.floor((e.clientY - rect.top) * scaleY)
@@ -165,11 +165,11 @@ export function FloorPlanCanvas({
 
     const canvas = canvasRef.current
     const rect = canvas.getBoundingClientRect()
-    
+
     // Calculate scale factor between displayed size and actual canvas size
     const scaleX = canvas.width / rect.width
     const scaleY = canvas.height / rect.height
-    
+
     const x = Math.floor((e.clientX - rect.left) * scaleX)
     const y = Math.floor((e.clientY - rect.top) * scaleY)
 
@@ -212,6 +212,7 @@ export function FloorPlanCanvas({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+
         {/* Toolbar */}
         <div className="flex flex-wrap gap-2 items-center justify-between">
           <div className="flex gap-2">

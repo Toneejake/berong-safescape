@@ -28,6 +28,7 @@ interface SimulationSetupProps {
   onRunSimulation: () => void
   onBack: () => void
   processing: boolean
+
 }
 
 type PlacementMode = "fire" | "agent" | "exit" | "none"
@@ -139,7 +140,7 @@ export function SimulationSetup({
 
   const canRunSimulation =
     config.firePosition !== null &&
-    config.agentPositions.length === config.numAgents
+    config.agentPositions.length >= 1 // Allow any number of agents (at least 1)
 
   return (
     <Card>
@@ -157,6 +158,8 @@ export function SimulationSetup({
             Auto-generate will create optimal configurations automatically.
           </AlertDescription>
         </Alert>
+
+
 
         <Tabs defaultValue={autoMode ? "auto" : "manual"} onValueChange={(v) => setAutoMode(v === "auto")}>
           <TabsList className="grid w-full grid-cols-2">

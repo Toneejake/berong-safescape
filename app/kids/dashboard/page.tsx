@@ -116,6 +116,51 @@ export default function KidsDashboardPage() {
         difficulty: "hard",
         category: "games"
       },
+      // Module Games (Standalone versions)
+      {
+        id: "game-element-mixer",
+        title: "Element Mixer Lab",
+        description: "Learn about the Fire Triangle! Drag and drop elements to create fire.",
+        type: "game",
+        emoji: "🧪",
+        href: "/kids/games/element-mixer",
+        difficulty: "easy",
+        category: "games",
+        isNew: true
+      },
+      {
+        id: "game-rhythm-marshal",
+        title: "Rhythm Marshal Challenge",
+        description: "Lead your team to safety by pressing SPACEBAR on the beat!",
+        type: "game",
+        emoji: "🥁",
+        href: "/kids/games/rhythm-marshal",
+        difficulty: "medium",
+        category: "games",
+        isNew: true
+      },
+      {
+        id: "game-smoke-labyrinth",
+        title: "The Smoke Labyrinth",
+        description: "Navigate through smoke and escape! Check doors before opening.",
+        type: "game",
+        emoji: "🌫️",
+        href: "/kids/games/smoke-labyrinth",
+        difficulty: "medium",
+        category: "games",
+        isNew: true
+      },
+      {
+        id: "game-sdr-sequence",
+        title: "SDR Sequence Challenge",
+        description: "Click STOP → DROP → ROLL in order! Avoid the decoy words.",
+        type: "game",
+        emoji: "🎯",
+        href: "/kids/games/sdr-sequence",
+        difficulty: "hard",
+        category: "games",
+        isNew: true
+      },
 
       // Videos
       {

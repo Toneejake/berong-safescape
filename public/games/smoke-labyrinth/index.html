@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Smoke Labyrinth - Fire Safety Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+        }
+
+        #game-container {
+            position: relative;
+            background-color: #020617;
+            border: 4px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .toast {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body class="text-slate-100 font-sans">
+
+    <div class="max-w-5xl mx-auto p-6 space-y-8">
+        <!-- Header -->
+        <div class="text-center">
+            <h1
+                class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-green-400 mb-4">
+                <i class="fa-solid fa-compass-drafting text-blue-400 mr-3"></i>The Smoke Labyrinth
+            </h1>
+            <p class="text-slate-300 text-lg max-w-2xl mx-auto">
+                Navigate through the smoke to escape! Use <strong class="text-white bg-slate-700 px-2 rounded">ARROW
+                    KEYS</strong> to find your way out.
+                Remember: <span class="text-red-400">Check doors before opening</span> and <span
+                    class="text-green-400">never go back inside!</span>
+            </p>
+        </div>
+
+        <!-- Info Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-door-open text-2xl text-red-400"></i>
+                    <div>
+                        <h3 class="font-bold text-white">Two Ways Out</h3>
+                        <p class="text-xs text-slate-400">Always know your exits</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-hand-back-fist text-2xl text-orange-400"></i>
+                    <div>
+                        <h3 class="font-bold text-white">Check the Door</h3>
+                        <p class="text-xs text-slate-400">Use back of hand for heat</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-person-walking-arrow-right text-2xl text-green-400"></i>
+                    <div>
+                        <h3 class="font-bold text-white">Stay Out</h3>
+                        <p class="text-xs text-slate-400">Never go back inside!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Area -->
+        <div class="flex flex-col xl:flex-row gap-8 justify-center items-start">
+            <div class="relative w-full max-w-[600px] mx-auto">
+                <div id="game-container">
+                    <canvas id="gameCanvas" width="600" height="400" class="w-full h-auto"></canvas>
+                    <div class="absolute top-4 left-4 text-left pointer-events-none">
+                        <div class="text-green-400 font-mono text-xs mb-1">VISIBILITY: LOW</div>
+                        <div class="text-slate-400 font-mono text-xs">OBJECTIVE: ESCAPE</div>
+                    </div>
+                    <!-- Mobile controls -->
+                    <div class="absolute bottom-4 right-4 grid grid-cols-3 gap-1 md:hidden opacity-70">
+                        <div></div>
+                        <button onpointerdown="startMove(0,-1)" onpointerup="stopMove()"
+                            class="bg-slate-700 w-12 h-12 rounded-full"><i class="fa-solid fa-arrow-up"></i></button>
+                        <div></div>
+                        <button onpointerdown="startMove(-1,0)" onpointerup="stopMove()"
+                            class="bg-slate-700 w-12 h-12 rounded-full"><i class="fa-solid fa-arrow-left"></i></button>
+                        <button onpointerdown="startMove(0,1)" onpointerup="stopMove()"
+                            class="bg-slate-700 w-12 h-12 rounded-full"><i class="fa-solid fa-arrow-down"></i></button>
+                        <button onpointerdown="startMove(1,0)" onpointerup="stopMove()"
+                            class="bg-slate-700 w-12 h-12 rounded-full"><i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Side panel -->
+            <div
+                class="w-full xl:w-72 bg-slate-900 p-4 rounded-xl border border-slate-600 text-left h-auto min-h-[300px] flex flex-col">
+                <h3 class="text-xs font-mono text-slate-500 uppercase mb-2">System Log</h3>
+                <div id="game-log"
+                    class="text-sm font-mono space-y-2 h-48 overflow-y-auto mb-4 border-b border-slate-700 pb-2">
+                    <p class="text-green-400">> Environment Loaded.</p>
+                    <p class="text-slate-300">> Smoke Density: 90%</p>
+                </div>
+
+                <div class="mt-auto">
+                    <button onclick="initGame()"
+                        class="w-full bg-slate-800 hover:bg-slate-700 text-xs py-2 rounded mb-2 border border-slate-600">
+                        <i class="fa-solid fa-rotate mr-2"></i>Reset Simulation
+                    </button>
+                </div>
+
+                <!-- Integrity modal -->
+                <div id="integrity-modal"
+                    class="hidden mt-4 pt-4 border-t border-slate-700 animate-pulse bg-slate-800 p-2 rounded">
+                    <p class="text-orange-400 font-bold text-sm mb-2 text-center">⚠️ TEMPTATION ALERT!</p>
+                    <p class="text-xs text-slate-300 mb-2 text-center">You are safe outside. But you left your tablet
+                        inside!</p>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="handleIntegrity(false)"
+                            class="bg-red-900 hover:bg-red-800 text-white text-xs py-2 rounded font-bold">Go Back For
+                            It</button>
+                        <button onclick="handleIntegrity(true)"
+                            class="bg-green-700 hover:bg-green-600 text-white text-xs py-2 rounded font-bold">Stay Out
+                            (Integrity)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Door check overlay -->
+        <div id="door-check-overlay" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+            <div class="bg-slate-800 p-8 rounded-2xl border-2 border-orange-500 max-w-sm text-center shadow-2xl">
+                <i class="fa-solid fa-hand-back-fist text-6xl text-orange-400 mb-4"></i>
+                <h3 class="text-xl font-bold text-white mb-2">Closed Door Detected</h3>
+                <p class="text-slate-300 mb-6 text-sm">You must check for heat before proceeding.</p>
+                <div class="grid gap-3">
+                    <button onclick="resolveDoor(false)"
+                        class="bg-red-900 hover:bg-red-800 p-3 rounded border border-red-700 text-sm">Open
+                        Immediately</button>
+                    <button onclick="resolveDoor(true)"
+                        class="bg-blue-600 hover:bg-blue-500 p-3 rounded font-bold text-sm">Touch with Back of
+                        Hand</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success message -->
+        <div id="completion-msg" class="hidden bg-green-900/50 p-6 rounded-xl border border-green-500 text-center">
+            <h3 class="text-green-400 text-2xl font-bold mb-2">ESCAPE SUCCESSFUL</h3>
+            <p class="text-white mb-4">You navigated the smoke and showed perfect integrity.</p>
+            <button onclick="initGame()"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full shadow-lg">
+                <i class="fa-solid fa-rotate-right mr-2"></i>Play Again
+            </button>
+        </div>
+
+        <!-- Instructions -->
+        <div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+            <h4 class="font-bold text-white mb-3"><i class="fa-solid fa-lightbulb text-yellow-400 mr-2"></i>How to Play
+            </h4>
+            <ul class="text-sm text-slate-300 space-y-2">
+                <li>• Use <span class="text-white bg-slate-700 px-2 rounded">ARROW KEYS</span> to move through the maze
+                </li>
+                <li>• Find the <span class="text-red-400">Door (red)</span> or <span class="text-blue-400">Window
+                        (blue)</span> to escape</li>
+                <li>• <span class="text-orange-400">Check doors for heat</span> using the back of your hand</li>
+                <li>• <span class="text-green-400">Never go back inside</span> once you escape!</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const fogCanvas = document.createElement('canvas');
+        const fogCtx = fogCanvas.getContext('2d');
+        fogCanvas.width = canvas.width;
+        fogCanvas.height = canvas.height;
+
+        let player = { x: 30, y: 30, radius: 5, speed: 2.5, dx: 0, dy: 0 };
+        let keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+        let gameState = 'playing';
+        let walls = [];
+        let exits = [];
+        let doorIsHot = true;
+
+        const CELL_SIZE = 20;
+        const COLS = Math.floor(canvas.width / CELL_SIZE);
+        const ROWS = Math.floor(canvas.height / CELL_SIZE);
+
+        function generateMaze() {
+            let maze = Array(ROWS).fill().map(() => Array(COLS).fill(1));
+            let stack = [];
+            let current = { x: 1, y: 1 };
+            maze[current.y][current.x] = 0;
+            stack.push(current);
+
+            while (stack.length > 0) {
+                current = stack[stack.length - 1];
+                let neighbors = [];
+                const dirs = [{ x: 0, y: -2 }, { x: 2, y: 0 }, { x: 0, y: 2 }, { x: -2, y: 0 }];
+                dirs.forEach(d => {
+                    let nx = current.x + d.x;
+                    let ny = current.y + d.y;
+                    if (nx > 0 && nx < COLS - 1 && ny > 0 && ny < ROWS - 1 && maze[ny][nx] === 1) {
+                        neighbors.push({ x: nx, y: ny, dx: d.x / 2, dy: d.y / 2 });
+                    }
+                });
+                if (neighbors.length > 0) {
+                    let next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    maze[current.y + next.dy][current.x + next.dx] = 0;
+                    maze[next.y][next.x] = 0;
+                    stack.push({ x: next.x, y: next.y });
+                } else {
+                    stack.pop();
+                }
+            }
+
+            // Add some openings
+            for (let y = 1; y < ROWS - 1; y++) {
+                for (let x = 1; x < COLS - 1; x++) {
+                    if (maze[y][x] === 0) {
+                        let wallCount = 0;
+                        if (maze[y - 1][x] === 1) wallCount++;
+                        if (maze[y + 1][x] === 1) wallCount++;
+                        if (maze[y][x - 1] === 1) wallCount++;
+                        if (maze[y][x + 1] === 1) wallCount++;
+                        if (wallCount >= 3 && Math.random() > 0.5) {
+                            let dirs = [{ x: 0, y: -1 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 1, y: 0 }];
+                            let d = dirs[Math.floor(Math.random() * dirs.length)];
+                            if (x + d.x > 0 && x + d.x < COLS - 1 && y + d.y > 0 && y + d.y < ROWS - 1) {
+                                maze[y + d.y][x + d.x] = 0;
+                            }
+                        }
+                    }
+                }
+            }
+
+            walls = [];
+            for (let y = 0; y < ROWS; y++) {
+                for (let x = 0; x < COLS; x++) {
+                    if (maze[y][x] === 1) {
+                        walls.push({ x: x * CELL_SIZE, y: y * CELL_SIZE, w: CELL_SIZE, h: CELL_SIZE });
+                    }
+                }
+            }
+
+            exits = [
+                { type: 'door', x: (COLS - 2) * CELL_SIZE, y: (ROWS - 5) * CELL_SIZE, w: CELL_SIZE, h: CELL_SIZE * 2, color: '#ef4444', label: 'DOOR' },
+                { type: 'window', x: 2 * CELL_SIZE, y: (ROWS - 3) * CELL_SIZE, w: CELL_SIZE * 2, h: CELL_SIZE, color: '#3b82f6', label: 'WINDOW' }
+            ];
+        }
+
+        function initGame() {
+            generateMaze();
+            fogCtx.fillStyle = '#020617';
+            fogCtx.fillRect(0, 0, fogCanvas.width, fogCanvas.height);
+            player.x = 30; player.y = 30;
+            player.dx = 0; player.dy = 0;
+            gameState = 'playing';
+            document.getElementById('completion-msg').classList.add('hidden');
+            document.getElementById('integrity-modal').classList.add('hidden');
+            log("Procedural Map Generated. Escape!");
+            doorIsHot = Math.random() > 0.3;
+            gameLoop();
+        }
+
+        function gameLoop() {
+            if (gameState !== 'playing') return;
+            updatePhysics();
+            drawGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function updatePhysics() {
+            player.dx = 0; player.dy = 0;
+            if (keys.ArrowUp) player.dy = -player.speed;
+            if (keys.ArrowDown) player.dy = player.speed;
+            if (keys.ArrowLeft) player.dx = -player.speed;
+            if (keys.ArrowRight) player.dx = player.speed;
+
+            let nextX = player.x + player.dx;
+            let nextY = player.y + player.dy;
+            let collided = false;
+
+            for (let w of walls) {
+                if (rectCircleColliding({ x: nextX, y: nextY, r: player.radius }, w)) {
+                    collided = true;
+                    break;
+                }
+            }
+
+            for (let e of exits) {
+                if (rectCircleColliding({ x: nextX, y: nextY, r: player.radius }, e)) {
+                    if (e.type === 'door') handleDoorCollision(e);
+                    if (e.type === 'window') handleWindowCollision();
+                    collided = true;
+                    break;
+                }
+            }
+
+            if (!collided) {
+                player.x = nextX;
+                player.y = nextY;
+            }
+
+            fogCtx.globalCompositeOperation = 'destination-out';
+            fogCtx.beginPath();
+            fogCtx.arc(player.x, player.y, 60, 0, Math.PI * 2);
+            fogCtx.fill();
+            fogCtx.globalCompositeOperation = 'source-over';
+        }
+
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#475569';
+            walls.forEach(w => ctx.fillRect(w.x, w.y, w.w, w.h));
+            exits.forEach(e => {
+                ctx.fillStyle = e.color;
+                ctx.fillRect(e.x, e.y, e.w, e.h);
+                const pulse = (Math.sin(Date.now() / 200) + 1) * 5;
+                ctx.beginPath();
+                ctx.arc(e.x + e.w / 2, e.y + e.h / 2, 20 + pulse, 0, Math.PI * 2);
+                ctx.strokeStyle = e.color;
+                ctx.globalAlpha = 0.3;
+                ctx.stroke();
+                ctx.globalAlpha = 1.0;
+            });
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#f97316';
+            ctx.fill();
+            ctx.drawImage(fogCanvas, 0, 0);
+        }
+
+        function rectCircleColliding(circle, rect) {
+            let distX = Math.abs(circle.x - rect.x - rect.w / 2);
+            let distY = Math.abs(circle.y - rect.y - rect.h / 2);
+            if (distX > (rect.w / 2 + circle.r)) return false;
+            if (distY > (rect.h / 2 + circle.r)) return false;
+            if (distX <= (rect.w / 2)) return true;
+            if (distY <= (rect.h / 2)) return true;
+            let dx = distX - rect.w / 2;
+            let dy = distY - rect.h / 2;
+            return (dx * dx + dy * dy <= (circle.r * circle.r));
+        }
+
+        function handleDoorCollision(door) {
+            gameState = 'paused';
+            document.getElementById('door-check-overlay').classList.remove('hidden');
+        }
+
+        function resolveDoor(checkedHeat) {
+            document.getElementById('door-check-overlay').classList.add('hidden');
+            if (checkedHeat) {
+                if (doorIsHot) {
+                    log("CHECK: Door is HOT! Find the Window.");
+                    fogCtx.globalCompositeOperation = 'destination-out';
+                    fogCtx.beginPath();
+                    fogCtx.arc(exits[0].x + 10, exits[0].y + 10, 40, 0, Math.PI * 2);
+                    fogCtx.fill();
+                    fogCtx.globalCompositeOperation = 'source-over';
+                    player.x -= 10;
+                    gameState = 'playing';
+                    gameLoop();
+                } else {
+                    log("CHECK: Door is Cool. Opening...");
+                    gameWin();
+                }
+            } else {
+                alert("GAME OVER! You opened a door without checking. Backdraft!");
+                initGame();
+            }
+        }
+
+        function handleWindowCollision() {
+            log("Window Found! Climbing out...");
+            gameWin();
+        }
+
+        function gameWin() {
+            gameState = 'won';
+            document.getElementById('integrity-modal').classList.remove('hidden');
+        }
+
+        function handleIntegrity(stayOut) {
+            document.getElementById('integrity-modal').classList.add('hidden');
+            if (stayOut) {
+                document.getElementById('completion-msg').classList.remove('hidden');
+                log("SUCCESS: Integrity verified.");
+                showToast('success', '🎉 You escaped safely! Great job!');
+            } else {
+                alert("GAME OVER! Never go back inside!");
+                initGame();
+            }
+        }
+
+        function log(msg) {
+            const logBox = document.getElementById('game-log');
+            const p = document.createElement('p');
+            p.innerText = `> ${msg}`;
+            p.className = "text-slate-300 border-l-2 border-slate-600 pl-2 text-xs";
+            logBox.prepend(p);
+        }
+
+        window.addEventListener('keydown', e => {
+            if (keys.hasOwnProperty(e.code)) keys[e.code] = true;
+            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault();
+        });
+        window.addEventListener('keyup', e => {
+            if (keys.hasOwnProperty(e.code)) keys[e.code] = false;
+        });
+
+        function startMove(dx, dy) {
+            player.dx = dx * player.speed;
+            player.dy = dy * player.speed;
+            keys = { ArrowUp: dy < 0, ArrowDown: dy > 0, ArrowLeft: dx < 0, ArrowRight: dx > 0 };
+        }
+        function stopMove() {
+            keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+        }
+
+        function showToast(type, message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2`;
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Initialize game on load
+        initGame();
+    </script>
+</body>
+
+</html>

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 model User {
@@ -228,7 +228,7 @@ model AssessmentQuestion {
   category        String         // From ASSESSMENT_CATEGORIES
   difficulty      String         @default("Medium") // Easy, Medium, Hard
   isActive        Boolean        @default(true)
-  forRoles        String[]       // ["kid", "adult", "professional"]
+  forRoles        Json           // ["kid", "adult", "professional"] - Using Json for SQLite compatibility
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   userAnswers     UserAnswer[]

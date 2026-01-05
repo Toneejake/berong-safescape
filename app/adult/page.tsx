@@ -110,18 +110,18 @@ export default function AdultPage() {
             </Card>
           </SpotlightCard>
 
-          <SpotlightCard spotlightColor="rgba(139, 92, 246, 0.15)">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-secondary h-full">
+          <SpotlightCard spotlightColor="rgba(239, 68, 68, 0.15)">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-red-500 h-full">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-start gap-3">
-                  <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-secondary flex-shrink-0 mt-0.5" />
+                  <Flame className="h-5 w-5 sm:h-6 sm:w-6 text-red-500 flex-shrink-0 mt-0.5" />
                   <div className="min-w-0 flex-1">
                     <CardTitle className="text-lg sm:text-2xl mb-1 sm:mb-2">Fire Spread Simulation</CardTitle>
                     <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-4 line-clamp-2">
                       Interactive tool to visualize how fire spreads in different environments.
                     </p>
                     <Link href="/adult/simulation">
-                      <Button size="sm" className="bg-secondary hover:bg-secondary/90 text-secondary-foreground w-full sm:w-auto">
+                      <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white w-full sm:w-auto">
                         Launch Simulator
                         <ArrowRight className="h-4 w-4 ml-2" />
                       </Button>

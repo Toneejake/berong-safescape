@@ -35,9 +35,19 @@
         }
 
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px) rotate(-5deg); }
-            75% { transform: translateX(10px) rotate(5deg); }
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-10px) rotate(-5deg);
+            }
+
+            75% {
+                transform: translateX(10px) rotate(5deg);
+            }
         }
 
         /* Signal Network Animation */
@@ -57,9 +67,17 @@
         }
 
         @keyframes bellShake {
-            0% { transform: rotate(0deg); }
-            25% { transform: rotate(15deg); }
-            75% { transform: rotate(-15deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            25% {
+                transform: rotate(15deg);
+            }
+
+            75% {
+                transform: rotate(-15deg);
+            }
         }
 
         /* Beat Visualizer Bar */
@@ -82,8 +100,15 @@
         }
 
         @keyframes beatMove {
-            0% { left: 0%; opacity: 1; }
-            100% { left: 100%; opacity: 0; }
+            0% {
+                left: 0%;
+                opacity: 1;
+            }
+
+            100% {
+                left: 100%;
+                opacity: 0;
+            }
         }
 
         /* Quiz Styles */
@@ -124,10 +149,11 @@
                 <i class="fa-solid fa-shield-cat"></i>
                 <h1>SafeScape <span>| Module 2</span></h1>
             </a>
-            
+
             <!-- Module Progress Indicators -->
             <div class="ss-module-indicators">
-                <a href="../module_1/index.html" class="ss-module-dot completed" id="nav-1" title="Module 1"><i class="fa-solid fa-check"></i></a>
+                <a href="../module_1/index.html" class="ss-module-dot completed" id="nav-1" title="Module 1"><i
+                        class="fa-solid fa-check"></i></a>
                 <div class="ss-module-connector active" id="conn-1-2"></div>
                 <a href="index.html" class="ss-module-dot current" title="Module 2">2</a>
                 <div class="ss-module-connector" id="conn-2-3"></div>
@@ -148,7 +174,8 @@
 
         <!-- HEADER -->
         <section class="fade-in text-center max-w-3xl mx-auto space-y-4" style="animation-delay: 0.1s;">
-            <h1 class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-400">
+            <h1
+                class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-400">
                 Listen, Line Up, Lead
             </h1>
             <p class="text-lg text-slate-300 leading-relaxed">
@@ -160,7 +187,8 @@
         <!-- VIDEO PRESENTATION -->
         <section id="section-video" class="fade-in ss-section" style="animation-delay: 0.2s;">
             <div class="ss-section-badge"><i class="fa-solid fa-check"></i></div>
-            <div class="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-slate-700 relative group">
+            <div
+                class="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-slate-700 relative group">
                 <video id="module-video" controls class="w-full h-full object-cover" onplay="onVideoPlay()">
                     <source src="../assets/videos/m2.mp4" type="video/mp4">
                 </video>
@@ -169,40 +197,49 @@
         </section>
 
         <!-- PART 1: THE SOUND DETECTIVE -->
-        <section id="section-sound" class="fade-in ss-section bg-black rounded-2xl p-8 border border-slate-700 shadow-2xl relative overflow-hidden"
+        <section id="section-sound"
+            class="fade-in ss-section bg-black rounded-2xl p-8 border border-slate-700 shadow-2xl relative overflow-hidden"
             style="animation-delay: 0.2s;">
             <div class="ss-section-badge"><i class="fa-solid fa-check"></i></div>
             <div class="relative z-10 text-center space-y-8">
-                <h2 class="text-2xl font-bold text-white"><i class="fa-solid fa-ear-listen text-blue-400 mr-2"></i> The Sound Detective</h2>
-                <p class="text-slate-400">Step 1: Listen to all three sounds.<br>Step 2: Choose the correct <strong>School Fire Alarm</strong>.</p>
+                <h2 class="text-2xl font-bold text-white"><i class="fa-solid fa-ear-listen text-blue-400 mr-2"></i> The
+                    Sound Detective</h2>
+                <p class="text-slate-400">Step 1: Listen to all three sounds.<br>Step 2: Choose the correct
+                    <strong>School Fire Alarm</strong>.</p>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
                     <!-- Option A -->
                     <div class="bg-slate-800 p-4 rounded-xl border border-slate-600 flex flex-col gap-4">
-                        <button onclick="playSound('recess')" class="bg-slate-700 hover:bg-slate-600 p-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <button onclick="playSound('recess')"
+                            class="bg-slate-700 hover:bg-slate-600 p-4 rounded-lg transition-colors flex items-center justify-center gap-2">
                             <i class="fa-solid fa-play text-yellow-400"></i> <span class="font-bold">Play Sound A</span>
                         </button>
-                        <button onclick="checkSoundAnswer('recess', this)" class="w-full border-2 border-slate-600 hover:border-yellow-400 text-slate-400 hover:text-white py-2 rounded-lg transition-all font-mono text-sm">
+                        <button onclick="checkSoundAnswer('recess', this)"
+                            class="w-full border-2 border-slate-600 hover:border-yellow-400 text-slate-400 hover:text-white py-2 rounded-lg transition-all font-mono text-sm">
                             Choose A
                         </button>
                     </div>
 
                     <!-- Option B -->
                     <div class="bg-slate-800 p-4 rounded-xl border border-slate-600 flex flex-col gap-4">
-                        <button onclick="playSound('whistle')" class="bg-slate-700 hover:bg-slate-600 p-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <button onclick="playSound('whistle')"
+                            class="bg-slate-700 hover:bg-slate-600 p-4 rounded-lg transition-colors flex items-center justify-center gap-2">
                             <i class="fa-solid fa-play text-blue-400"></i> <span class="font-bold">Play Sound B</span>
                         </button>
-                        <button onclick="checkSoundAnswer('whistle', this)" class="w-full border-2 border-slate-600 hover:border-blue-400 text-slate-400 hover:text-white py-2 rounded-lg transition-all font-mono text-sm">
+                        <button onclick="checkSoundAnswer('whistle', this)"
+                            class="w-full border-2 border-slate-600 hover:border-blue-400 text-slate-400 hover:text-white py-2 rounded-lg transition-all font-mono text-sm">
                             Choose B
                         </button>
                     </div>
 
                     <!-- Option C -->
                     <div class="bg-slate-800 p-4 rounded-xl border border-slate-600 flex flex-col gap-4">
-                        <button onclick="playSound('fire')" class="bg-slate-700 hover:bg-slate-600 p-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <button onclick="playSound('fire')"
+                            class="bg-slate-700 hover:bg-slate-600 p-4 rounded-lg transition-colors flex items-center justify-center gap-2">
                             <i class="fa-solid fa-play text-red-500"></i> <span class="font-bold">Play Sound C</span>
                         </button>
-                        <button onclick="checkSoundAnswer('fire', this)" class="w-full border-2 border-slate-600 hover:border-red-500 text-slate-400 hover:text-white py-2 rounded-lg transition-all font-mono text-sm">
+                        <button onclick="checkSoundAnswer('fire', this)"
+                            class="w-full border-2 border-slate-600 hover:border-red-500 text-slate-400 hover:text-white py-2 rounded-lg transition-all font-mono text-sm">
                             Choose C
                         </button>
                     </div>
@@ -223,7 +260,8 @@
                             <h2 class="text-2xl font-bold text-white">Recess vs. Emergency</h2>
                         </div>
                         <p class="text-slate-300 leading-relaxed">
-                            A <strong>Fire Alarm</strong> is a <span class="text-red-400 font-bold">long, continuous ring</span>. It is an order: Stop what you are doing and evacuate.
+                            A <strong>Fire Alarm</strong> is a <span class="text-red-400 font-bold">long, continuous
+                                ring</span>. It is an order: Stop what you are doing and evacuate.
                         </p>
                     </div>
                     <div>
@@ -232,28 +270,34 @@
                             <h2 class="text-2xl font-bold text-white">The Red Box</h2>
                         </div>
                         <p class="text-slate-300 leading-relaxed">
-                            The red box on the wall is a <strong>Manual Call Point</strong>. Inside is a switch that triggers the alarm for the <em>whole school</em>.
+                            The red box on the wall is a <strong>Manual Call Point</strong>. Inside is a switch that
+                            triggers the alarm for the <em>whole school</em>.
                         </p>
                     </div>
-                    
+
                     <button onclick="markContentRead()" class="ss-btn ss-btn-secondary mt-4">
                         <i class="fa-solid fa-check"></i> I understand the alarm system
                     </button>
                 </div>
 
                 <!-- INTERACTIVE: NETWORK MAP -->
-                <div class="bg-slate-800 rounded-xl p-6 border-4 border-slate-700 shadow-lg relative min-h-[300px] flex items-center justify-center">
-                    <h3 class="absolute top-4 w-full text-center text-slate-400 text-sm font-mono uppercase">Interactive System Map</h3>
+                <div
+                    class="bg-slate-800 rounded-xl p-6 border-4 border-slate-700 shadow-lg relative min-h-[300px] flex items-center justify-center">
+                    <h3 class="absolute top-4 w-full text-center text-slate-400 text-sm font-mono uppercase">Interactive
+                        System Map</h3>
 
                     <svg viewBox="0 0 400 300" class="w-full h-auto rounded bg-slate-900 absolute inset-0 z-0">
                         <path id="wire-path" d="M 50 150 L 200 150 L 200 50 M 200 150 L 200 250 M 200 150 L 350 150"
                             fill="none" stroke="#facc15" stroke-width="3" class="signal-path opacity-50" />
                         <rect x="140" y="20" width="120" height="60" fill="#334155" stroke="#475569" />
-                        <text x="200" y="55" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="sans-serif" font-weight="bold">CLASSROOMS</text>
+                        <text x="200" y="55" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="sans-serif"
+                            font-weight="bold">CLASSROOMS</text>
                         <rect x="140" y="220" width="120" height="60" fill="#334155" stroke="#475569" />
-                        <text x="200" y="255" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="sans-serif" font-weight="bold">CANTEEN</text>
+                        <text x="200" y="255" fill="#94a3b8" font-size="10" text-anchor="middle"
+                            font-family="sans-serif" font-weight="bold">CANTEEN</text>
                         <rect x="300" y="110" width="90" height="80" fill="#334155" stroke="#475569" />
-                        <text x="345" y="155" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="sans-serif" font-weight="bold">GYMNASIUM</text>
+                        <text x="345" y="155" fill="#94a3b8" font-size="10" text-anchor="middle"
+                            font-family="sans-serif" font-weight="bold">GYMNASIUM</text>
                         <g id="bell-1" transform="translate(200, 70)" class="text-yellow-600">
                             <circle cx="0" cy="0" r="6" fill="gold" />
                         </g>
@@ -266,9 +310,12 @@
                     </svg>
 
                     <div class="relative z-10 -left-[140px] top-[10px]">
-                        <button onclick="triggerNetwork()" class="group relative w-20 h-20 bg-red-600 rounded-lg shadow-xl border-b-4 border-red-800 active:border-b-0 active:translate-y-1 transition-all flex flex-col items-center justify-center hover:bg-red-500">
-                            <div class="w-12 h-12 bg-white/20 rounded-full border-2 border-white/40 flex items-center justify-center">
-                                <i class="fa-solid fa-hand-pointer text-white text-2xl animate-bounce group-active:hidden"></i>
+                        <button onclick="triggerNetwork()"
+                            class="group relative w-20 h-20 bg-red-600 rounded-lg shadow-xl border-b-4 border-red-800 active:border-b-0 active:translate-y-1 transition-all flex flex-col items-center justify-center hover:bg-red-500">
+                            <div
+                                class="w-12 h-12 bg-white/20 rounded-full border-2 border-white/40 flex items-center justify-center">
+                                <i
+                                    class="fa-solid fa-hand-pointer text-white text-2xl animate-bounce group-active:hidden"></i>
                             </div>
                             <span class="text-[10px] text-white font-bold mt-1 uppercase">Push</span>
                         </button>
@@ -278,8 +325,10 @@
 
             <!-- Text Block 2.3 -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                <div class="order-2 md:order-1 bg-white rounded-xl overflow-hidden shadow-lg border-4 border-slate-700 h-64 relative flex items-center justify-center">
-                    <div class="bg-white rounded-xl overflow-hidden shadow-lg border-4 border-slate-700 h-96 relative flex items-center justify-center transform rotate-1 hover:rotate-0 transition-transform duration-500">
+                <div
+                    class="order-2 md:order-1 bg-white rounded-xl overflow-hidden shadow-lg border-4 border-slate-700 h-64 relative flex items-center justify-center">
+                    <div
+                        class="bg-white rounded-xl overflow-hidden shadow-lg border-4 border-slate-700 h-96 relative flex items-center justify-center transform rotate-1 hover:rotate-0 transition-transform duration-500">
                         <img src="../../module_2/line.png" alt="Line Up" class="w-full h-full object-contain">
                     </div>
                 </div>
@@ -289,24 +338,32 @@
                         <h2 class="text-2xl font-bold text-white">The Buddy System</h2>
                     </div>
                     <p class="text-slate-300 leading-relaxed">
-                        The number one rule in a Philippine Fire Drill is: <strong class="text-white">"Huwag Tumakbo" (Do Not Run)</strong>.
-                        We line up in pairs. Hold your buddy's hand. If your buddy is missing, tell the teacher immediately.
+                        The number one rule in a Philippine Fire Drill is: <strong class="text-white">"Huwag Tumakbo"
+                            (Do Not Run)</strong>.
+                        We line up in pairs. Hold your buddy's hand. If your buddy is missing, tell the teacher
+                        immediately.
                     </p>
                 </div>
             </div>
         </section>
 
         <!-- PART 3: THE GAME (RHYTHM MARSHAL) -->
-        <section id="section-game" class="fade-in ss-section bg-slate-800 rounded-2xl p-8 shadow-2xl border border-slate-700 text-center"
+        <section id="section-game"
+            class="fade-in ss-section bg-slate-800 rounded-2xl p-8 shadow-2xl border border-slate-700 text-center"
             style="animation-delay: 0.5s;">
             <div class="ss-section-badge"><i class="fa-solid fa-check"></i></div>
             <div class="mb-6">
-                <h2 class="text-3xl font-bold text-white mb-2"><i class="fa-solid fa-drum text-purple-400 mr-2"></i> Rhythm Marshal Challenge</h2>
-                <p class="text-slate-400">Press <strong class="text-white border px-2 rounded bg-slate-700">SPACEBAR</strong> on the beat. Keep moving!</p>
+                <h2 class="text-3xl font-bold text-white mb-2"><i class="fa-solid fa-drum text-purple-400 mr-2"></i>
+                    Rhythm Marshal Challenge</h2>
+                <p class="text-slate-400">Press <strong
+                        class="text-white border px-2 rounded bg-slate-700">SPACEBAR</strong> on the beat. Keep moving!
+                </p>
             </div>
 
-            <div class="relative w-full max-w-2xl mx-auto bg-slate-900 h-72 rounded-xl border-2 border-slate-600 overflow-hidden flex flex-col relative">
-                <div class="w-full bg-slate-800 h-8 border-b border-slate-700 relative flex items-center justify-between px-4">
+            <div
+                class="relative w-full max-w-2xl mx-auto bg-slate-900 h-72 rounded-xl border-2 border-slate-600 overflow-hidden flex flex-col relative">
+                <div
+                    class="w-full bg-slate-800 h-8 border-b border-slate-700 relative flex items-center justify-between px-4">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-stopwatch text-slate-400"></i>
                         <span id="game-timer" class="font-mono text-white font-bold">15s</span>
@@ -323,7 +380,9 @@
                         <span>START</span>
                         <span>FINISH LINE</span>
                     </div>
-                    <div id="walking-team" class="absolute left-4 bottom-8 flex gap-2 text-3xl transition-transform duration-200" style="transform: translateX(0px);">
+                    <div id="walking-team"
+                        class="absolute left-4 bottom-8 flex gap-2 text-3xl transition-transform duration-200"
+                        style="transform: translateX(0px);">
                         <i class="fa-solid fa-child-reaching text-orange-400"></i>
                         <i class="fa-solid fa-child text-blue-400"></i>
                         <i class="fa-solid fa-child-dress text-pink-400"></i>
@@ -335,19 +394,25 @@
                     </div>
                 </div>
 
-                <div id="rhythm-feedback" class="absolute top-12 left-0 w-full text-center font-bold font-mono text-slate-500 text-xl pointer-events-none"></div>
+                <div id="rhythm-feedback"
+                    class="absolute top-12 left-0 w-full text-center font-bold font-mono text-slate-500 text-xl pointer-events-none">
+                </div>
 
-                <div id="rhythm-overlay" class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-20">
+                <div id="rhythm-overlay"
+                    class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-20">
                     <p class="text-slate-300 mb-4 text-sm">Lead 5 students to safety in 15s.</p>
-                    <button onclick="startRhythmGame()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full shadow-lg">
+                    <button onclick="startRhythmGame()"
+                        class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full shadow-lg">
                         START WALKING
                     </button>
                 </div>
 
-                <div id="game-over-overlay" class="hidden absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-30 text-center p-6">
+                <div id="game-over-overlay"
+                    class="hidden absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-30 text-center p-6">
                     <h3 id="go-title" class="text-2xl font-bold mb-2"></h3>
                     <p id="go-desc" class="text-slate-300 mb-6"></p>
-                    <button onclick="resetRhythmGame()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full">
+                    <button onclick="resetRhythmGame()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full">
                         TRY AGAIN
                     </button>
                 </div>
@@ -355,12 +420,15 @@
 
             <div id="completion-msg" class="hidden mt-6 bg-slate-900 p-6 rounded-xl border border-green-500">
                 <h3 class="text-green-400 text-xl font-bold mb-2">Safe & Sound!</h3>
-                <p class="text-white mb-4 font-mono">Final Score: <span id="final-score" class="text-orange-400 text-2xl">0</span></p>
+                <p class="text-white mb-4 font-mono">Final Score: <span id="final-score"
+                        class="text-orange-400 text-2xl">0</span></p>
                 <div class="flex justify-center gap-4">
-                    <button onclick="resetRhythmGame()" class="bg-slate-700 hover:bg-slate-600 text-white px-6 py-2 rounded-full border border-slate-500">
+                    <button onclick="resetRhythmGame()"
+                        class="bg-slate-700 hover:bg-slate-600 text-white px-6 py-2 rounded-full border border-slate-500">
                         <i class="fa-solid fa-rotate-right mr-2"></i>Play Again
                     </button>
-                    <button onclick="scrollToQuiz()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full shadow-lg shadow-blue-900/50">
+                    <button onclick="scrollToQuiz()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full shadow-lg shadow-blue-900/50">
                         Take Certification Quiz <i class="fa-solid fa-arrow-down ml-2"></i>
                     </button>
                 </div>
@@ -368,12 +436,15 @@
         </section>
 
         <!-- FINAL QUIZ SECTION -->
-        <section id="final-quiz" class="fade-in ss-section bg-slate-800 rounded-2xl p-8 md:p-12 border border-slate-700 shadow-2xl"
+        <section id="final-quiz"
+            class="fade-in ss-section bg-slate-800 rounded-2xl p-8 md:p-12 border border-slate-700 shadow-2xl"
             style="animation-delay: 0.6s;">
             <div class="ss-section-badge"><i class="fa-solid fa-check"></i></div>
             <div class="text-center mb-8">
-                <h2 class="text-3xl font-bold text-white mb-2"><i class="fa-solid fa-graduation-cap text-yellow-400 mr-2"></i> Marshal Certification</h2>
-                <p class="text-slate-400">Prove you know the Science of Fire and the Art of Leading. <br>Score <span class="text-orange-400 font-bold">4/5</span> to pass.</p>
+                <h2 class="text-3xl font-bold text-white mb-2"><i
+                        class="fa-solid fa-graduation-cap text-yellow-400 mr-2"></i> Marshal Certification</h2>
+                <p class="text-slate-400">Prove you know the Science of Fire and the Art of Leading. <br>Score <span
+                        class="text-orange-400 font-bold">4/5</span> to pass.</p>
             </div>
 
             <div id="quiz-container" class="max-w-2xl mx-auto space-y-8">
@@ -386,7 +457,8 @@
                 <p class="text-slate-400 mb-6" id="result-desc"></p>
 
                 <div class="flex justify-center gap-4">
-                    <button id="btn-retake" onclick="renderQuiz()" class="text-sm text-slate-500 hover:text-white underline hidden">Retake Quiz</button>
+                    <button id="btn-retake" onclick="renderQuiz()"
+                        class="text-sm text-slate-500 hover:text-white underline hidden">Retake Quiz</button>
                     <a href="../module_3/index.html" id="btn-next-module" class="hidden ss-btn ss-btn-success">
                         Go to Module 3 <i class="fa-solid fa-arrow-right ml-2"></i>
                     </a>
@@ -399,7 +471,8 @@
             <div class="bg-green-900/30 border border-green-500 rounded-2xl p-8 max-w-xl mx-auto">
                 <i class="fa-solid fa-circle-check text-6xl text-green-500 mb-4"></i>
                 <h2 class="text-3xl font-bold text-white mb-2">Module 2 Complete!</h2>
-                <p class="text-slate-300 mb-6">Excellent! You've mastered the fire drill and learned to lead with calm.</p>
+                <p class="text-slate-300 mb-6">Excellent! You've mastered the fire drill and learned to lead with calm.
+                </p>
                 <a href="../module_3/index.html" class="ss-btn ss-btn-primary text-lg">
                     Continue to Module 3 <i class="fa-solid fa-arrow-right ml-2"></i>
                 </a>
@@ -485,31 +558,31 @@
         // --- NAVIGATION UPDATE ---
         function updateNavigation() {
             const progress = SafeScapeProgress.getProgress();
-            
+
             // Module 1 should always be completed to be here
             const nav1 = document.getElementById('nav-1');
             if (progress.module1?.completed) {
                 nav1.classList.add('completed');
                 nav1.innerHTML = '<i class="fa-solid fa-check"></i>';
             }
-            
+
             for (let i = 3; i <= 5; i++) {
                 const navDot = document.getElementById(`nav-${i}`);
-                const connector = document.getElementById(`conn-${i-1}-${i}`);
+                const connector = document.getElementById(`conn-${i - 1}-${i}`);
                 const moduleData = progress[`module${i}`];
-                
+
                 if (moduleData?.unlocked) {
                     navDot.classList.remove('locked');
                     navDot.classList.add('unlocked');
                     navDot.href = `../module_${i}/index.html`;
-                    
+
                     if (moduleData?.completed) {
                         navDot.classList.add('completed');
                         navDot.innerHTML = '<i class="fa-solid fa-check"></i>';
                     }
                 }
-                
-                if (progress[`module${i-1}`]?.completed && connector) {
+
+                if (progress[`module${i - 1}`]?.completed && connector) {
                     connector.classList.add('active');
                 }
             }
@@ -535,34 +608,52 @@
         // --- AUDIO LOGIC ---
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx;
+        let fireAlarmAudio = null;
 
         function initAudio() {
             if (!audioCtx) audioCtx = new AudioContext();
             if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            // Pre-load the fire alarm audio
+            if (!fireAlarmAudio) {
+                fireAlarmAudio = new Audio('/games/llama-o-rama/game/audio/fire_alarm.mp3');
+                fireAlarmAudio.volume = 0.5;
+            }
         }
 
         function playSound(type) {
             initAudio();
             const now = audioCtx.currentTime;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
 
             if (type === 'recess') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
                 osc.type = 'sine'; osc.frequency.setValueAtTime(800, now); osc.frequency.setValueAtTime(1000, now + 0.1);
                 gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.5);
                 osc.start(now); osc.stop(now + 0.5);
             }
             else if (type === 'whistle') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
                 osc.type = 'sawtooth'; osc.frequency.setValueAtTime(400, now); osc.frequency.linearRampToValueAtTime(600, now + 0.5);
                 gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.5);
                 osc.start(now); osc.stop(now + 0.5);
             }
             else if (type === 'fire') {
-                osc.type = 'square'; osc.frequency.setValueAtTime(600, now);
-                gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 2.0);
-                osc.start(now); osc.stop(now + 2.0);
+                // Use actual fire alarm audio file
+                if (fireAlarmAudio) {
+                    fireAlarmAudio.currentTime = 0;
+                    fireAlarmAudio.play().catch(e => console.log('Audio play error:', e));
+                    // Stop after 3 seconds
+                    setTimeout(() => {
+                        fireAlarmAudio.pause();
+                        fireAlarmAudio.currentTime = 0;
+                    }, 3000);
+                }
             }
         }
 
@@ -625,51 +716,51 @@
         function gameOver(title, desc) { gameRunning = false; clearInterval(timerInterval); clearInterval(inactivityInterval); document.removeEventListener('keydown', handleInput); const overlay = document.getElementById('game-over-overlay'); document.getElementById('go-title').innerText = title; document.getElementById('go-desc').innerText = desc; overlay.classList.remove('hidden'); }
         function handleWarning(reason) { warningCount++; score = Math.max(0, score - 50); document.getElementById('score-display').innerText = `Score: ${score}`; if (warningCount === 1) { gameRunning = false; const overlay = document.getElementById('game-over-overlay'); document.getElementById('go-title').innerText = "WARNING!"; document.getElementById('go-desc').innerText = `${reason} Stay calm and follow the beat.`; document.getElementById('go-title').className = "text-2xl font-bold mb-2 text-orange-500"; const btn = overlay.querySelector('button'); btn.innerText = "CONTINUE"; btn.onclick = function () { overlay.classList.add('hidden'); btn.innerText = "TRY AGAIN"; btn.onclick = resetRhythmGame; gameRunning = true; lastActionTime = Date.now(); runMetronome(); }; overlay.classList.remove('hidden'); } else if (warningCount >= 2) { gameOver("PANIC CAUSED!", "You stumbled too many times. Stay calm!"); } }
         function runMetronome() { if (!gameRunning) return; const now = audioCtx.currentTime; const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.frequency.setValueAtTime(1000, now); gain.gain.exponentialRampToValueAtTime(0.00001, now + 0.05); osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.05); lastBeatTime = Date.now(); setTimeout(runMetronome, BEAT_MS); }
-        function handleInput(e) { 
-            if (!gameRunning || e.code !== 'Space') return; 
-            e.preventDefault(); 
-            const now = Date.now(); 
-            lastActionTime = now; 
-            if (now - lastTapTime < 300) { handleWarning("Too Fast!"); lastTapTime = now; return; } 
-            lastTapTime = now; 
-            const timeSinceTick = now - lastBeatTime; 
-            const feedback = document.getElementById('rhythm-feedback'); 
-            const team = document.getElementById('walking-team'); 
-            const isOnBeat = (timeSinceTick < WINDOW) || (timeSinceTick > (BEAT_MS - WINDOW)); 
-            if (isOnBeat) { 
-                positionX += 40; score += 100; 
-                document.getElementById('score-display').innerText = `Score: ${score}`; 
-                team.style.transform = `translateX(${positionX}px)`; 
-                team.classList.add('walking-step'); 
-                setTimeout(() => team.classList.remove('walking-step'), 100); 
-                feedback.innerText = "WALK!"; 
-                feedback.className = "absolute top-12 left-0 w-full text-center font-bold font-mono text-green-400 text-xl pointer-events-none"; 
-            } else { 
-                team.classList.add('stumble'); 
-                setTimeout(() => team.classList.remove('stumble'), 400); 
-                feedback.innerText = "OFF BEAT!"; 
-                feedback.className = "absolute top-12 left-0 w-full text-center font-bold font-mono text-red-400 text-xl pointer-events-none"; 
-                handleWarning("Off Beat!"); 
-            } 
-            if (positionX >= 500) { 
-                gameRunning = false; 
-                clearInterval(timerInterval); 
-                clearInterval(inactivityInterval); 
-                document.removeEventListener('keydown', handleInput); 
-                score += (timeLeft * 50); 
-                document.getElementById('final-score').innerText = score; 
-                document.getElementById('completion-msg').classList.remove('hidden'); 
-                feedback.innerText = "SAFE!"; 
-                
+        function handleInput(e) {
+            if (!gameRunning || e.code !== 'Space') return;
+            e.preventDefault();
+            const now = Date.now();
+            lastActionTime = now;
+            if (now - lastTapTime < 300) { handleWarning("Too Fast!"); lastTapTime = now; return; }
+            lastTapTime = now;
+            const timeSinceTick = now - lastBeatTime;
+            const feedback = document.getElementById('rhythm-feedback');
+            const team = document.getElementById('walking-team');
+            const isOnBeat = (timeSinceTick < WINDOW) || (timeSinceTick > (BEAT_MS - WINDOW));
+            if (isOnBeat) {
+                positionX += 40; score += 100;
+                document.getElementById('score-display').innerText = `Score: ${score}`;
+                team.style.transform = `translateX(${positionX}px)`;
+                team.classList.add('walking-step');
+                setTimeout(() => team.classList.remove('walking-step'), 100);
+                feedback.innerText = "WALK!";
+                feedback.className = "absolute top-12 left-0 w-full text-center font-bold font-mono text-green-400 text-xl pointer-events-none";
+            } else {
+                team.classList.add('stumble');
+                setTimeout(() => team.classList.remove('stumble'), 400);
+                feedback.innerText = "OFF BEAT!";
+                feedback.className = "absolute top-12 left-0 w-full text-center font-bold font-mono text-red-400 text-xl pointer-events-none";
+                handleWarning("Off Beat!");
+            }
+            if (positionX >= 500) {
+                gameRunning = false;
+                clearInterval(timerInterval);
+                clearInterval(inactivityInterval);
+                document.removeEventListener('keydown', handleInput);
+                score += (timeLeft * 50);
+                document.getElementById('final-score').innerText = score;
+                document.getElementById('completion-msg').classList.remove('hidden');
+                feedback.innerText = "SAFE!";
+
                 // Mark game as completed
                 if (!localState.rhythmGameCompleted) {
                     localState.rhythmGameCompleted = true;
                     saveLocalProgress();
                     showToast('success', 'Rhythm Marshal completed!');
                 }
-            } 
+            }
         }
-        
+
         function scrollToQuiz() { document.getElementById('final-quiz').scrollIntoView({ behavior: 'smooth' }); }
 
         // --- QUIZ LOGIC ---
@@ -751,7 +842,7 @@
                 title.className = "text-2xl font-bold text-green-400 mb-2";
                 desc.innerText = `Outstanding! You got ${correctCount}/5. You are a true leader with integrity.`;
                 nextBtn.classList.remove('hidden');
-                
+
                 if (!localState.quizPassed) {
                     localState.quizPassed = true;
                     saveLocalProgress();

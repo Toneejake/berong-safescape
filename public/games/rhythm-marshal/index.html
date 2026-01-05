@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rhythm Marshal Challenge - Fire Safety Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+        }
+
+        .walking-step {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .stumble {
+            animation: shake 0.4s ease-in-out;
+            color: #f87171;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-10px) rotate(-5deg);
+            }
+
+            75% {
+                transform: translateX(10px) rotate(5deg);
+            }
+        }
+
+        .beat-pill {
+            width: 20px;
+            height: 100%;
+            background: #f97316;
+            position: absolute;
+            left: 0;
+            animation: beatMove 0.6s linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes beatMove {
+            0% {
+                left: 0%;
+                opacity: 1;
+            }
+
+            100% {
+                left: 100%;
+                opacity: 0;
+            }
+        }
+
+        .toast {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body class="text-slate-100 font-sans">
+
+    <div class="max-w-4xl mx-auto p-6 space-y-8">
+        <!-- Header -->
+        <div class="text-center">
+            <h1
+                class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 mb-4">
+                <i class="fa-solid fa-drum text-purple-400 mr-3"></i>Rhythm Marshal Challenge
+            </h1>
+            <p class="text-slate-300 text-lg max-w-2xl mx-auto">
+                Lead your team to safety! Press <strong class="text-white bg-slate-700 px-2 rounded">SPACEBAR</strong>
+                on the beat to walk calmly.
+                <span class="text-orange-400">Don't run!</span> Stay calm and follow the rhythm.
+            </p>
+        </div>
+
+        <!-- Info Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-users text-2xl text-blue-400"></i>
+                    <div>
+                        <h3 class="font-bold text-white">The Buddy System</h3>
+                        <p class="text-xs text-slate-400">Line up in pairs, hold hands</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-person-walking text-2xl text-green-400"></i>
+                    <div>
+                        <h3 class="font-bold text-white">Walk, Don't Run</h3>
+                        <p class="text-xs text-slate-400">"Huwag Tumakbo!"</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-music text-2xl text-orange-400"></i>
+                    <div>
+                        <h3 class="font-bold text-white">Stay Calm</h3>
+                        <p class="text-xs text-slate-400">Follow the beat to stay safe</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Area -->
+        <div class="bg-slate-800 rounded-2xl p-8 shadow-2xl border border-slate-700">
+            <div
+                class="relative w-full max-w-2xl mx-auto bg-slate-900 h-72 rounded-xl border-2 border-slate-600 overflow-hidden flex flex-col relative">
+                <!-- Timer bar -->
+                <div
+                    class="w-full bg-slate-800 h-8 border-b border-slate-700 relative flex items-center justify-between px-4">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-stopwatch text-slate-400"></i>
+                        <span id="game-timer" class="font-mono text-white font-bold">15s</span>
+                    </div>
+                    <div class="font-mono text-orange-400 text-sm" id="score-display">Score: 0</div>
+                    <div class="absolute left-0 top-0 w-full h-full pointer-events-none overflow-hidden">
+                        <div id="beat-pill" class="beat-pill"></div>
+                        <div class="absolute right-8 h-full w-2 bg-green-500/50"></div>
+                    </div>
+                </div>
+
+                <!-- Game field -->
+                <div class="flex-1 relative flex items-center overflow-hidden bg-slate-900">
+                    <div class="absolute bottom-0 w-full flex justify-between px-8 text-slate-600 text-xs font-mono">
+                        <span>START</span>
+                        <span>FINISH LINE</span>
+                    </div>
+                    <div id="walking-team"
+                        class="absolute left-4 bottom-8 flex gap-2 text-3xl transition-transform duration-200"
+                        style="transform: translateX(0px);">
+                        <i class="fa-solid fa-child-reaching text-orange-400"></i>
+                        <i class="fa-solid fa-child text-blue-400"></i>
+                        <i class="fa-solid fa-child-dress text-pink-400"></i>
+                        <i class="fa-solid fa-child text-green-400"></i>
+                        <i class="fa-solid fa-child-dress text-purple-400"></i>
+                    </div>
+                    <div class="absolute right-4 bottom-8 text-4xl text-green-500">
+                        <i class="fa-solid fa-flag-checkered"></i>
+                    </div>
+                </div>
+
+                <div id="rhythm-feedback"
+                    class="absolute top-12 left-0 w-full text-center font-bold font-mono text-slate-500 text-xl pointer-events-none">
+                </div>
+
+                <!-- Start overlay -->
+                <div id="rhythm-overlay"
+                    class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-20">
+                    <p class="text-slate-300 mb-4 text-sm">Lead 5 students to safety in 15s.</p>
+                    <button onclick="startRhythmGame()"
+                        class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full shadow-lg">
+                        START WALKING
+                    </button>
+                </div>
+
+                <!-- Game over overlay -->
+                <div id="game-over-overlay"
+                    class="hidden absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-30 text-center p-6">
+                    <h3 id="go-title" class="text-2xl font-bold mb-2"></h3>
+                    <p id="go-desc" class="text-slate-300 mb-6"></p>
+                    <button onclick="resetRhythmGame()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full">
+                        TRY AGAIN
+                    </button>
+                </div>
+            </div>
+
+            <!-- Success message -->
+            <div id="completion-msg" class="hidden mt-6 bg-slate-900 p-6 rounded-xl border border-green-500">
+                <h3 class="text-green-400 text-xl font-bold mb-2 text-center">Safe & Sound!</h3>
+                <p class="text-white mb-4 font-mono text-center">Final Score: <span id="final-score"
+                        class="text-orange-400 text-2xl">0</span></p>
+                <div class="flex justify-center gap-4">
+                    <button onclick="resetRhythmGame()"
+                        class="bg-slate-700 hover:bg-slate-600 text-white px-6 py-2 rounded-full border border-slate-500">
+                        <i class="fa-solid fa-rotate-right mr-2"></i>Play Again
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+            <h4 class="font-bold text-white mb-3"><i class="fa-solid fa-lightbulb text-yellow-400 mr-2"></i>How to Play
+            </h4>
+            <ul class="text-sm text-slate-300 space-y-2">
+                <li>• Press <span class="text-white bg-slate-700 px-2 rounded">SPACEBAR</span> on the beat (when the
+                    orange pill reaches the green zone)</li>
+                <li>• Walk your team to the finish line before time runs out</li>
+                <li>• <span class="text-red-400">Don't tap too fast!</span> - Running causes panic</li>
+                <li>• <span class="text-yellow-400">Stay calm</span> - Off-beat steps cause stumbles</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+
+    <script>
+        // Audio
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        // Game variables
+        let gameRunning = false;
+        let lastBeatTime = 0;
+        let positionX = 0;
+        let warningCount = 0;
+        let lastTapTime = 0;
+        let timeLeft = 15;
+        let score = 0;
+        let timerInterval;
+        let lastActionTime = 0;
+        let inactivityInterval;
+        const BPM = 100;
+        const BEAT_MS = 60000 / BPM;
+        const WINDOW = 250;
+
+        function startRhythmGame() {
+            initAudio();
+            document.getElementById('rhythm-overlay').classList.add('hidden');
+            document.getElementById('game-over-overlay').classList.add('hidden');
+            document.getElementById('completion-msg').classList.add('hidden');
+            gameRunning = true;
+            positionX = 0;
+            warningCount = 0;
+            timeLeft = 15;
+            score = 0;
+            lastActionTime = Date.now();
+            document.getElementById('walking-team').style.transform = `translateX(0px)`;
+            document.getElementById('game-timer').innerText = "15s";
+            document.getElementById('score-display').innerText = "Score: 0";
+            document.getElementById('beat-pill').style.animationDuration = `${BEAT_MS / 1000}s`;
+            runMetronome();
+            document.addEventListener('keydown', handleInput);
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
+            if (inactivityInterval) clearInterval(inactivityInterval);
+            inactivityInterval = setInterval(checkInactivity, 250);
+        }
+
+        function resetRhythmGame() {
+            startRhythmGame();
+        }
+
+        function checkInactivity() {
+            if (!gameRunning) return;
+            if (Date.now() - lastActionTime > 3000) {
+                gameOver("FROZEN!", "You stopped moving for too long.");
+            }
+        }
+
+        function updateTimer() {
+            if (!gameRunning) return;
+            timeLeft--;
+            document.getElementById('game-timer').innerText = `${timeLeft}s`;
+            if (timeLeft <= 0) gameOver("TOO SLOW!", "The smoke caught up. Move with rhythm!");
+            if (timeLeft <= 5) document.getElementById('game-timer').classList.add('text-red-500');
+            else document.getElementById('game-timer').classList.remove('text-red-500');
+        }
+
+        function gameOver(title, desc) {
+            gameRunning = false;
+            clearInterval(timerInterval);
+            clearInterval(inactivityInterval);
+            document.removeEventListener('keydown', handleInput);
+            const overlay = document.getElementById('game-over-overlay');
+            document.getElementById('go-title').innerText = title;
+            document.getElementById('go-title').className = "text-2xl font-bold mb-2 text-red-400";
+            document.getElementById('go-desc').innerText = desc;
+            overlay.classList.remove('hidden');
+        }
+
+        function handleWarning(reason) {
+            warningCount++;
+            score = Math.max(0, score - 50);
+            document.getElementById('score-display').innerText = `Score: ${score}`;
+            if (warningCount === 1) {
+                gameRunning = false;
+                const overlay = document.getElementById('game-over-overlay');
+                document.getElementById('go-title').innerText = "WARNING!";
+                document.getElementById('go-desc').innerText = `${reason} Stay calm and follow the beat.`;
+                document.getElementById('go-title').className = "text-2xl font-bold mb-2 text-orange-500";
+                const btn = overlay.querySelector('button');
+                btn.innerText = "CONTINUE";
+                btn.onclick = function () {
+                    overlay.classList.add('hidden');
+                    btn.innerText = "TRY AGAIN";
+                    btn.onclick = resetRhythmGame;
+                    gameRunning = true;
+                    lastActionTime = Date.now();
+                    runMetronome();
+                };
+                overlay.classList.remove('hidden');
+            } else if (warningCount >= 2) {
+                gameOver("PANIC CAUSED!", "You stumbled too many times. Stay calm!");
+            }
+        }
+
+        function runMetronome() {
+            if (!gameRunning) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.setValueAtTime(1000, now);
+            gain.gain.exponentialRampToValueAtTime(0.00001, now + 0.05);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.05);
+            lastBeatTime = Date.now();
+            setTimeout(runMetronome, BEAT_MS);
+        }
+
+        function handleInput(e) {
+            if (!gameRunning || e.code !== 'Space') return;
+            e.preventDefault();
+            const now = Date.now();
+            lastActionTime = now;
+
+            if (now - lastTapTime < 300) {
+                handleWarning("Too Fast!");
+                lastTapTime = now;
+                return;
+            }
+
+            lastTapTime = now;
+            const timeSinceTick = now - lastBeatTime;
+            const feedback = document.getElementById('rhythm-feedback');
+            const team = document.getElementById('walking-team');
+            const isOnBeat = (timeSinceTick < WINDOW) || (timeSinceTick > (BEAT_MS - WINDOW));
+
+            if (isOnBeat) {
+                positionX += 40;
+                score += 100;
+                document.getElementById('score-display').innerText = `Score: ${score}`;
+                team.style.transform = `translateX(${positionX}px)`;
+                team.classList.add('walking-step');
+                setTimeout(() => team.classList.remove('walking-step'), 100);
+                feedback.innerText = "WALK!";
+                feedback.className = "absolute top-12 left-0 w-full text-center font-bold font-mono text-green-400 text-xl pointer-events-none";
+            } else {
+                team.classList.add('stumble');
+                setTimeout(() => team.classList.remove('stumble'), 400);
+                feedback.innerText = "OFF BEAT!";
+                feedback.className = "absolute top-12 left-0 w-full text-center font-bold font-mono text-red-400 text-xl pointer-events-none";
+                handleWarning("Off Beat!");
+            }
+
+            if (positionX >= 500) {
+                gameRunning = false;
+                clearInterval(timerInterval);
+                clearInterval(inactivityInterval);
+                document.removeEventListener('keydown', handleInput);
+                score += (timeLeft * 50);
+                document.getElementById('final-score').innerText = score;
+                document.getElementById('completion-msg').classList.remove('hidden');
+                feedback.innerText = "SAFE!";
+                showToast('success', '🎉 Your team is safe! Great leadership!');
+            }
+        }
+
+        function showToast(type, message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2`;
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+
+</html>

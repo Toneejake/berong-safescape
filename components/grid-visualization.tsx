@@ -33,7 +33,7 @@ export function GridVisualization({
   onCellClick,
   interactive = false,
   showExitsAlways = true,
-  fireScale = 1.5, // Increased default fire size
+  fireScale = 2.85, // Fire size (50% larger than previous 1.9)
   showLegend = false,
   highlightDoors = true
 }: GridVisualizationProps) {
@@ -181,7 +181,7 @@ export function GridVisualization({
         const centerX = c * cellSize + cellSize / 2
         const centerY = r * cellSize + cellSize / 2
         const radius = 8 // Increased from 5
-        
+
         // Outer glow for visibility
         ctx.beginPath()
         ctx.arc(centerX, centerY, radius + 4, 0, 2 * Math.PI)
@@ -196,7 +196,7 @@ export function GridVisualization({
         ctx.strokeStyle = "#15803d" // green-700
         ctx.lineWidth = 2
         ctx.stroke()
-        
+
         // Exit icon (arrow pointing out)
         ctx.fillStyle = "#ffffff"
         ctx.font = "bold 10px Arial"
@@ -212,13 +212,13 @@ export function GridVisualization({
       const centerX = c * cellSize + cellSize / 2
       const centerY = r * cellSize + cellSize / 2
       const radius = 12 // Larger than exits
-      
+
       // Outer glow for visibility (blue)
       ctx.beginPath()
       ctx.arc(centerX, centerY, radius + 6, 0, 2 * Math.PI)
       ctx.fillStyle = "rgba(59, 130, 246, 0.25)" // blue glow
       ctx.fill()
-      
+
       // Main assembly point marker (dashed circle)
       ctx.beginPath()
       ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI)
@@ -229,7 +229,7 @@ export function GridVisualization({
       ctx.lineWidth = 2
       ctx.stroke()
       ctx.setLineDash([]) // Reset dash
-      
+
       // Assembly point icon (gathering people icon)
       ctx.fillStyle = "#ffffff"
       ctx.font = "bold 10px Arial"
@@ -399,8 +399,13 @@ export function GridVisualization({
     if (!canvas) return
 
     const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
+
+    // Account for CSS scaling: the displayed size may differ from canvas internal size
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+
+    const x = (e.clientX - rect.left) * scaleX
+    const y = (e.clientY - rect.top) * scaleY
 
     const col = Math.floor(x / cellSize)
     const row = Math.floor(y / cellSize)
@@ -417,8 +422,13 @@ export function GridVisualization({
     if (!canvas) return
 
     const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
+
+    // Account for CSS scaling: the displayed size may differ from canvas internal size
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+
+    const x = (e.clientX - rect.left) * scaleX
+    const y = (e.clientY - rect.top) * scaleY
 
     const col = Math.floor(x / cellSize)
     const row = Math.floor(y / cellSize)

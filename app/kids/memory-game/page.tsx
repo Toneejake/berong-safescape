@@ -73,7 +73,10 @@ export default function MemoryGamePage() {
   const handleCardClick = (cardId: number) => {
     if (flippedCards.length === 2) return
     if (flippedCards.includes(cardId)) return
-    if (cards[cardId].matched) return
+
+    // Find the card by id, not by index
+    const clickedCard = cards.find(c => c.id === cardId)
+    if (!clickedCard || clickedCard.matched) return
 
     const newFlippedCards = [...flippedCards, cardId]
     setFlippedCards(newFlippedCards)
@@ -84,10 +87,12 @@ export default function MemoryGamePage() {
     if (newFlippedCards.length === 2) {
       setMoves(moves + 1)
       const [firstId, secondId] = newFlippedCards
-      const firstCard = cards[firstId]
-      const secondCard = cards[secondId]
 
-      if (firstCard.name === secondCard.name) {
+      // Find cards by id, not by index
+      const firstCard = cards.find(c => c.id === firstId)
+      const secondCard = cards.find(c => c.id === secondId)
+
+      if (firstCard && secondCard && firstCard.name === secondCard.name) {
         setTimeout(() => {
           setCards((prevCards) =>
             prevCards.map((card) => (card.id === firstId || card.id === secondId ? { ...card, matched: true } : card)),
@@ -167,10 +172,10 @@ export default function MemoryGamePage() {
                       <Star
                         key={i}
                         className={`h-5 w-5 ${moves <= 15
+                          ? "text-yellow-400 fill-yellow-400"
+                          : i < 3
                             ? "text-yellow-400 fill-yellow-400"
-                            : i < 3
-                              ? "text-yellow-400 fill-yellow-400"
-                              : "text-gray-300"
+                            : "text-gray-300"
                           }`}
                       />
                     ))}
@@ -186,8 +191,8 @@ export default function MemoryGamePage() {
                   onClick={() => handleCardClick(card.id)}
                   disabled={card.matched || card.flipped}
                   className={`aspect-square rounded-lg text-4xl flex items-center justify-center transition-all transform hover:scale-105 ${card.flipped || card.matched
-                      ? "bg-white border-2 border-bfp-blue"
-                      : "bg-gradient-to-br from-bfp-blue to-purple-500 hover:from-bfp-blue/90 hover:to-purple-500/90"
+                    ? "bg-white border-2 border-bfp-blue"
+                    : "bg-gradient-to-br from-bfp-blue to-purple-500 hover:from-bfp-blue/90 hover:to-purple-500/90"
                     } ${card.matched ? "opacity-50" : ""}`}
                 >
                   {card.flipped || card.matched ? card.emoji : "❓"}

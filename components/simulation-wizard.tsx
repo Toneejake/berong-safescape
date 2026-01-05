@@ -33,6 +33,7 @@ interface SimulationData {
     numAgents: number
     firePosition: [number, number] | null
     agentPositions: [number, number][]
+    burnUntilComplete: boolean // Continue fire until entire space is burned
   }
   jobId: string | null
   results: any | null
@@ -51,7 +52,8 @@ export function SimulationWizard() {
     config: {
       numAgents: 5,
       firePosition: null,
-      agentPositions: []
+      agentPositions: [],
+      burnUntilComplete: true // Default to true for extended fire demo
     },
     jobId: null,
     results: null
@@ -129,10 +131,33 @@ export function SimulationWizard() {
       const result = await response.json()
       console.log('Process image result:', result)
 
+      // Auto-flip grid if wall percentage is abnormally high (>50%)
+      // In a typical floor plan, walls are thin lines (~10-20% of area)
+      // If walls > 50%, the detection is likely inverted
+      let processedGrid = result.grid
+      const total = processedGrid.length * processedGrid[0].length
+      const wallCount = processedGrid.flat().filter((c: number) => c === 1).length
+      const wallPercentage = (wallCount / total) * 100
+
+      console.log(`[AUTO-FLIP] Grid composition: ${wallPercentage.toFixed(1)}% walls`)
+
+      if (wallPercentage > 50) {
+        console.log('[AUTO-FLIP] Wall percentage > 50%, auto-flipping grid...')
+        processedGrid = processedGrid.map((row: number[]) =>
+          row.map((cell: number) => {
+            if (cell === 0) return 1
+            if (cell === 1) return 0
+            return cell // Keep doors (2) and windows (3) unchanged
+          })
+        )
+        const newWallCount = processedGrid.flat().filter((c: number) => c === 1).length
+        console.log(`[AUTO-FLIP] After flip: ${((newWallCount / total) * 100).toFixed(1)}% walls`)
+      }
+
       setData(prev => ({
         ...prev,
         imageFile: file,
-        grid: result.grid,
+        grid: processedGrid,
         originalImage: result.originalImage,
         gridSize: result.gridSize
       }))
@@ -175,7 +200,8 @@ export function SimulationWizard() {
           grid: data.grid,
           exits: exitsForBackend.length > 0 ? exitsForBackend : null,
           fire_position: data.config.firePosition,
-          agent_positions: data.config.agentPositions
+          agent_positions: data.config.agentPositions,
+          extended_fire_steps: data.config.burnUntilComplete ? -1 : 0 // -1 = burn until complete
         })
       })
 
@@ -264,7 +290,8 @@ export function SimulationWizard() {
       config: {
         numAgents: 5,
         firePosition: null,
-        agentPositions: []
+        agentPositions: [],
+        burnUntilComplete: true
       },
       jobId: null,
       results: null
@@ -385,6 +412,7 @@ export function SimulationWizard() {
 
       {stage === "setup" && data.grid && (
         <SimulationSetup
+          key={`grid-${data.grid.flat().slice(0, 100).reduce((a, b) => a + b, 0)}`}
           grid={data.grid}
           originalImage={data.originalImage}
           config={{
@@ -420,6 +448,7 @@ export function SimulationWizard() {
           results={data.results}
           grid={data.grid}
           originalImage={data.originalImage}
+          userExits={data.userExits.map(e => [e.y, e.x] as [number, number])} // Pass user exits for playback
           onReset={handleReset}
         />
       )}

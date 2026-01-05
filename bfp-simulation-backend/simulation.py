@@ -525,24 +525,57 @@ def run_heuristic_simulation(grid, agent_positions, fire_position, exits=None,
             break
     
     # Extended fire spread demonstration
-    if extended_fire_steps > 0:
-        print(f"[HEURISTIC] Running {extended_fire_steps} extended fire steps", flush=True)
-        for _ in range(extended_fire_steps):
-            fire_sim.step()
-            fire_coords = np.argwhere(fire_sim.fire_map == 1).tolist()
-            # Keep agents frozen
-            agents_data = []
-            for agent in agents:
-                agents_data.append({
-                    "pos": [agent.pos[1], agent.pos[0]],
-                    "status": agent.status,
-                    "state": agent.state,
-                    "tripped": False
+    if extended_fire_steps != 0:
+        if extended_fire_steps == -1:
+            # Burn until complete - continue fire until no more cells can burn
+            print("[HEURISTIC] Burn until complete mode - spreading fire until fully consumed", flush=True)
+            max_burn_steps = 2000  # Safety limit
+            burn_step = 0
+            while burn_step < max_burn_steps:
+                prev_fire_count = np.sum(fire_sim.fire_map)
+                fire_sim.step()
+                new_fire_count = np.sum(fire_sim.fire_map)
+                
+                fire_coords = np.argwhere(fire_sim.fire_map == 1).tolist()
+                # Keep agents frozen at final position
+                agents_data = []
+                for agent in agents:
+                    agents_data.append({
+                        "pos": [agent.pos[1], agent.pos[0]],
+                        "status": agent.status,
+                        "state": agent.state,
+                        "tripped": False
+                    })
+                history.append({
+                    "fire_map": fire_coords,
+                    "agents": agents_data
                 })
-            history.append({
-                "fire_map": fire_coords,
-                "agents": agents_data
-            })
+                
+                burn_step += 1
+                
+                # Stop if fire stopped spreading (no new cells burned)
+                if new_fire_count == prev_fire_count:
+                    print(f"[HEURISTIC] Fire fully spread after {burn_step} extra steps", flush=True)
+                    break
+        else:
+            # Fixed number of extended steps
+            print(f"[HEURISTIC] Running {extended_fire_steps} extended fire steps", flush=True)
+            for _ in range(extended_fire_steps):
+                fire_sim.step()
+                fire_coords = np.argwhere(fire_sim.fire_map == 1).tolist()
+                # Keep agents frozen
+                agents_data = []
+                for agent in agents:
+                    agents_data.append({
+                        "pos": [agent.pos[1], agent.pos[0]],
+                        "status": agent.status,
+                        "state": agent.state,
+                        "tripped": False
+                    })
+                history.append({
+                    "fire_map": fire_coords,
+                    "agents": agents_data
+                })
     
     # Calculate statistics
     escaped = sum(1 for a in agents if a.status in ['escaped', 'at_assembly'])
