@@ -793,6 +793,51 @@ def run_simulation_task(job_id: str, config: SimulationConfig):
         if config.exits and len(config.exits) > 0:
             exits_xy = [frontend_to_backend(row, col) for row, col in config.exits]
             print(f"[JOB {job_id[:8]}] Converted {len(config.exits)} exits from (row,col) to (x,y) format", flush=True)
+            
+            # Validate exits - ensure they're on free cells, not walls, and not near agents
+            MIN_EXIT_AGENT_DISTANCE = 20  # Exits must be at least 20 cells from any agent
+            validated_exits = []
+            for ex in exits_xy:
+                ex_x, ex_y = int(ex[0]), int(ex[1])
+                if 0 <= ex_y < grid.shape[0] and 0 <= ex_x < grid.shape[1]:
+                    if grid[ex_y][ex_x] == 1:  # CELL_WALL
+                        print(f"[JOB {job_id[:8]}] WARNING: Exit ({ex_x}, {ex_y}) is on WALL, finding nearest free cell...", flush=True)
+                        # Search for nearest free cell that's not near agents
+                        found = False
+                        for radius in range(1, 50):
+                            for dy in range(-radius, radius + 1):
+                                for dx in range(-radius, radius + 1):
+                                    if abs(dx) == radius or abs(dy) == radius:
+                                        new_x, new_y = ex_x + dx, ex_y + dy
+                                        if 0 <= new_y < grid.shape[0] and 0 <= new_x < grid.shape[1]:
+                                            if grid[new_y][new_x] == 0:  # CELL_FREE
+                                                # Check distance to all agents
+                                                too_close = False
+                                                for agent_pos in agent_positions_xy:
+                                                    dist = np.sqrt((new_x - agent_pos[0])**2 + (new_y - agent_pos[1])**2)
+                                                    if dist < MIN_EXIT_AGENT_DISTANCE:
+                                                        too_close = True
+                                                        break
+                                                if not too_close:
+                                                    print(f"[JOB {job_id[:8]}] Fixed exit: ({ex_x}, {ex_y}) -> ({new_x}, {new_y})", flush=True)
+                                                    validated_exits.append((new_x, new_y))
+                                                    found = True
+                                                    break
+                                    if found:
+                                        break
+                                if found:
+                                    break
+                            if found:
+                                break
+                    else:
+                        validated_exits.append((ex_x, ex_y))
+            
+            if len(validated_exits) > 0:
+                exits_xy = validated_exits
+                print(f"[JOB {job_id[:8]}] Using {len(exits_xy)} validated exits", flush=True)
+            else:
+                exits_xy = None
+                print(f"[JOB {job_id[:8]}] No valid exits found, will auto-detect", flush=True)
         else:
             exits_xy = None
         

@@ -12,6 +12,7 @@ interface SimulationResultsProps {
     escaped_count: number
     burned_count: number
     time_steps: number
+    exits?: [number, number][] // Corrected exit positions from backend
     agent_results: Array<{
       agent_id: number
       status: "escaped" | "burned"
@@ -138,7 +139,7 @@ export function SimulationResults({ results, grid, originalImage, userExits = []
                   originalImage={originalImage}
                   showWallOverlay={showWallOverlay}
                   agentPositions={currentFrame.agents ? currentFrame.agents.map((a: any) => a.pos) : []}
-                  exits={userExits} // User-placed exits passed from wizard
+                  exits={results.exits || userExits} // Use corrected exits from backend, fallback to user exits
                   fireMap={currentFrame.fire_map as [number, number][]}
                   firePosition={null}
                   showExitsAlways={true} // Always show exits during simulation

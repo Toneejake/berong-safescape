@@ -389,7 +389,7 @@ class EvacuationEnv(gym.Env):
         self.current_step += 1
         self.fire_sim.step()
 
-        target_exit = self.exits[action]
+        # PPO action is ignored - each agent goes to their nearest exit instead
         reward = -0.01
 
         for agent in self.agents:
@@ -398,7 +398,15 @@ class EvacuationEnv(gym.Env):
 
                 is_stuck_or_needs_path = not agent.path or (self.current_step % 10 == 0)
                 if agent.state != 'PANICKED' and is_stuck_or_needs_path:
-                    agent.compute_path(self.base_grid, target_exit, self.fire_sim.fire_map)
+                    # Find nearest exit for this agent
+                    min_dist = float('inf')
+                    nearest_exit = self.exits[0] if self.exits else (0, 0)
+                    for ex in self.exits:
+                        dist = np.sqrt((agent.pos[0] - ex[0])**2 + (agent.pos[1] - ex[1])**2)
+                        if dist < min_dist:
+                            min_dist = dist
+                            nearest_exit = ex
+                    agent.compute_path(self.base_grid, nearest_exit, self.fire_sim.fire_map)
 
                 agent.move(self.base_grid)
                 
@@ -445,22 +453,100 @@ def run_heuristic_simulation(grid, agent_positions, fire_position, exits=None,
     """
     print(f"[HEURISTIC] Starting simulation: {len(agent_positions)} agents", flush=True)
     
+    # Validate fire position - ensure it's on a free cell
+    fire_x, fire_y = int(fire_position[0]), int(fire_position[1])
+    if 0 <= fire_y < grid.shape[0] and 0 <= fire_x < grid.shape[1]:
+        if grid[fire_y][fire_x] == CELL_WALL:
+            print(f"[HEURISTIC] WARNING: Fire position ({fire_x}, {fire_y}) is on WALL, finding nearest free cell...", flush=True)
+            # Search for nearest free cell
+            found = False
+            for radius in range(1, 50):
+                for dy in range(-radius, radius + 1):
+                    for dx in range(-radius, radius + 1):
+                        if abs(dx) == radius or abs(dy) == radius:
+                            new_x, new_y = fire_x + dx, fire_y + dy
+                            if 0 <= new_y < grid.shape[0] and 0 <= new_x < grid.shape[1]:
+                                if grid[new_y][new_x] == CELL_FREE:
+                                    print(f"[HEURISTIC] Fixed fire position: ({fire_x}, {fire_y}) -> ({new_x}, {new_y})", flush=True)
+                                    fire_position = (new_x, new_y)
+                                    found = True
+                                    break
+                    if found:
+                        break
+                if found:
+                    break
+            if not found:
+                print(f"[HEURISTIC] ERROR: Could not find free cell near fire position", flush=True)
+    
     # Initialize fire simulator
     fire_sim = FireSimulator(grid)
     # Fire position needs to be (y, x) for fire_sim
     fire_start_yx = (fire_position[1], fire_position[0])
     fire_sim.reset(ignition_points=[fire_start_yx])
+    print(f"[HEURISTIC] Fire started at ({fire_position[0]}, {fire_position[1]})", flush=True)
     
     # Auto-detect exits if not provided
     if exits is None or len(exits) == 0:
         exits = auto_detect_exits_from_grid(grid)
         print(f"[HEURISTIC] Auto-detected {len(exits)} exits", flush=True)
     
+    # Validate and fix exits - ensure they're on free cells and not near agents
+    MIN_EXIT_AGENT_DISTANCE = 20  # Exits must be at least 20 cells from any agent
+    validated_exits = []
+    for ex in exits:
+        ex_x, ex_y = int(ex[0]), int(ex[1])
+        # Check if exit is on a wall
+        if 0 <= ex_y < grid.shape[0] and 0 <= ex_x < grid.shape[1]:
+            if grid[ex_y][ex_x] == CELL_WALL:
+                print(f"[HEURISTIC] WARNING: Exit ({ex_x}, {ex_y}) is on WALL, searching for nearest free cell...", flush=True)
+                # Search for nearest free cell that's not too close to agents
+                found = False
+                for radius in range(1, 50):  # Search up to 50 cells away
+                    for dy in range(-radius, radius + 1):
+                        for dx in range(-radius, radius + 1):
+                            if abs(dx) == radius or abs(dy) == radius:  # Only check perimeter
+                                new_x, new_y = ex_x + dx, ex_y + dy
+                                if 0 <= new_y < grid.shape[0] and 0 <= new_x < grid.shape[1]:
+                                    if grid[new_y][new_x] == CELL_FREE:
+                                        # Check distance to all agents
+                                        too_close_to_agent = False
+                                        for agent_pos in agent_positions:
+                                            agent_dist = np.sqrt((new_x - agent_pos[0])**2 + (new_y - agent_pos[1])**2)
+                                            if agent_dist < MIN_EXIT_AGENT_DISTANCE:
+                                                too_close_to_agent = True
+                                                break
+                                        if not too_close_to_agent:
+                                            print(f"[HEURISTIC] Fixed exit: ({ex_x}, {ex_y}) -> ({new_x}, {new_y})", flush=True)
+                                            validated_exits.append((new_x, new_y))
+                                            found = True
+                                            break
+                        if found:
+                            break
+                    if found:
+                        break
+                if not found:
+                    print(f"[HEURISTIC] ERROR: Could not find free cell near exit ({ex_x}, {ex_y})", flush=True)
+            else:
+                validated_exits.append((ex_x, ex_y))
+        else:
+            print(f"[HEURISTIC] WARNING: Exit ({ex_x}, {ex_y}) is out of bounds", flush=True)
+    
+    # Use validated exits (or fall back to auto-detection if none valid)
+    if len(validated_exits) == 0:
+        print("[HEURISTIC] No valid exits! Auto-detecting from grid edges...", flush=True)
+        validated_exits = auto_detect_exits_from_grid(grid)
+    
+    exits = validated_exits
+    print(f"[HEURISTIC] Using {len(exits)} validated exits", flush=True)
+    
     # Initialize agents
     agents = [Person(position=pos) for pos in agent_positions]
     
+    # Log all exits
+    print(f"[HEURISTIC] Available exits: {exits}", flush=True)
+    
     # Assign each agent to nearest exit (heuristic strategy)
-    for agent in agents:
+    for i, agent in enumerate(agents):
         min_dist = float('inf')
         best_exit = exits[0] if exits else (0, 0)
         for ex in exits:
@@ -469,6 +555,7 @@ def run_heuristic_simulation(grid, agent_positions, fire_position, exits=None,
                 min_dist = dist
                 best_exit = ex
         agent.assigned_exit = best_exit
+        print(f"[HEURISTIC] Agent {i} at ({agent.pos[0]}, {agent.pos[1]}) -> Exit ({best_exit[0]}, {best_exit[1]}) [dist={min_dist:.1f}]", flush=True)
     
     # Run simulation
     history = []

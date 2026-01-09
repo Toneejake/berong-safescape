@@ -184,8 +184,8 @@ export function SimulationWizard() {
     setStage("running")
 
     try {
-      // Convert user exits to tuple format
-      const exitsForBackend = data.userExits.map(exit => [exit.x, exit.y] as [number, number])
+      // Convert user exits to [row, col] format (exit.y = row, exit.x = col)
+      const exitsForBackend = data.userExits.map(exit => [exit.y, exit.x] as [number, number])
 
       console.log('Starting simulation with:', {
         userExits: exitsForBackend.length,
