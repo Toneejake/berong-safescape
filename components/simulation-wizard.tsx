@@ -23,12 +23,18 @@ interface Exit {
   pixelY: number
 }
 
+interface AssemblyPoint {
+  x: number
+  y: number
+}
+
 interface SimulationData {
   imageFile: File | null
   grid: number[][] | null
   originalImage: string | null
   gridSize: { width: number; height: number } | null
   userExits: Exit[]
+  assemblyPoint: AssemblyPoint | null
   config: {
     numAgents: number
     firePosition: [number, number] | null
@@ -42,13 +48,14 @@ interface SimulationData {
 export function SimulationWizard() {
   const [stage, setStage] = useState<Stage>("upload")
   const [inputMode, setInputMode] = useState<'upload' | 'draw'>('upload')
-  const [exitMode, setExitMode] = useState<'view' | 'add-exit'>('view')
+  const [exitMode, setExitMode] = useState<'view' | 'add-exit' | 'add-assembly'>('view')
   const [data, setData] = useState<SimulationData>({
     imageFile: null,
     grid: null,
     originalImage: null,
     gridSize: null,
     userExits: [],
+    assemblyPoint: null,
     config: {
       numAgents: 5,
       firePosition: null,
@@ -192,6 +199,11 @@ export function SimulationWizard() {
         agents: data.config.agentPositions.length
       })
 
+      // Convert assembly point to [row, col] format
+      const assemblyForBackend = data.assemblyPoint
+        ? [data.assemblyPoint.y, data.assemblyPoint.x] as [number, number]
+        : null
+
       // Submit simulation job
       const response = await fetch("/api/simulation/run-simulation", {
         method: "POST",
@@ -201,6 +213,7 @@ export function SimulationWizard() {
           exits: exitsForBackend.length > 0 ? exitsForBackend : null,
           fire_position: data.config.firePosition,
           agent_positions: data.config.agentPositions,
+          assembly_point: assemblyForBackend,
           extended_fire_steps: data.config.burnUntilComplete ? -1 : 0 // -1 = burn until complete
         })
       })
@@ -287,6 +300,7 @@ export function SimulationWizard() {
       originalImage: null,
       gridSize: null,
       userExits: [],
+      assemblyPoint: null,
       config: {
         numAgents: 5,
         firePosition: null,
@@ -377,6 +391,8 @@ export function SimulationWizard() {
             gridSize={data.gridSize}
             exits={data.userExits}
             onExitsChange={(exits) => setData(prev => ({ ...prev, userExits: exits }))}
+            assemblyPoint={data.assemblyPoint}
+            onAssemblyPointChange={(point) => setData(prev => ({ ...prev, assemblyPoint: point }))}
             mode={exitMode}
             onModeChange={setExitMode}
           />
@@ -389,20 +405,22 @@ export function SimulationWizard() {
                 </Button>
                 <Button
                   onClick={() => setStage("setup")}
-                  disabled={data.userExits.length === 0}
+                  disabled={data.userExits.length === 0 || !data.assemblyPoint}
                 >
                   Configure Simulation
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>
-              {data.userExits.length === 0 && (
+              {(data.userExits.length === 0 || !data.assemblyPoint) && (
                 <p className="text-sm text-amber-600 mt-2">
-                  ⚠️ Place at least 1 exit to continue
+                  ⚠️ Required: {data.userExits.length === 0 && 'At least 1 exit'}
+                  {data.userExits.length === 0 && !data.assemblyPoint && ' and '}
+                  {!data.assemblyPoint && 'Assembly point'}
                 </p>
               )}
-              {data.userExits.length > 0 && (
-                <p className="text-sm text-muted-foreground mt-2">
-                  ℹ️ Your {data.userExits.length} exit{data.userExits.length !== 1 ? 's' : ''} will distribute 248 AI model exits evenly
+              {data.userExits.length > 0 && data.assemblyPoint && (
+                <p className="text-sm text-green-600 mt-2">
+                  ✓ {data.userExits.length} exit{data.userExits.length !== 1 ? 's' : ''} and assembly point set
                 </p>
               )}
             </CardContent>

@@ -259,7 +259,12 @@ class Person:
         
         # Recompute path to assembly if needed
         if not self.path:
+            print(f"[ASSEMBLY DEBUG] Agent computing path to assembly: pos=({self.pos[0]:.0f}, {self.pos[1]:.0f}) -> assembly={assembly_point}", flush=True)
             self.compute_path(grid, assembly_point, fire_map)
+            if self.path:
+                print(f"[ASSEMBLY DEBUG] Path found: {len(self.path)} steps", flush=True)
+            else:
+                print(f"[ASSEMBLY DEBUG] WARNING: No path found to assembly!", flush=True)
         
         # Move toward assembly point (slower, calmer movement after escape)
         if self.path:
@@ -366,8 +371,14 @@ class EvacuationEnv(gym.Env):
         super().reset(seed=seed)
         self.current_step = 0
 
-        # Fire position is (y, x) for fire_sim
-        fire_start = self.initial_fire_position or (self.base_grid.shape[0] // 2, self.base_grid.shape[1] // 2)
+        # Fire position: input is (x, y) but fire_sim expects (y, x) format
+        if self.initial_fire_position:
+            # Convert from (x, y) to (y, x) for fire_map
+            fire_start = (self.initial_fire_position[1], self.initial_fire_position[0])
+            print(f"[RL ENV] Fire position converted: input (x,y)={self.initial_fire_position} -> fire_map (y,x)={fire_start}", flush=True)
+        else:
+            fire_start = (self.base_grid.shape[0] // 2, self.base_grid.shape[1] // 2)
+            print(f"[RL ENV] Using default fire position (center): {fire_start}", flush=True)
         self.fire_sim.reset(ignition_points=[fire_start])
 
         self.agents = []
@@ -480,10 +491,17 @@ def run_heuristic_simulation(grid, agent_positions, fire_position, exits=None,
     
     # Initialize fire simulator
     fire_sim = FireSimulator(grid)
-    # Fire position needs to be (y, x) for fire_sim
+    # Fire position needs to be (y, x) for fire_sim - input is (x, y)
     fire_start_yx = (fire_position[1], fire_position[0])
+    
+    # DEBUG: Detailed fire position logging
+    print(f"[FIRE DEBUG] Input fire_position (x,y): {fire_position}", flush=True)
+    print(f"[FIRE DEBUG] Converted to (y,x) for fire_map: {fire_start_yx}", flush=True)
+    print(f"[FIRE DEBUG] Grid shape: {grid.shape} (rows, cols)", flush=True)
+    print(f"[FIRE DEBUG] Cell value at fire position: grid[{fire_start_yx[0]}][{fire_start_yx[1]}] = {grid[fire_start_yx[0]][fire_start_yx[1]] if 0 <= fire_start_yx[0] < grid.shape[0] and 0 <= fire_start_yx[1] < grid.shape[1] else 'OUT OF BOUNDS'}", flush=True)
+    
     fire_sim.reset(ignition_points=[fire_start_yx])
-    print(f"[HEURISTIC] Fire started at ({fire_position[0]}, {fire_position[1]})", flush=True)
+    print(f"[HEURISTIC] Fire started at (x={fire_position[0]}, y={fire_position[1]}) -> fire_map[{fire_start_yx[0]}][{fire_start_yx[1]}]", flush=True)
     
     # Auto-detect exits if not provided
     if exits is None or len(exits) == 0:

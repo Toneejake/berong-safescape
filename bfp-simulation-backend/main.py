@@ -934,10 +934,16 @@ def run_simulation_task(job_id: str, config: SimulationConfig):
             })
         
         # Extended fire steps: continue fire spread after all agents are done
+        # Also move escaped agents to assembly point if provided
+        assembly_point_xy = frontend_to_backend(config.assembly_point[0], config.assembly_point[1]) if config.assembly_point else None
+        
         if config.extended_fire_steps != 0:
             if config.extended_fire_steps == -1:
                 # Burn until complete - continue fire until no more cells can burn
                 print(f"[JOB {job_id[:8]}] Burn until complete mode - spreading fire until fully consumed", flush=True)
+                if assembly_point_xy:
+                    print(f"[JOB {job_id[:8]}] Assembly point: {assembly_point_xy} - agents will move there after escaping", flush=True)
+                
                 max_burn_steps = 2000  # Safety limit
                 burn_step = 0
                 while burn_step < max_burn_steps:
@@ -945,8 +951,14 @@ def run_simulation_task(job_id: str, config: SimulationConfig):
                     env.fire_sim.step()
                     new_fire_count = np.sum(env.fire_sim.fire_map)
                     
+                    # Move escaped agents toward assembly point
+                    if assembly_point_xy:
+                        for agent in env.agents:
+                            if agent.status == 'escaped':
+                                agent.move_to_assembly(grid, assembly_point_xy, env.fire_sim.fire_map)
+                                agent.check_status(env.fire_sim.fire_map, env.exits, assembly_point=assembly_point_xy)
+                    
                     fire_coords = np.argwhere(env.fire_sim.fire_map == 1).tolist()
-                    # Keep last agent positions frozen
                     agents_data = []
                     for agent in env.agents:
                         agent_pos_frontend = [agent.pos[1], agent.pos[0]]
@@ -963,8 +975,17 @@ def run_simulation_task(job_id: str, config: SimulationConfig):
                     
                     burn_step += 1
                     
-                    # Stop if fire stopped spreading (no new cells burned)
-                    if new_fire_count == prev_fire_count:
+                    # Check if done: fire stopped AND all agents at assembly (or no assembly)
+                    fire_stopped = (new_fire_count == prev_fire_count)
+                    if assembly_point_xy:
+                        all_at_assembly = all(a.status in ['at_assembly', 'burned'] for a in env.agents)
+                        if fire_stopped and all_at_assembly:
+                            print(f"[JOB {job_id[:8]}] Fire fully spread and all agents at assembly after {burn_step} extra steps", flush=True)
+                            break
+                        elif fire_stopped:
+                            # Fire stopped but agents still moving to assembly - continue
+                            pass
+                    elif fire_stopped:
                         print(f"[JOB {job_id[:8]}] Fire fully spread after {burn_step} extra steps", flush=True)
                         break
             else:
@@ -989,7 +1010,8 @@ def run_simulation_task(job_id: str, config: SimulationConfig):
                     })
         
         # Calculate final statistics
-        escaped = sum(1 for agent in env.agents if agent.status == "escaped")
+        # Count both 'escaped' and 'at_assembly' as successfully evacuated
+        escaped = sum(1 for agent in env.agents if agent.status in ["escaped", "at_assembly"])
         burned = sum(1 for agent in env.agents if agent.status == "burned")
         total_agents = len(env.agents)
         
@@ -998,10 +1020,12 @@ def run_simulation_task(job_id: str, config: SimulationConfig):
         # Prepare agent results with detailed information
         agent_results = []
         for i, agent in enumerate(env.agents):
+            # Normalize status for frontend (at_assembly counts as escaped)
+            final_status = "escaped" if agent.status in ["escaped", "at_assembly"] else agent.status
             agent_results.append({
                 "agent_id": i,
-                "status": agent.status,
-                "exit_time": agent.escape_time if hasattr(agent, 'escape_time') and agent.status == "escaped" else None,
+                "status": final_status,
+                "exit_time": agent.escape_time if hasattr(agent, 'escape_time') and agent.status in ["escaped", "at_assembly"] else None,
                 "path_length": agent.steps_taken if hasattr(agent, 'steps_taken') else step_count
             })
         
