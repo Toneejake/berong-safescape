@@ -47,9 +47,15 @@ export function SimulationSetup({
   const [showWallOverlay, setShowWallOverlay] = useState(true) // Toggle for wall overlay
 
   const handleCellClick = (row: number, col: number) => {
-    // Check if cell is valid (not a wall)
-    if (grid[row][col] === 1) {
+    const cellValue = grid[row][col]
+
+    // Check if cell is valid - not a wall or exterior zone
+    if (cellValue === 1) {
       alert("Cannot place items on walls!")
+      return
+    }
+    if (cellValue === 4) {
+      alert("Cannot place fire or agents in the exterior zone! Use the exterior zone for assembly point only.")
       return
     }
 

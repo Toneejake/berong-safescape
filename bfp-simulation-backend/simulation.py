@@ -9,6 +9,7 @@ CELL_FREE = 0
 CELL_WALL = 1
 CELL_DOOR = 2
 CELL_WINDOW = 3
+CELL_EXTERIOR = 4  # Exterior padding zone (assembly only, fire blocked)
 
 # Material-aware fire spread probabilities
 FIRE_SPREAD_PROBS = {
@@ -16,6 +17,7 @@ FIRE_SPREAD_PROBS = {
     CELL_WALL: 0.0,       # Cannot spread through walls
     CELL_DOOR: 0.6,       # Doors allow fire spread (open/burnable)
     CELL_WINDOW: 0.8,     # Windows spread fire quickly (glass breaks)
+    CELL_EXTERIOR: 0.0,   # Fire cannot spread to exterior zone
 }
 
 

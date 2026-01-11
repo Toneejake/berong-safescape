@@ -77,7 +77,41 @@ def create_grid_from_image(model, image_path, image_size, device, threshold=0.5,
     free_pct = composition.get(0, 0) / total * 100
     print(f"[INFERENCE] Grid composition: {wall_pct:.1f}% walls, {free_pct:.1f}% free space")
     
-    return grid_numpy
+    # Add exterior padding around the grid
+    grid_with_padding = add_exterior_padding(grid_numpy, padding_size=20)
+    print(f"[INFERENCE] Added 20px exterior padding: {grid_numpy.shape} -> {grid_with_padding.shape}")
+    
+    return grid_with_padding
+
+
+def add_exterior_padding(grid, padding_size=20):
+    """
+    Add exterior padding around the grid for assembly area placement.
+    
+    Args:
+        grid: Original grid (e.g., 256x256) with values 0=free, 1=wall
+        padding_size: Pixels of padding on each side (default 20)
+    
+    Returns:
+        Expanded grid (e.g., 296x296) with exterior zone marked as value 4.
+        Cell values:
+            0 = Free space (inside building)
+            1 = Wall
+            2 = Door
+            3 = Window
+            4 = EXTERIOR (padding zone - assembly only, fire blocked)
+    """
+    original_size = grid.shape[0]
+    new_size = original_size + (padding_size * 2)
+    
+    # Create new grid filled with EXTERIOR marker (4)
+    expanded_grid = np.full((new_size, new_size), 4, dtype=np.int32)
+    
+    # Place original grid in center
+    expanded_grid[padding_size:padding_size + original_size,
+                  padding_size:padding_size + original_size] = grid.astype(np.int32)
+    
+    return expanded_grid
 
 
 def analyze_floor_plan_brightness(image_path, image_size=256):

@@ -54,7 +54,7 @@ export function FloorPlanCanvas({
     img.src = originalImage
   }, [originalImage])
 
-  // Draw canvas
+  // Draw canvas - using same cellSize as grid-visualization for consistency
   useEffect(() => {
     if (!canvasRef.current || !image) return
 
@@ -62,20 +62,40 @@ export function FloorPlanCanvas({
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Set canvas size
-    canvas.width = gridSize.width
-    canvas.height = gridSize.height
+    // Match grid-visualization cellSize
+    const cellSize = 3
+    const PADDING = 20
+    const originalImageSize = 256
 
-    // Draw original image
-    ctx.drawImage(image, 0, 0, gridSize.width, gridSize.height)
+    // Set canvas size (grid.length * cellSize)
+    const canvasWidth = grid[0]?.length * cellSize || gridSize.width * cellSize
+    const canvasHeight = grid.length * cellSize || gridSize.height * cellSize
+    canvas.width = canvasWidth
+    canvas.height = canvasHeight
 
-    // Draw red wall overlay
+    // Fill entire canvas with dark gray (exterior zone)
+    ctx.fillStyle = '#373737'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+    // Draw original image inside the padding area
+    ctx.drawImage(
+      image,
+      PADDING * cellSize,
+      PADDING * cellSize,
+      originalImageSize * cellSize,
+      originalImageSize * cellSize
+    )
+
+    // Draw wall and exterior overlay
     if (showOverlay) {
-      ctx.fillStyle = 'rgba(255, 0, 0, 0.25)'
-      for (let y = 0; y < grid.length; y++) {
-        for (let x = 0; x < grid[y].length; x++) {
-          if (grid[y][x] === 1) { // Wall
-            ctx.fillRect(x, y, 1, 1)
+      for (let row = 0; row < grid.length; row++) {
+        for (let col = 0; col < grid[row].length; col++) {
+          if (grid[row][col] === 4) { // Exterior zone - dark gray
+            ctx.fillStyle = 'rgba(55, 55, 55, 0.85)'
+            ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize)
+          } else if (grid[row][col] === 1) { // Wall - red
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.25)'
+            ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize)
           }
         }
       }
@@ -84,11 +104,13 @@ export function FloorPlanCanvas({
     // Draw exits as green circles with numbers
     exits.forEach((exit, index) => {
       const isHovered = hoveredExit === exit.id
-      const radius = isHovered ? 8 : 6
+      const radius = (isHovered ? 10 : 8) // Larger for visibility
+      const centerX = exit.x * cellSize + cellSize / 2
+      const centerY = exit.y * cellSize + cellSize / 2
 
       // Draw circle
       ctx.beginPath()
-      ctx.arc(exit.x, exit.y, radius, 0, 2 * Math.PI)
+      ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI)
       ctx.fillStyle = isHovered ? 'rgba(34, 197, 94, 0.9)' : 'rgba(34, 197, 94, 0.7)'
       ctx.fill()
       ctx.strokeStyle = 'white'
@@ -100,27 +122,27 @@ export function FloorPlanCanvas({
       ctx.font = 'bold 10px Arial'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.fillText((index + 1).toString(), exit.x, exit.y)
+      ctx.fillText((index + 1).toString(), centerX, centerY)
     })
 
     // Draw assembly point as blue flag
     if (assemblyPoint) {
-      const x = assemblyPoint.x
-      const y = assemblyPoint.y
+      const centerX = assemblyPoint.x * cellSize + cellSize / 2
+      const centerY = assemblyPoint.y * cellSize + cellSize / 2
 
       // Draw flag pole
       ctx.beginPath()
-      ctx.moveTo(x, y)
-      ctx.lineTo(x, y - 15)
+      ctx.moveTo(centerX, centerY)
+      ctx.lineTo(centerX, centerY - 20)
       ctx.strokeStyle = '#1e40af'
-      ctx.lineWidth = 2
+      ctx.lineWidth = 3
       ctx.stroke()
 
       // Draw flag
       ctx.beginPath()
-      ctx.moveTo(x, y - 15)
-      ctx.lineTo(x + 12, y - 10)
-      ctx.lineTo(x, y - 5)
+      ctx.moveTo(centerX, centerY - 20)
+      ctx.lineTo(centerX + 15, centerY - 14)
+      ctx.lineTo(centerX, centerY - 8)
       ctx.closePath()
       ctx.fillStyle = 'rgba(59, 130, 246, 0.9)'
       ctx.fill()
@@ -130,7 +152,7 @@ export function FloorPlanCanvas({
 
       // Draw base circle
       ctx.beginPath()
-      ctx.arc(x, y, 4, 0, 2 * Math.PI)
+      ctx.arc(centerX, centerY, 5, 0, 2 * Math.PI)
       ctx.fillStyle = '#1e40af'
       ctx.fill()
       ctx.strokeStyle = 'white'
@@ -151,28 +173,32 @@ export function FloorPlanCanvas({
 
     const canvas = canvasRef.current
     const rect = canvas.getBoundingClientRect()
+    const cellSize = 3 // Must match drawing cellSize
 
     // Calculate scale factor between displayed size and actual canvas size
     const scaleX = canvas.width / rect.width
     const scaleY = canvas.height / rect.height
 
-    // Get click position relative to canvas, accounting for scaling
-    const x = Math.floor((e.clientX - rect.left) * scaleX)
-    const y = Math.floor((e.clientY - rect.top) * scaleY)
+    // Get click position in canvas pixels
+    const canvasX = (e.clientX - rect.left) * scaleX
+    const canvasY = (e.clientY - rect.top) * scaleY
 
-    // Check if clicking on assembly point to remove it
+    // Convert canvas pixels to grid coordinates
+    const gridX = Math.floor(canvasX / cellSize)
+    const gridY = Math.floor(canvasY / cellSize)
+
+    // Check if clicking on assembly point to remove it (using grid coords)
     if (assemblyPoint) {
-      const distToAssembly = Math.sqrt(Math.pow(assemblyPoint.x - x, 2) + Math.pow(assemblyPoint.y - y, 2))
-      if (distToAssembly <= 8) {
+      if (assemblyPoint.x === gridX && assemblyPoint.y === gridY) {
         onAssemblyPointChange(null)
         return
       }
     }
 
-    // Check if clicking on existing exit
+    // Check if clicking on existing exit (using grid coords)
     const clickedExit = exits.find(exit => {
-      const dist = Math.sqrt(Math.pow(exit.x - x, 2) + Math.pow(exit.y - y, 2))
-      return dist <= 8 // Within 8 pixels
+      const dist = Math.sqrt(Math.pow(exit.x - gridX, 2) + Math.pow(exit.y - gridY, 2))
+      return dist <= 3 // Within 3 grid cells
     })
 
     if (clickedExit) {
@@ -183,30 +209,37 @@ export function FloorPlanCanvas({
 
     // Add new exit if in add mode
     if (mode === 'add-exit') {
-      // Validate: must be on free space
-      if (x < 0 || x >= grid[0].length || y < 0 || y >= grid.length) return
-      if (grid[y][x] === 1) {
+      // Validate: must be within grid bounds
+      if (gridX < 0 || gridX >= grid[0].length || gridY < 0 || gridY >= grid.length) return
+
+      // Validate: must be on free space (not wall or exterior)
+      const cellValue = grid[gridY][gridX]
+      if (cellValue === 1) {
         alert('Cannot place exit on wall!')
+        return
+      }
+      if (cellValue === 4) {
+        alert('Cannot place exit in exterior zone!')
         return
       }
 
       // Check if too close to existing exits
       const tooClose = exits.some(exit => {
-        const dist = Math.sqrt(Math.pow(exit.x - x, 2) + Math.pow(exit.y - y, 2))
-        return dist < 5
+        const dist = Math.sqrt(Math.pow(exit.x - gridX, 2) + Math.pow(exit.y - gridY, 2))
+        return dist < 3
       })
 
       if (tooClose) {
-        alert('Exit too close to another exit! Place at least 5 pixels apart.')
+        alert('Exit too close to another exit!')
         return
       }
 
       const newExit: Exit = {
         id: crypto.randomUUID(),
-        x,
-        y,
-        pixelX: e.clientX - rect.left,
-        pixelY: e.clientY - rect.top
+        x: gridX,
+        y: gridY,
+        pixelX: gridX * cellSize,
+        pixelY: gridY * cellSize
       }
 
       onExitsChange([...exits, newExit])
@@ -214,14 +247,16 @@ export function FloorPlanCanvas({
 
     // Add assembly point if in add-assembly mode
     if (mode === 'add-assembly') {
-      // Validate: must be on free space
-      if (x < 0 || x >= grid[0].length || y < 0 || y >= grid.length) return
-      if (grid[y][x] === 1) {
-        alert('Cannot place assembly point on wall!')
+      // Validate: must be within grid bounds
+      if (gridX < 0 || gridX >= grid[0].length || gridY < 0 || gridY >= grid.length) return
+
+      const cellValue = grid[gridY][gridX]
+      if (cellValue !== 4) {
+        alert('Assembly point must be placed in the exterior zone (dark gray padding area)!')
         return
       }
 
-      onAssemblyPointChange({ x, y })
+      onAssemblyPointChange({ x: gridX, y: gridY })
       onModeChange('view') // Auto-exit placement mode after placing
     }
   }, [exits, grid, mode, onExitsChange, assemblyPoint, onAssemblyPointChange, onModeChange])
@@ -231,18 +266,24 @@ export function FloorPlanCanvas({
 
     const canvas = canvasRef.current
     const rect = canvas.getBoundingClientRect()
+    const cellSize = 3 // Must match drawing cellSize
 
     // Calculate scale factor between displayed size and actual canvas size
     const scaleX = canvas.width / rect.width
     const scaleY = canvas.height / rect.height
 
-    const x = Math.floor((e.clientX - rect.left) * scaleX)
-    const y = Math.floor((e.clientY - rect.top) * scaleY)
+    // Get mouse position in canvas pixels
+    const canvasX = (e.clientX - rect.left) * scaleX
+    const canvasY = (e.clientY - rect.top) * scaleY
 
-    // Check if hovering over exit
+    // Convert to grid coordinates
+    const gridX = Math.floor(canvasX / cellSize)
+    const gridY = Math.floor(canvasY / cellSize)
+
+    // Check if hovering over exit (using grid coords)
     const hovered = exits.find(exit => {
-      const dist = Math.sqrt(Math.pow(exit.x - x, 2) + Math.pow(exit.y - y, 2))
-      return dist <= 8
+      const dist = Math.sqrt(Math.pow(exit.x - gridX, 2) + Math.pow(exit.y - gridY, 2))
+      return dist <= 3
     })
 
     setHoveredExit(hovered ? hovered.id : null)
@@ -332,14 +373,16 @@ export function FloorPlanCanvas({
           </Button>
         </div>
 
-        {/* Canvas */}
-        <div className="relative border rounded-lg overflow-hidden bg-gray-100">
-          <canvas
-            ref={canvasRef}
-            onClick={handleCanvasClick}
-            onMouseMove={handleCanvasMouseMove}
-            className="max-w-full h-auto"
-          />
+        {/* Canvas - Centered and enlarged to match simulation-setup */}
+        <div className="flex justify-center">
+          <div className="relative border rounded-lg overflow-hidden bg-gray-100">
+            <canvas
+              ref={canvasRef}
+              onClick={handleCanvasClick}
+              onMouseMove={handleCanvasMouseMove}
+              style={{ width: '600px', height: '600px', imageRendering: 'pixelated' }}
+            />
+          </div>
         </div>
 
         {/* Instructions */}

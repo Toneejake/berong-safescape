@@ -131,16 +131,29 @@ export function GridVisualization({
     // Clear canvas
     ctx.clearRect(0, 0, canvasSize, canvasSize)
 
+    // Exterior padding configuration
+    const PADDING = 20
+    const originalImageSize = 256
+
     // Draw background image if available, otherwise draw grid-based walls
     if (backgroundImage) {
-      ctx.drawImage(backgroundImage, 0, 0, canvasSize, canvasSize)
+      // Fill entire canvas with exterior zone color first
+      ctx.fillStyle = "#373737"
+      ctx.fillRect(0, 0, canvasSize, canvasSize)
+
+      // Draw background image inside the padding area
+      ctx.drawImage(backgroundImage, PADDING * cellSize, PADDING * cellSize, originalImageSize * cellSize, originalImageSize * cellSize)
 
       // Draw semi-transparent wall overlay if enabled
       if (showWallOverlay) {
         for (let row = 0; row < grid.length; row++) {
           for (let col = 0; col < grid[row].length; col++) {
             const cellValue = grid[row][col]
-            if (cellValue === 1) {
+            if (cellValue === 4) {
+              // Exterior zone - dark gray (assembly area only)
+              ctx.fillStyle = "rgba(55, 55, 55, 0.85)"
+              ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize)
+            } else if (cellValue === 1) {
               // Wall - dark overlay
               ctx.fillStyle = "rgba(31, 41, 55, 0.4)"
               ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize)
@@ -161,7 +174,9 @@ export function GridVisualization({
       for (let row = 0; row < grid.length; row++) {
         for (let col = 0; col < grid[row].length; col++) {
           const cellValue = grid[row][col]
-          if (cellValue === 1) {
+          if (cellValue === 4) {
+            ctx.fillStyle = "#373737" // Exterior - dark gray
+          } else if (cellValue === 1) {
             ctx.fillStyle = "#1f2937" // Wall - dark
           } else if (cellValue === 2) {
             ctx.fillStyle = "#d4a574" // Door - brown
