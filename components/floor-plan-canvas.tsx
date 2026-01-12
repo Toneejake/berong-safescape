@@ -74,7 +74,7 @@ export function FloorPlanCanvas({
     canvas.height = canvasHeight
 
     // Fill entire canvas with dark gray (exterior zone)
-    ctx.fillStyle = '#373737'
+    ctx.fillStyle = '#f5f5f5'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
     // Draw original image inside the padding area
@@ -90,8 +90,8 @@ export function FloorPlanCanvas({
     if (showOverlay) {
       for (let row = 0; row < grid.length; row++) {
         for (let col = 0; col < grid[row].length; col++) {
-          if (grid[row][col] === 4) { // Exterior zone - dark gray
-            ctx.fillStyle = 'rgba(55, 55, 55, 0.85)'
+          if (grid[row][col] === 4) { // Exterior zone - clear/white
+            ctx.fillStyle = 'rgba(245, 245, 245, 0.95)'
             ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize)
           } else if (grid[row][col] === 1) { // Wall - red
             ctx.fillStyle = 'rgba(255, 0, 0, 0.25)'

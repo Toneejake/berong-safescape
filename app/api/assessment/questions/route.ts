@@ -8,13 +8,10 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type') || 'preTest'
     const limit = parseInt(searchParams.get('limit') || '10')
 
-    // Fetch questions that match the role
-    const questions = await prisma.assessmentQuestion.findMany({
+    // Fetch all active questions (SQLite doesn't support 'has' for JSON arrays)
+    const allQuestions = await prisma.assessmentQuestion.findMany({
       where: {
         isActive: true,
-        forRoles: {
-          has: role,
-        },
       },
       select: {
         id: true,
@@ -22,17 +19,23 @@ export async function GET(request: NextRequest) {
         options: true,
         category: true,
         difficulty: true,
-        // Don't send correct answer to client for security
-        // correctAnswer and explanation will be checked server-side
+        forRoles: true, // Need to fetch this for filtering
       },
       orderBy: {
         id: 'asc',
       },
-      take: limit,
     })
 
-    // Shuffle questions for variety
-    const shuffledQuestions = questions.sort(() => Math.random() - 0.5)
+    // Filter questions by role in JavaScript (SQLite workaround)
+    const filteredQuestions = allQuestions.filter(q => {
+      const roles = q.forRoles as string[]
+      return roles && roles.includes(role)
+    }).map(({ forRoles, ...rest }) => rest) // Remove forRoles from response
+
+    // Shuffle questions for variety and take the limit
+    const shuffledQuestions = filteredQuestions
+      .sort(() => Math.random() - 0.5)
+      .slice(0, limit)
 
     return NextResponse.json({
       success: true,

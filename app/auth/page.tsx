@@ -133,18 +133,22 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 flex items-center justify-center p-4">
-      {/* Registration Wizard Modal */}
+      {/* Registration Wizard Modal - Full screen overlay */}
       {showRegistrationWizard && (
-        <RegistrationWizard
-          onComplete={() => {
-            setShowRegistrationWizard(false)
-            const redirectPath = getRedirectPath()
-            router.push(redirectPath)
-          }}
-          onCancel={() => setShowRegistrationWizard(false)}
-        />
+        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-start justify-center overflow-y-auto py-8">
+          <div className="w-full max-w-2xl mx-4">
+            <RegistrationWizard
+              onComplete={() => {
+                setShowRegistrationWizard(false)
+                const redirectPath = getRedirectPath()
+                router.push(redirectPath)
+              }}
+              onCancel={() => setShowRegistrationWizard(false)}
+            />
+          </div>
+        </div>
       )}
-      
+
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
@@ -233,15 +237,15 @@ export default function AuthPage() {
                       Join our fire safety community and help protect Santa Cruz, Laguna
                     </p>
                   </div>
-                  
-                  <Button 
+
+                  <Button
                     className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground"
                     onClick={() => setShowRegistrationWizard(true)}
                     size="lg"
                   >
                     Start Registration
                   </Button>
-                  
+
                   <p className="text-xs text-center text-muted-foreground">
                     Registration includes a quick fire safety assessment to personalize your learning experience.
                   </p>
