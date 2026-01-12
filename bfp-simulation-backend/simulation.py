@@ -98,6 +98,127 @@ def a_star_search(grid, start, goal, fire_map=None):
     return []
 
 
+def find_nearest_exterior(grid, start):
+    """Find the nearest exterior cell (value=4) from start position using BFS.
+    
+    Args:
+        grid: 2D numpy array of cell types
+        start: (x, y) tuple - starting position
+    
+    Returns:
+        (x, y) tuple of nearest exterior cell, or None if not found
+    """
+    from collections import deque
+    
+    start_x, start_y = int(start[0]), int(start[1])
+    
+    # If already on exterior, return current position
+    if 0 <= start_y < grid.shape[0] and 0 <= start_x < grid.shape[1]:
+        if grid[start_y][start_x] == CELL_EXTERIOR:
+            return start
+    
+    # BFS to find nearest exterior cell
+    visited = set()
+    queue = deque([(start_x, start_y, 0)])  # (x, y, distance)
+    visited.add((start_x, start_y))
+    
+    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+    
+    while queue:
+        x, y, dist = queue.popleft()
+        
+        for dx, dy in directions:
+            nx, ny = x + dx, y + dy
+            
+            if 0 <= nx < grid.shape[1] and 0 <= ny < grid.shape[0]:
+                if (nx, ny) not in visited:
+                    visited.add((nx, ny))
+                    
+                    # Found exterior cell!
+                    if grid[ny][nx] == CELL_EXTERIOR:
+                        return (nx, ny)
+                    
+                    # Can traverse through non-wall cells
+                    if grid[ny][nx] != CELL_WALL:
+                        queue.append((nx, ny, dist + 1))
+    
+    print(f"[DEBUG] No exterior cell found from {start}", flush=True)
+    return None
+
+
+def a_star_exterior_only(grid, start, goal):
+    """A* pathfinding restricted to EXTERIOR cells only (value=4).
+    Used for escaped agents moving to assembly point.
+    
+    Args:
+        grid: 2D numpy array where grid[y][x] = cell type
+        start: (x, y) tuple - starting position (must be on exterior)
+        goal: (x, y) tuple - target position (must be on exterior)
+    
+    Returns:
+        List of (x, y) positions from start to goal (excluding start)
+    """
+    # Validate start and goal are on exterior
+    if not (0 <= start[0] < grid.shape[1] and 0 <= start[1] < grid.shape[0]):
+        print(f"[DEBUG] Exterior A* Failed: Start {start} out of bounds", flush=True)
+        return []
+    if grid[start[1]][start[0]] != CELL_EXTERIOR:
+        print(f"[DEBUG] Exterior A* Failed: Start {start} not on exterior (value={grid[start[1]][start[0]]})", flush=True)
+        return []
+    
+    if not (0 <= goal[0] < grid.shape[1] and 0 <= goal[1] < grid.shape[0]):
+        print(f"[DEBUG] Exterior A* Failed: Goal {goal} out of bounds", flush=True)
+        return []
+    if grid[goal[1]][goal[0]] != CELL_EXTERIOR:
+        print(f"[DEBUG] Exterior A* Failed: Goal {goal} not on exterior (value={grid[goal[1]][goal[0]]})", flush=True)
+        return []
+    
+    def heuristic(a, b):
+        return abs(a[0] - b[0]) + abs(a[1] - b[1])
+    
+    neighbors = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+    close_set = set()
+    came_from = {}
+    gscore = {start: 0}
+    fscore = {start: heuristic(start, goal)}
+    oheap = []
+    heapq.heappush(oheap, (fscore[start], start))
+    
+    while oheap:
+        current = heapq.heappop(oheap)[1]
+        if current == goal:
+            data = []
+            while current in came_from:
+                data.append(current)
+                current = came_from[current]
+            data.reverse()
+            return data
+        close_set.add(current)
+        
+        for i, j in neighbors:
+            neighbor = current[0] + i, current[1] + j
+            tentative_g_score = gscore[current] + 1
+            
+            if 0 <= neighbor[0] < grid.shape[1] and 0 <= neighbor[1] < grid.shape[0]:
+                cell_type = grid[neighbor[1]][neighbor[0]]
+                
+                # ONLY allow exterior cells - this is the key difference!
+                if cell_type != CELL_EXTERIOR:
+                    continue
+            else:
+                continue
+                
+            if neighbor in close_set and tentative_g_score >= gscore.get(neighbor, 0):
+                continue
+            if tentative_g_score < gscore.get(neighbor, 0) or neighbor not in [i[1] for i in oheap]:
+                came_from[neighbor] = current
+                gscore[neighbor] = tentative_g_score
+                fscore[neighbor] = tentative_g_score + heuristic(neighbor, goal)
+                heapq.heappush(oheap, (fscore[neighbor], neighbor))
+    
+    print(f"[DEBUG] Exterior A* Failed: No path found from {start} to {goal}", flush=True)
+    return []
+
 # Fire Simulator Class with Material-Aware Spread
 class FireSimulator:
     def __init__(self, grid, spread_probability=0.25, firewall_spread_factor=0.1):
@@ -185,8 +306,8 @@ class Person:
             self.speed = 1.0
             self.trip_probability = 0.0
 
-    def move(self, grid):
-        """Move agent along path with per-cell wall validation."""
+    def move(self, grid, fire_map=None):
+        """Move agent along path with per-cell wall and fire validation."""
         if self.tripped_timer > 0:
             self.tripped_timer -= 1
             return
@@ -212,6 +333,12 @@ class Person:
                 if cell_type == CELL_WALL:
                     print(f"[DEBUG] Agent blocked by wall at {next_pos}", flush=True)
                     self.path = []  # Clear invalid path
+                    break
+                
+                # Check if next position is on fire - CRITICAL: avoid fire!
+                if fire_map is not None and fire_map[next_pos[1]][next_pos[0]] >= 1:
+                    print(f"[DEBUG] Agent avoiding fire at {next_pos}, recalculating path", flush=True)
+                    self.path = []  # Clear path to trigger recalculation
                     break
                 
                 # Move to next position
@@ -255,23 +382,51 @@ class Person:
                 return
 
     def move_to_assembly(self, grid, assembly_point, fire_map):
-        """Move agent toward assembly point after escape."""
+        """Move agent toward assembly point after escape using TWO-PHASE approach.
+        
+        Phase 1: Move from current position to nearest exterior cell
+        Phase 2: Move along exterior-only path to assembly point
+        
+        This prevents agents from re-entering the building.
+        """
         if self.status != 'escaped':
             return
         
-        # Recompute path to assembly if needed
-        if not self.path:
-            print(f"[ASSEMBLY DEBUG] Agent computing path to assembly: pos=({self.pos[0]:.0f}, {self.pos[1]:.0f}) -> assembly={assembly_point}", flush=True)
-            self.compute_path(grid, assembly_point, fire_map)
-            if self.path:
-                print(f"[ASSEMBLY DEBUG] Path found: {len(self.path)} steps", flush=True)
-            else:
-                print(f"[ASSEMBLY DEBUG] WARNING: No path found to assembly!", flush=True)
+        current_pos = (int(self.pos[0]), int(self.pos[1]))
         
-        # Move toward assembly point (slower, calmer movement after escape)
+        # Check if agent is on exterior zone
+        is_on_exterior = False
+        if 0 <= current_pos[1] < grid.shape[0] and 0 <= current_pos[0] < grid.shape[1]:
+            is_on_exterior = grid[current_pos[1]][current_pos[0]] == CELL_EXTERIOR
+        
+        # Recompute path if needed
+        if not self.path:
+            if not is_on_exterior:
+                # PHASE 1: Find nearest exterior cell and path to it
+                nearest_ext = find_nearest_exterior(grid, current_pos)
+                if nearest_ext:
+                    print(f"[ASSEMBLY DEBUG] Phase 1: Agent at {current_pos} finding path to exterior at {nearest_ext}", flush=True)
+                    self.path = a_star_search(grid, current_pos, nearest_ext, fire_map)
+                    if self.path:
+                        print(f"[ASSEMBLY DEBUG] Phase 1 path found: {len(self.path)} steps to exterior", flush=True)
+                    else:
+                        print(f"[ASSEMBLY DEBUG] WARNING: No path to exterior found!", flush=True)
+                else:
+                    print(f"[ASSEMBLY DEBUG] WARNING: No exterior cell found near {current_pos}!", flush=True)
+            else:
+                # PHASE 2: Already on exterior, use exterior-only path to assembly
+                assembly_pos = (int(assembly_point[0]), int(assembly_point[1]))
+                print(f"[ASSEMBLY DEBUG] Phase 2: Agent on exterior at {current_pos}, pathfinding to assembly {assembly_pos}", flush=True)
+                self.path = a_star_exterior_only(grid, current_pos, assembly_pos)
+                if self.path:
+                    print(f"[ASSEMBLY DEBUG] Phase 2 exterior-only path found: {len(self.path)} steps to assembly", flush=True)
+                else:
+                    print(f"[ASSEMBLY DEBUG] WARNING: No exterior path to assembly found!", flush=True)
+        
+        # Move along path
         if self.path:
             self.speed = 1.0  # Normal speed when moving to assembly
-            self.move(grid)
+            self.move(grid)  # No fire avoidance needed for assembly movement
 
     def compute_path(self, grid, goal, fire_map):
         """Compute path to goal using A*."""
@@ -421,7 +576,7 @@ class EvacuationEnv(gym.Env):
                             nearest_exit = ex
                     agent.compute_path(self.base_grid, nearest_exit, self.fire_sim.fire_map)
 
-                agent.move(self.base_grid)
+                agent.move(self.base_grid, self.fire_sim.fire_map)
                 
                 # Debug: Check for wall collision after move
                 pos_y, pos_x = int(agent.pos[1]), int(agent.pos[0])
@@ -595,7 +750,7 @@ def run_heuristic_simulation(grid, agent_positions, fire_position, exits=None,
             if not agent.path or step_count % 10 == 0:
                 agent.compute_path(grid, agent.assigned_exit, fire_sim.fire_map)
             
-            agent.move(grid)
+            agent.move(grid, fire_sim.fire_map)
             agent.check_status(fire_sim.fire_map, exits, assembly_point=assembly_point)
         
         # Handle agents moving to assembly point after escape
